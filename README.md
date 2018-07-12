@@ -11,7 +11,7 @@ Developed with [Truffle Framework](https://truffleframework.com/)
 
 ## Install
 ```
-git clone https://github.com/EthicHub/platform-contracts
+git clone https://gitlab.com/EthicHub/platform-contracts
 cd platform-contracts
 npm install
 ```
