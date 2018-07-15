@@ -141,29 +141,30 @@ contract('EthicHubUser', function() {
         registrationStatus.should.be.equal(true);
     });
     it('change user status', async function() {
-        await userManagerInstance.changeUserStatus(investor1, 'investor', false);
+        await userManagerInstance.unregisterInvestor(investor1);
         let registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'investor');
         registrationStatus.should.be.equal(false);
-        await userManagerInstance.changeUserStatus(investor1, 'investor', true);
+        await userManagerInstance.registerInvestor(investor1);
         registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'localNode');
         registrationStatus.should.be.equal(false);
         registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'investor');
         registrationStatus.should.be.equal(true);
     });
-    it('change users status', async function() {
-        await userManagerInstance.changeUsersStatus([localNode1, localNode2],  'localNode', false);
-        let registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
-        registrationStatus.should.be.equal(false);
-        await userManagerInstance.changeUsersStatus([localNode1, localNode2], 'localNode', true);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'community');
-        registrationStatus.should.be.equal(false);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'community');
-        registrationStatus.should.be.equal(false);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
-        registrationStatus.should.be.equal(true);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'localNode');
-        registrationStatus.should.be.equal(true);
-    });
+    //it('change users status', async function() {
+    //    await userManagerInstance.changeUsersStatus([localNode1, localNode2],  'localNode', false);
+    //    let registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
+    //    registrationStatus.should.be.equal(false);
+    //    await userManagerInstance.changeUsersStatus([localNode1, localNode2], 'localNode', true);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'community');
+    //    registrationStatus.should.be.equal(false);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'community');
+    //    registrationStatus.should.be.equal(false);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
+    //    registrationStatus.should.be.equal(true);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'localNode');
+    //    registrationStatus.should.be.equal(true);
+    //});
+    
 });
 
 contract('EthicHubLending (Lending owner != LocalNode)', function() {
