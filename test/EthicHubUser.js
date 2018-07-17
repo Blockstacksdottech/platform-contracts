@@ -64,41 +64,6 @@ contract('User', function (whitelisted_accounts) {
       await this.cmc.upgradeContract(this.reputation.address, 'reputation')
     });
 
-      // it('change status of registered account (true->false)', async function () {
-      //     var i = Math.floor(Math.random() * whitelisted_accounts.length);
-      //     await this.users.changeUserStatus(whitelisted_accounts[i], this.profile, true, {from:owner}).should.be.fulfilled;
-      //     account = whitelisted_accounts[i];
-      //     is_registered = await this.users.viewRegistrationStatus(account, this.profile);
-      //     is_registered.should.be.equal(true);
-      //     await this.users.changeUserStatus(account, this.profile, false, {from:owner}).should.be.fulfilled;
-      //     is_registered = await this.users.viewRegistrationStatus(account, this.profile);
-      //     is_registered.should.be.equal(false);
-      // });
-      // it('change status for list of registered accounts (true->false)', async function () {
-      //     await this.users.changeUsersStatus(whitelisted_accounts, this.profile, false, {from:owner}).should.be.fulfilled;
-      //     for (var i = 0; i < whitelisted_accounts.length; i++) {
-      //         account = whitelisted_accounts[i];
-      //         is_registered = await this.users.viewRegistrationStatus(account, this.profile);
-      //         is_registered.should.be.equal(false);
-      //     }
-      // });
-
-      // it('add registered test account (true)', async function () {
-      //     await this.users.changeUserStatus(test_account, this.profile, true, {from:owner}).should.be.fulfilled;
-      //     is_registered = await this.users.viewRegistrationStatus(test_account, this.profile);
-      //     is_registered.should.be.equal(true);
-      // });
-
-      // it('view two registered accounts: whitelisted all false and test true', async function () {
-      //     await this.users.changeUsersStatus(whitelisted_accounts, this.profile, false, {from:owner}).should.be.fulfilled;
-      //     var i = Math.floor(Math.random() * whitelisted_accounts.length);
-      //     is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[i], this.profile);
-      //     is_registered.should.be.equal(false);
-      //     await this.users.changeUserStatus(test_account, this.profile, true, {from:owner}).should.be.fulfilled;
-      //     is_registered = await this.users.viewRegistrationStatus(test_account, this.profile);
-      //     is_registered.should.be.equal(true);
-      // });
-        //
       it('onlyOwner can change status', async function () {
           let prof = "localNode";
           let is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
@@ -155,6 +120,19 @@ contract('User', function (whitelisted_accounts) {
           is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
           is_registered.should.be.equal(false);
        });
+
+       it('register/unregister arbiter', async function () {
+          let prof = "arbiter";
+          let is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
+          is_registered.should.be.equal(false);
+          await this.users.registerArbiter(whitelisted_accounts[0], {from:owner}).should.be.fulfilled;
+          is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
+          is_registered.should.be.equal(true);
+          await this.users.unregisterArbiter(whitelisted_accounts[0], {from:owner}).should.be.fulfilled;
+          is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
+          is_registered.should.be.equal(false);
+       });
+
    });
 
 });

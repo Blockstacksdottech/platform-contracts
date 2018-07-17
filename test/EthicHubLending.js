@@ -26,7 +26,7 @@ const EthicHubLending = artifacts.require('EthicHubLending');
 const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol');
 const MockReputation = artifacts.require('./helper_contracts/MockReputation.sol');
 
-contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, investor5, localNode, ethicHubTeam, community]) {
+contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
     beforeEach(async function () {
         await advanceBlock();
         this.fundingStartTime = latestTime() + duration.days(1);
@@ -47,6 +47,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.mockStorage.setAddress(utils.soliditySha3("contract.name", "reputation"),this.mockReputation.address);
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode",localNode),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative",borrower),true);
+        await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", arbiter),true);
 
         this.lending = await EthicHubLending.new(
                                                 this.fundingStartTime,
@@ -57,16 +58,16 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                 this.lendingDays,
                                                 this.mockStorage.address,
                                                 localNode,
-                                                ethicHubTeam
+                                                ethicHubTeam,
+                                                arbiter
                                             );
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor2),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor3),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor4),true);
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor5),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "community",community),true);
-
+        await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", arbiter),true);
         await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members,community);
     });
 
@@ -82,7 +83,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     localNode,
-                                                    ethicHubTeam
+                                                    ethicHubTeam,
+                                                    arbiter
                                                 );
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
             var isRunning = await someLending.isContribPeriodRunning();
@@ -104,7 +106,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     borrower,
-                                                    ethicHubTeam
+                                                    ethicHubTeam,
+                                                    arbiter
                                                 ).should.be.rejectedWith(EVMRevert);
 
         });
@@ -120,7 +123,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     localNode,
-                                                    ethicHubTeam
+                                                    ethicHubTeam,
+                                                    arbiter
                                                 ).should.be.rejectedWith(EVMRevert);
 
         });
@@ -855,6 +859,25 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
 
     })
+
+    describe('Change borrower', async function() {
+
+        it('Should allow to change borrower with registered arbiter', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.mockStorage.setBool(utils.soliditySha3("user", "representative", investor3), true);
+            await this.lending.setBorrower(investor3, {from: arbiter}).should.be.fulfilled;
+            let b = await this.lending.borrower();
+            b.should.be.equal(investor3);
+        })
+
+        it('Should not allow to change borrower with unregistered arbiter', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.lending.setBorrower(investor3, {from: owner}).should.be.rejectedWith(EVMRevert);
+        })
+
+   })
+
+
 
     function getExpectedInvestorBalance(initialAmount,contribution,testEnv) {
 

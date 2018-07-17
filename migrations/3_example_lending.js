@@ -39,6 +39,7 @@ module.exports = async (deployer, network, accounts) => {
     userManagerInstance = await userManager.deployed();
     await userManagerInstance.registerLocalNode(localNode);
     await userManagerInstance.registerRepresentative(accounts[2]);
+    await userManagerInstance.registerArbiter(accounts[5]);
 
     const community = accounts[8]
     console.log("--> Deploying EthicHubLending(Owner)...");
@@ -53,7 +54,8 @@ module.exports = async (deployer, network, accounts) => {
         2,//_lendingDays
         storage.address, //_storageAddress
         localNode,//localNode
-        accounts[4]//team
+        accounts[4],//team
+        accounts[5],//arbiter
     ).then(() => {
         return lending.deployed().then(async (lendingInstance) => {
 

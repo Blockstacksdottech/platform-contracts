@@ -71,25 +71,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         emit UserStatusChanged(target, profile, false);
     }
 
-
-    // COMMENTTED, METHOD NOT ACCESSIBLE
-    // /**
-    //  * @dev Changes registration statuses of addresses for participation.
-    //  * @param targets Addresses that will be registered/deregistered.
-    //  * @param profile profile of user.
-    //  * @param isRegistered New registration status of addresses.
-    //  */
-    // function changeUsersStatus(address[] targets, string profile, bool isRegistered)
-    //     internal
-    //     onlyOwner
-    // {
-    //     require(targets.length > 0);
-    //     require(bytes(profile).length != 0);
-    //     for (uint i = 0; i < targets.length; i++) {
-    //         changeUserStatus(targets[i], profile, isRegistered);
-    //     }
-    // }
-
+    
     /**
      * @dev View registration status of an address for participation.
      * @return isRegistered boolean registration status of address for a specific profile.
@@ -214,4 +196,30 @@ contract EthicHubUser is Ownable, EthicHubBase {
             deleteUserStatus(target, "representative");
         }
     }
+
+    /**
+     * @dev register a arbiter address.
+     */
+    function registerArbiter(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        changeUserStatus(target, "arbiter", true);
+    }
+
+    /**
+     * @dev unregister a arbiter address.
+     */
+    function unregisterArbiter(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "arbiter", target));
+        if (isRegistered) {
+            deleteUserStatus(target, "arbiter");
+        }
+    }
+
 }
