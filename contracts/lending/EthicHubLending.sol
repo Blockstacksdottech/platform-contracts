@@ -407,4 +407,9 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     function getMaxDelayDays() public view returns(uint256){
         return ethicHubStorage.getUint(keccak256("lending.maxDelayDays", this));
     }
+
+    function getUserContributionReclaimStatus(address userAddress) public view returns(bool isCompensated, bool surplusEthReclaimed){
+        isCompensated = investors[userAddress].isCompensated;
+        surplusEthReclaimed = investors[userAddress].surplusEthReclaimed;
+    }
 }
