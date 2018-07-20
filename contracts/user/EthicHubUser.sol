@@ -2,7 +2,6 @@
     Smart contract of user status.
 
     Copyright (C) 2018 EthicHub
-
     This file is part of platform contracts.
 
     This program is free software: you can redistribute it and/or modify
@@ -37,7 +36,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         public
     {
         // Version
-        version = 1;
+        version = 2;
     }
 
     /**
@@ -47,7 +46,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
      * @param isRegistered New registration status of address.
      */
     function changeUserStatus(address target, string profile, bool isRegistered)
-        public
+        internal
         onlyOwner
     {
         require(target != address(0));
@@ -56,22 +55,22 @@ contract EthicHubUser is Ownable, EthicHubBase {
         emit UserStatusChanged(target, profile, isRegistered);
     }
 
+
     /**
-     * @dev Changes registration statuses of addresses for participation.
-     * @param targets Addresses that will be registered/deregistered.
+     * @dev delete an address for participation.
+     * @param target Address that will be deleted.
      * @param profile profile of user.
-     * @param isRegistered New registration status of addresses.
      */
-    function changeUsersStatus(address[] targets, string profile, bool isRegistered)
-        external
+    function deleteUserStatus(address target, string profile)
+        internal
         onlyOwner
     {
-        require(targets.length > 0);
+        require(target != address(0));
         require(bytes(profile).length != 0);
-        for (uint i = 0; i < targets.length; i++) {
-            changeUserStatus(targets[i], profile, isRegistered);
-        }
+        ethicHubStorage.deleteBool(keccak256("user", profile, target));
+        emit UserStatusChanged(target, profile, false);
     }
+
 
     /**
      * @dev View registration status of an address for participation.
@@ -96,9 +95,23 @@ contract EthicHubUser is Ownable, EthicHubBase {
         require(target != address(0));
         bool isRegistered = ethicHubStorage.getBool(keccak256("user", "localNode", target));
         if (!isRegistered) {
-            ethicHubStorage.setBool(keccak256("user", "localNode", target), true);
+            changeUserStatus(target, "localNode", true);
             EthicHubReputationInterface rep = EthicHubReputationInterface (ethicHubStorage.getAddress(keccak256("contract.name", "reputation")));
             rep.initLocalNodeReputation(target);
+        }
+    }
+
+    /**
+     * @dev unregister a localNode address.
+     */
+    function unregisterLocalNode(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "localNode", target));
+        if (isRegistered) {
+            deleteUserStatus(target, "localNode");
         }
     }
 
@@ -112,11 +125,27 @@ contract EthicHubUser is Ownable, EthicHubBase {
         require(target != address(0));
         bool isRegistered = ethicHubStorage.getBool(keccak256("user", "community", target));
         if (!isRegistered) {
-            ethicHubStorage.setBool(keccak256("user", "community", target), true);
+            changeUserStatus(target, "community", true);
             EthicHubReputationInterface rep = EthicHubReputationInterface(ethicHubStorage.getAddress(keccak256("contract.name", "reputation")));
             rep.initCommunityReputation(target);
         }
     }
+
+    /**
+     * @dev unregister a community address.
+     */
+    function unregisterCommunity(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "community", target));
+        if (isRegistered) {
+            deleteUserStatus(target, "community");
+        }
+    }
+
+
 
     /**
      * @dev register a invertor address.
@@ -126,7 +155,21 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        ethicHubStorage.setBool(keccak256("user", "investor", target), true);
+        changeUserStatus(target, "investor", true);
+    }
+
+    /**
+     * @dev unregister a investor address.
+     */
+    function unregisterInvestor(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "investor", target));
+        if (isRegistered) {
+            deleteUserStatus(target, "investor");
+        }
     }
 
     /**
@@ -137,7 +180,21 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        ethicHubStorage.setBool(keccak256("user", "representative", target), true);
+        changeUserStatus(target, "representative", true);
+    }
+
+    /**
+     * @dev unregister a representative address.
+     */
+    function unregisterRepresentative(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "representative", target));
+        if (isRegistered) {
+            deleteUserStatus(target, "representative");
+        }
     }
 
 

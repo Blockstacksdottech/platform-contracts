@@ -26,7 +26,7 @@ const EthicHubLending = artifacts.require('EthicHubLending');
 const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol');
 const MockReputation = artifacts.require('./helper_contracts/MockReputation.sol');
 
-contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, investor5, localNode, ethicHubTeam, community]) {
+contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
     beforeEach(async function () {
         await advanceBlock();
         this.fundingStartTime = latestTime() + duration.days(1);
@@ -59,14 +59,14 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                 localNode,
                                                 ethicHubTeam
                                             );
+        await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), arbiter);
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor2),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor3),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor4),true);
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor5),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "community",community),true);
-
+        await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", arbiter),true);
         await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members,community);
     });
 
@@ -691,6 +691,32 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         });
 
+        it('Should not allow to send funds back if not borrower', async function() {
+          await increaseTimeTo(this.fundingStartTime  + duration.days(1));
+
+          const investment2 = ether(1);
+          const investment3 = ether(0.5);
+          const investment4 = ether(1.5);
+
+          const investor2InitialBalance = await web3.eth.getBalance(investor2);
+          const investor3InitialBalance = await web3.eth.getBalance(investor3);
+          const investor4InitialBalance = await web3.eth.getBalance(investor4);
+
+          await this.lending.sendTransaction({value: investment2, from: investor2}).should.be.fulfilled;
+          await this.lending.sendTransaction({value: investment3, from: investor3}).should.be.fulfilled;
+          await this.lending.sendTransaction({value: investment4, from: investor4}).should.be.fulfilled;
+          const investor2SendTransactionBalance = await web3.eth.getBalance(investor2);
+          const investor3SendTransactionBalance = await web3.eth.getBalance(investor3);
+          const investor4SendTransactionBalance = await web3.eth.getBalance(investor4);
+          await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+          await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+          await this.lending.setBorrowerReturnEthPerFiatRate(this.finalEthPerFiatRate, {from: owner}).should.be.fulfilled;
+          //console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
+          const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
+          await this.lending.sendTransaction({value: borrowerReturnAmount, from: investor2}).should.be.rejectedWith(EVMRevert);
+      
+        });
+
         it('Should not allow reclaim twice the funds', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1));
 
@@ -793,14 +819,13 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.sendTransaction({value: ether(1), from: borrower}).should.be.rejectedWith(EVMRevert);
         })
 
-        // We can't restrict returns
-        // it('Should only allow borrower to send partial return', async function() {
-        //     await increaseTimeTo(this.fundingStartTime  + duration.days(1));
-        //     await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
-        //     await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
-        //     await this.lending.sendTransaction({value: ether(1), from: investor2}).should.be.rejectedWith(EVMRevert);
-        //     await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
-        // })
+        it('Should only allow borrower to send partial return', async function() {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1));
+            await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
+            await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+            await this.lending.sendTransaction({value: ether(1), from: investor2}).should.be.rejectedWith(EVMRevert);
+            await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+        })
 
         it('Should allow to reclaim partial return from contributor', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1));
@@ -863,6 +888,25 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
 
     })
+
+    describe('Change borrower', async function() {
+
+        it('Should allow to change borrower with registered arbiter', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.mockStorage.setBool(utils.soliditySha3("user", "representative", investor3), true);
+            await this.lending.setBorrower(investor3, {from: arbiter}).should.be.fulfilled;
+            let b = await this.lending.borrower();
+            b.should.be.equal(investor3);
+        })
+
+        it('Should not allow to change borrower with unregistered arbiter', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.lending.setBorrower(investor3, {from: owner}).should.be.rejectedWith(EVMRevert);
+        })
+
+   })
+
+
 
     function getExpectedInvestorBalance(initialAmount,contribution,testEnv) {
 

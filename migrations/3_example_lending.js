@@ -35,6 +35,7 @@ module.exports = async (deployer, network, accounts) => {
         console.log("Skipping example lending on main network");
         return;
     }
+    return
     const localNode = accounts[3]
     userManagerInstance = await userManager.deployed();
     await userManagerInstance.registerLocalNode(localNode);

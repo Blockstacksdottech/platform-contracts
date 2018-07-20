@@ -39,6 +39,7 @@ const cmc = artifacts.require('./EthicHubCMC.sol');
 const userManager = artifacts.require('./user/EthicHubUser.sol');
 const lending = artifacts.require('./lending/EthicHubLending.sol');
 const reputation = artifacts.require('./reputation/EthicHubReputation.sol');
+const arbitrage = artifacts.require('./arbitrage/EthicHubArbitrage.sol');
 
 const Uninitialized = 0;
 const AcceptingContributions = 1;
@@ -100,6 +101,7 @@ const investor1 = web3.eth.accounts[5];
 const investor2 = web3.eth.accounts[6];
 const investor3 = web3.eth.accounts[7];
 const community = web3.eth.accounts[8];
+const arbiter = web3.eth.accounts[9];
 
 contract('EthicHubUser', function() {
     let instances;
@@ -137,33 +139,35 @@ contract('EthicHubUser', function() {
     });
     it('should register representative', async function() {
         await userManagerInstance.registerRepresentative(borrower);
-        let registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'investor');
+        let registrationStatus = await userManagerInstance.viewRegistrationStatus(borrower, 'representative');
         registrationStatus.should.be.equal(true);
     });
+
     it('change user status', async function() {
-        await userManagerInstance.changeUserStatus(investor1, 'investor', false);
+        await userManagerInstance.unregisterInvestor(investor1);
         let registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'investor');
         registrationStatus.should.be.equal(false);
-        await userManagerInstance.changeUserStatus(investor1, 'investor', true);
+        await userManagerInstance.registerInvestor(investor1);
         registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'localNode');
         registrationStatus.should.be.equal(false);
         registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'investor');
         registrationStatus.should.be.equal(true);
     });
-    it('change users status', async function() {
-        await userManagerInstance.changeUsersStatus([localNode1, localNode2],  'localNode', false);
-        let registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
-        registrationStatus.should.be.equal(false);
-        await userManagerInstance.changeUsersStatus([localNode1, localNode2], 'localNode', true);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'community');
-        registrationStatus.should.be.equal(false);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'community');
-        registrationStatus.should.be.equal(false);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
-        registrationStatus.should.be.equal(true);
-        registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'localNode');
-        registrationStatus.should.be.equal(true);
-    });
+    //it('change users status', async function() {
+    //    await userManagerInstance.changeUsersStatus([localNode1, localNode2],  'localNode', false);
+    //    let registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
+    //    registrationStatus.should.be.equal(false);
+    //    await userManagerInstance.changeUsersStatus([localNode1, localNode2], 'localNode', true);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'community');
+    //    registrationStatus.should.be.equal(false);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'community');
+    //    registrationStatus.should.be.equal(false);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode1, 'localNode');
+    //    registrationStatus.should.be.equal(true);
+    //    registrationStatus = await userManagerInstance.viewRegistrationStatus(localNode2, 'localNode');
+    //    registrationStatus.should.be.equal(true);
+    //});
+
 });
 
 contract('EthicHubLending (Lending owner != LocalNode)', function() {
@@ -1400,3 +1404,182 @@ function rawTransaction(
         });
     });
 }
+
+contract('EthicHubLending with surplus', function() {
+    let instances;
+    let storageInstance;
+    let lendingInstance;
+    let ownerUserManager = ownerTruffle;
+    let ownerLending = ownerTruffle;
+    let userManagerInstance;
+    let reputationInstance;
+    let cmcInstance;
+    let lendingStartTime;
+    let arbitrageInstance;
+
+    before(async () => {
+        await advanceBlock();
+        instances = await deployedContracts();
+        storageInstance = instances[0];
+        userManagerInstance = instances[1];
+        reputationInstance = instances[2];
+        cmcInstance = instances[3];
+        lendingStartTime = latestTime() + duration.days(1);
+        // register first LocalNode necessary on lending contract
+        await userManagerInstance.registerLocalNode(localNode1);
+        await userManagerInstance.registerRepresentative(borrower);
+        lendingInstance = await lending.new(
+            //Arguments
+            lendingStartTime,//_fundingStartTime
+            latestTime() + duration.days(35),//_fundingEndTime
+            borrower,//_representative
+            10,//_annualInterest
+            ether(4),//_totalLendingAmount
+            2,//_lendingDays
+            storage.address, //_storageAddress
+            localNode1,
+            teamEH
+        )
+        await userManagerInstance.registerCommunity(community);
+        //Gives set permissions on storage
+        await cmcInstance.addNewLendingContract(lendingInstance.address);
+        console.log("--> EthicHubLending deployed");
+        //Lending saves parameters in storage, checks if owner is localNode
+        await lendingInstance.saveInitialParametersToStorage(
+            2,//maxDefaultDays
+            1,//tier
+            20,//community members
+            community//community rep wallet
+        )
+        ownerLending = await new lendingInstance.owner();
+
+    });
+    it('should pass if contract are on storage contract', async function() {
+        let lendingContractAddress = await storageInstance.getAddress(utils.soliditySha3("contract.address", lendingInstance.address));
+        lendingContractAddress.should.be.equal(lendingInstance.address);
+    });
+    describe('The investment flow', function() {
+        it('investment with surplus', async function() {
+            await increaseTimeTo(latestTime() + duration.days(1));
+            await advanceBlock();
+            const surplus = ether(2)
+            // Some initial parameters
+            const initialEthPerFiatRate = 100;
+            const finalEthPerFiatRate = 100;
+            const investment1 = ether(2);
+            const investment2 = ether(2);
+            const investment3 = ether(1.5);
+            const delayDays = 2;
+            let transaction;
+
+            // Register all actors
+            transaction = await userManagerInstance.registerInvestor(investor1);
+            reportMethodGasUsed('report', 'ownerUserManager', 'userManagerInstance.registerInvestor(investor1)', transaction.tx, true);
+            transaction = await userManagerInstance.registerInvestor(investor2);
+            reportMethodGasUsed('report', 'ownerUserManager', 'userManagerInstance.registerInvestor(investor2)', transaction.tx);
+            transaction = await userManagerInstance.registerInvestor(investor3);
+            reportMethodGasUsed('report', 'ownerUserManager', 'userManagerInstance.registerInvestor(investor3)', transaction.tx);
+
+
+            // Init Reputation
+            const initialCommunityReputation = await reputationInstance.getCommunityReputation(community).should.be.fulfilled;
+            const initialLocalNodeReputation = await reputationInstance.getLocalNodeReputation(localNode1).should.be.fulfilled;
+
+            await increaseTimeTo(lendingStartTime + duration.minutes(100));
+            await advanceBlock();
+
+            // Is contribution period
+            var isRunning = await lendingInstance.isContribPeriodRunning();
+            isRunning.should.be.equal(true);
+
+            // Investment part
+            //Send transaction
+            transaction = await lendingInstance.sendTransaction({value: investment1, from: investor1}).should.be.fulfilled;
+            reportMethodGasUsed('report', 'investor1', 'lendingInstance.sendTransaction', transaction.tx);
+            const contribution1 = await lendingInstance.checkInvestorContribution(investor1);
+            contribution1.should.be.bignumber.equal(investment1);
+            transaction = await lendingInstance.sendTransaction({value: investment2, from: investor2}).should.be.fulfilled;
+            reportMethodGasUsed('report', 'investor2', 'lendingInstance.sendTransaction', transaction.tx);
+            const contribution2 = await lendingInstance.checkInvestorContribution(investor2);
+            contribution2.should.be.bignumber.equal(investment2);
+            // Goal is reached, no accepts more invesments
+            transaction = await lendingInstance.sendTransaction({value: investment3, from: investor3}).should.be.rejectedWith(EVMRevert);
+            //reportMethodGasUsed('report', 'investor3', 'lendingInstance.sendTransaction', transaction.tx);
+
+            // Send funds to borrower
+            transaction = await lendingInstance.sendFundsToBorrower({from:ownerLending}).should.be.fulfilled;
+            reportMethodGasUsed('report', 'ownerLending', 'lendingInstance.sendFundsToBorrower', transaction.tx);
+
+            //Registering arbitrage mechanism
+            arbitrageInstance = await arbitrage.new(storageInstance.address, {from:ownerTruffle});
+            await cmcInstance.upgradeContract(arbitrageInstance.address, 'arbitrage');
+
+            //Chaning borrower
+            await arbitrageInstance.assignArbiterForLendingContract(arbiter, lendingInstance.address).should.be.fulfilled;
+
+            let borrower2 = teamEH;
+            await userManagerInstance.registerRepresentative(borrower2);
+            lendingInstance.setBorrower(borrower2, {from:arbiter});
+
+            // Send surplus 2 eth
+            transaction = await lendingInstance.sendTransaction({value: surplus, from: borrower}).should.be.rejectedWith(EVMRevert);
+            transaction = await lendingInstance.sendTransaction({value: surplus, from: borrower2}).should.be.fulfilled;
+
+            reportMethodGasUsed('report', 'borrower', 'lendingInstance.sendTransaction', transaction.tx);
+            transaction = await lendingInstance.finishInitialExchangingPeriod(initialEthPerFiatRate, {from: ownerLending}).should.be.fulfilled;
+            reportMethodGasUsed('report', 'ownerLending', 'lendingInstance.finishInitialExchangingPeriod', transaction.tx);
+
+            // Borrower return amount
+            transaction = await lendingInstance.setBorrowerReturnEthPerFiatRate(finalEthPerFiatRate, {from: ownerLending}).should.be.fulfilled;
+            reportMethodGasUsed('report', 'ownerLending', 'lendingInstance.setBorrowerReturnEthPerFiatRate', transaction.tx);
+            // Show balances
+            //console.log('=== MIDDLE ===');
+            //await traceBalancesAllActors();
+            var investorInitialBalance = await web3.eth.getBalance(investor1);
+            var investor2InitialBalance = await web3.eth.getBalance(investor2);
+            await lendingInstance.reclaimSurplusEth(investor1).should.be.fulfilled;
+            await lendingInstance.reclaimSurplusEth(investor2).should.be.fulfilled;
+
+            var investorFinalBalance = await web3.eth.getBalance(investor1);
+            var expectedInvestorBalance = investorInitialBalance.add(ether(1));
+            checkLostinTransactions(expectedInvestorBalance,investorFinalBalance);
+
+            var investor2FinalBalance = await web3.eth.getBalance(investor2);
+            var expectedInvestor2Balance = investor2InitialBalance.add(ether(1));
+            checkLostinTransactions(expectedInvestor2Balance,investor2FinalBalance);
+
+            const borrowerReturnAmount = await lendingInstance.borrowerReturnAmount();
+
+            //Change borrower again
+            let borrower3 = localNode1;
+            await userManagerInstance.registerRepresentative(borrower3);
+            lendingInstance.setBorrower(borrower3, {from:arbiter});
+            transaction = await lendingInstance.sendTransaction({value: borrowerReturnAmount, from: borrower2}).should.be.rejectedWith(EVMRevert);
+            transaction = await lendingInstance.sendTransaction({value: borrowerReturnAmount.mul(0.5), from: borrower3}).should.be.fulfilled;
+
+            //block more borrower changes
+            await arbitrageInstance.revokeArbiterForLendingContract(arbiter,lendingInstance.address);
+            let borrower4 = investor1;
+            lendingInstance.setBorrower(borrower4, {from:arbiter}).should.be.rejectedWith(EVMRevert);
+
+            //finish returning
+            transaction = await lendingInstance.sendTransaction({value: borrowerReturnAmount, from: borrower3}).should.be.fulfilled;
+
+            reportMethodGasUsed('report', 'borrower', 'lendingInstance.returnBorrowedEth', transaction.tx);
+
+            var investorInitialBalance = await web3.eth.getBalance(investor1);
+            var investor2InitialBalance = await web3.eth.getBalance(investor2);
+            await lendingInstance.reclaimContributionWithInterest(investor1).should.be.fulfilled;
+            await lendingInstance.reclaimContributionWithInterest(investor2).should.be.fulfilled;
+
+            var investorFinalBalance = await web3.eth.getBalance(investor1);
+            var expectedInvestorBalance = getExpectedInvestorBalance(investorInitialBalance, investment1.sub(ether(2).div(2)), initialEthPerFiatRate, 10, finalEthPerFiatRate)
+            checkLostinTransactions(expectedInvestorBalance,investorFinalBalance);
+
+            var investor2FinalBalance = await web3.eth.getBalance(investor2);
+            var expectedInvestor2Balance = getExpectedInvestorBalance(investorInitialBalance, investment2.sub(ether(2).div(2)), initialEthPerFiatRate, 10, finalEthPerFiatRate);
+            checkLostinTransactions(expectedInvestor2Balance,investor2FinalBalance);
+
+        });
+    });
+});

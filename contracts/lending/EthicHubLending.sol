@@ -63,11 +63,18 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     event onInitalRateSet(uint rate);
     event onReturnRateSet(uint rate);
     event onReturnAmount(address indexed borrower, uint amount);
+    event onBorrowerChanged(address indexed newBorrower);
 
     // modifiers
     modifier checkProfileRegistered(string profile) {
         bool isRegistered = ethicHubStorage.getBool(keccak256("user", profile, msg.sender));
         require(isRegistered);
+        _;
+    }
+
+    modifier checkIfArbiter() {
+        address arbiter = ethicHubStorage.getAddress(keccak256("arbiter", this));
+        require(arbiter == msg.sender);
         _;
     }
 
@@ -99,7 +106,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
         require(_annualInterest > 0 && _annualInterest < 100);
-        version = 1;
+        version = 2;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -115,7 +122,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_maxDelayDays != 0);
         require(state == LendingState.Uninitialized);
         require(_tier > 0);
-        require(_communityMembers >= 20);
+        require(_communityMembers > 0);
         require(ethicHubStorage.getBool(keccak256("user", "community", _community)));
         ethicHubStorage.setUint(keccak256("lending.maxDelayDays", this), _maxDelayDays);
         ethicHubStorage.setAddress(keccak256("lending.community", this), _community);
@@ -126,6 +133,13 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         state = LendingState.AcceptingContributions;
         emit StateChange(uint(state));
 
+    }
+
+    function setBorrower(address _borrower) external checkIfArbiter {
+        require(_borrower != address(0));
+        require(ethicHubStorage.getBool(keccak256("user", "representative", _borrower)));
+        borrower = _borrower;
+        emit onBorrowerChanged(borrower);
     }
 
     function() public payable whenNotPaused {
@@ -142,6 +156,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     function sendBackSurplusEth() internal {
         require(state == LendingState.ExchangingToFiat);
+        require(msg.sender == borrower);
         surplusEth = surplusEth.add(msg.value);
         require(surplusEth <= totalLendingAmount);
         emit onSurplusSent(msg.value);
@@ -260,6 +275,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     function returnBorrowedEth() internal {
         require(state == LendingState.AwaitingReturn);
+        require(msg.sender == borrower);
         require(borrowerReturnEthPerFiatRate > 0);
         bool projectRepayed = false;
         uint excessRepayment = 0;
