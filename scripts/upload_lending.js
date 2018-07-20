@@ -31,13 +31,39 @@ function now() {
 var cmc;
 var userManager;
 const loader = require('./contract_loader.js');
-let cmcAddress = '0x00babec3dc2acc452353949b131854b6f50ef32b';
-let userAddress = '0xa7441f5bd97b091a7ffc0611dac3811575c6fb70';
-let storageAddress = '0x5ae98649601190a1d6cbb319e6bf218b8ef262d5';
-let localNode = '0x22B81a6ba76eE53adE0b918C20b4E4c23e3ad473';
-let representative = '0x87F751f7ae13F1C6fc1a7f67C550773350a52Cb5';
-let community = '0x9441a32D2CFA0Cff7c5374D46Fd1B391Fab44146';
-let team = '0xdFb6994ADD952486d2B65af4A6c9D511b122f172';
+var cmcAddress;
+var userAddress;
+var storageAddress;
+var localNode;
+var representative;
+var community;
+var team = '0xdFb6994ADD952486d2B65af4A6c9D511b122f172';
+switch (process.env.NETWORK_ID) {
+  case "1":
+    userAddress = '0xEdD8950B7AcD7717ECc07A94dF126BF2A07f74C4';
+    account = '0xAB42A5a21566C9f1466D414CD3195dA44643390b';
+    storageAddress = '';
+    localNode = '';
+    representative = '';
+    community = '';
+    team = '';
+  break;
+  case "42":
+    userAddress = '0x8E5E619c56a03b0C769f3E07B0A3C2448994f91F';
+    account = '0xfBCb86e80FF9C864BA37b9bbf2Be21cC71abcdeE';
+    storageAddress = '0x3313bCC5a3a91e4c20748A9aD9749cE4d0255A68';
+    cmcAddress = '0x40e15A130B71Db4EF32892D18fF304549ea7A9C7';
+    localNode = '0x08B909c5c1Fc6bCc4e69BA865b3c38b6365bD894';
+    representative = '';
+    community = '';
+    team = '';
+    break;
+  default:
+  console.log("Unknown network: "+process.env.NETWORK_ID );
+  process.exit(-1);
+}
+
+
 
 
 loader.load(web3, 'EthicHubCMC', cmcAddress).then( cmcInstance => {

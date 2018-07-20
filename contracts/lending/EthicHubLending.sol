@@ -105,7 +105,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
         require(_annualInterest > 0 && _annualInterest < 100);
-        version = 1;
+        version = 2;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -154,6 +154,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     function sendBackSurplusEth() internal {
         require(state == LendingState.ExchangingToFiat);
+        require(msg.sender == borrower);
         surplusEth = surplusEth.add(msg.value);
         require(surplusEth <= totalLendingAmount);
         emit onSurplusSent(msg.value);
@@ -418,5 +419,10 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     function getMaxDelayDays() public view returns(uint256){
         return ethicHubStorage.getUint(keccak256("lending.maxDelayDays", this));
+    }
+
+    function getUserContributionReclaimStatus(address userAddress) public view returns(bool isCompensated, bool surplusEthReclaimed){
+        isCompensated = investors[userAddress].isCompensated;
+        surplusEthReclaimed = investors[userAddress].surplusEthReclaimed;
     }
 }

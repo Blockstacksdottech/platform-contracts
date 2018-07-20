@@ -1,5 +1,9 @@
 ![EthicHub Logo](https://storage.googleapis.com/general-material/banner3.png)
 
+# :warning: :warning: :rocket: :rocket: ATTENTION :rocket: :rocket: :warning: :warning:
+
+We moved our repos to Gitlab. This repo is not going to be updated. If you want to see the work continue, contribute, learn... [Come with us there](https://gitlab.com/EthicHub/platform-contracts.git)!
+
 # EthicHub Alpha Contracts
 The backbone of EthicHub's Ethical Crowdlending Platform.
 
@@ -7,7 +11,7 @@ Developed with [Truffle Framework](https://truffleframework.com/)
 
 ## Install
 ```
-git clone https://github.com/EthicHub/platform-contracts
+git clone https://gitlab.com/EthicHub/platform-contracts
 cd platform-contracts
 npm install
 ```

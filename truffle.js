@@ -4,7 +4,7 @@ require('dotenv').config();
 
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
-//let mnemonic = process.env.MNEMONIC;
+let mnemonic = process.env.MNEMONIC;
 
 
 module.exports = {
@@ -34,6 +34,21 @@ module.exports = {
       network_id: '*',
       gasLimit: 6000000,
       gas: 4700000
+    },
+    kovan: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://kovan.infura.io/"+process.env.INFURA_KEY);
+      },
+      network_id: '*',
+      gasLimit: 6000000,
+      gas: 4700000
+    },
+    coverage: {
+      host: 'localhost',
+      network_id: '*', // eslint-disable-line camelcase
+      port: 8555,
+      gas: 0x10000000,
+      gasPrice: 0x01,
     }
 
   }
