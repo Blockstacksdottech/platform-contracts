@@ -47,21 +47,12 @@ contract('Arbitrage', function ([owner,arbiter,not_arbiter,lending_contract,not_
       this.storage = await MockStorage.new();
       await this.storage.setAddress(utils.soliditySha3("contract.address", lending_contract), lending_contract)
       this.arbitrage = await Arbitrage.new(this.storage.address, {from:owner})
-    //  await this.cmc.upgradeContract(this.arbitrage.address, 'arbitrage')
 
     });
 
     function getArbiterForContract(lendingContract, storage) {
       return storage.getAddress(utils.soliditySha3("arbiter", lendingContract))
     }
-
-    // function assignArbiterForLendingContract(address _arbiter, address _lendingAddress) public onlyOwner {
-    //     require(_arbiter != address(0));
-    //     require(_lendingContract != address(0));
-    //     require(_lendingContract == ethicHubStorage.getAddress(keccak256("contract.address", _lendingAddress)));
-    //     ethicHubStorage.setAddress(keccak256("arbiter", _lendingAddress), _arbiter);
-    //     emit ArbiterAssigned(_arbiter, _lendingAddress, now);
-    // }
 
     describe('Register Arbiter', function() {
       it('Should not allow null arbiter', async function() {
@@ -97,14 +88,6 @@ contract('Arbitrage', function ([owner,arbiter,not_arbiter,lending_contract,not_
 
     });
 
-    // function revokeArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {
-    //     require(_arbiter != address(0));
-    //     require(_lendingContract != address(0));
-    //     require(_lendingContract == ethicHubStorage.getAddress(keccak256("contract.address", _lendingContract)));
-    //     require(arbiterForLendingContract(_lendingContract) == _arbiter);
-    //     ethicHubStorage.deleteAddress(keccak256("arbiter", _lendingContract));
-    //     emit ArbiterRevoked(_arbiter, _lendingContract, now);
-    // }
 
     describe('Revoke Arbiter', function() {
 
