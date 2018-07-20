@@ -47,7 +47,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.mockStorage.setAddress(utils.soliditySha3("contract.name", "reputation"),this.mockReputation.address);
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode",localNode),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative",borrower),true);
-        await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", arbiter),true);
 
         this.lending = await EthicHubLending.new(
                                                 this.fundingStartTime,
@@ -58,9 +57,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                 this.lendingDays,
                                                 this.mockStorage.address,
                                                 localNode,
-                                                ethicHubTeam,
-                                                arbiter
+                                                ethicHubTeam
                                             );
+        await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), arbiter);
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor),true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor",investor2),true);
@@ -83,8 +82,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     localNode,
-                                                    ethicHubTeam,
-                                                    arbiter
+                                                    ethicHubTeam
                                                 );
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
             var isRunning = await someLending.isContribPeriodRunning();
@@ -106,8 +104,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     borrower,
-                                                    ethicHubTeam,
-                                                    arbiter
+                                                    ethicHubTeam
                                                 ).should.be.rejectedWith(EVMRevert);
 
         });
@@ -123,8 +120,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     localNode,
-                                                    ethicHubTeam,
-                                                    arbiter
+                                                    ethicHubTeam
                                                 ).should.be.rejectedWith(EVMRevert);
 
         });
@@ -797,14 +793,13 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.sendTransaction({value: ether(1), from: borrower}).should.be.rejectedWith(EVMRevert);
         })
 
-        // We can't restrict returns
-        // it('Should only allow borrower to send partial return', async function() {
-        //     await increaseTimeTo(this.fundingStartTime  + duration.days(1));
-        //     await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
-        //     await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
-        //     await this.lending.sendTransaction({value: ether(1), from: investor2}).should.be.rejectedWith(EVMRevert);
-        //     await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
-        // })
+        it.only('Should only allow borrower to send partial return', async function() {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1));
+            await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
+            await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+            await this.lending.sendTransaction({value: ether(1), from: investor2}).should.be.rejectedWith(EVMRevert);
+            await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+        })
 
         it('Should allow to reclaim partial return from contributor', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1));

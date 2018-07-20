@@ -33,7 +33,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     address public borrower;
     address public localNode;
     address public ethicHubTeam;
-    address public arbiter;
     uint256 public borrowerReturnDate;
     uint256 public borrowerReturnEthPerFiatRate;
     uint256 public constant ethichubFee = 3;
@@ -72,6 +71,12 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         _;
     }
 
+    modifier checkIfArbiter() {
+        address arbiter = ethicHubStorage.getAddress(keccak256("arbiter", this));
+        require(arbiter == msg.sender);
+        _;
+    }
+
     modifier onlyOwnerOrLocalNode() {
         require(localNode == msg.sender || owner == msg.sender);
         _;
@@ -86,8 +91,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 _lendingDays,
         address _storageAddress,
         address _localNode,
-        address _ethicHubTeam,
-        address _arbiter
+        address _ethicHubTeam
         )
         EthicHubBase(_storageAddress)
         public {
@@ -97,7 +101,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(ethicHubStorage.getBool(keccak256("user", "representative", _borrower)));
         require(_localNode != address(0));
         require(_ethicHubTeam != address(0));
-        require(_arbiter != address(0));
         require(ethicHubStorage.getBool(keccak256("user", "localNode", _localNode)));
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
@@ -108,7 +111,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         localNode = _localNode;
         ethicHubTeam = _ethicHubTeam;
         borrower = _borrower;
-        arbiter = _arbiter;
         annualInterest = _annualInterest;
         totalLendingAmount = _totalLendingAmount;
         lendingDays = _lendingDays;
@@ -124,7 +126,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         ethicHubStorage.setUint(keccak256("lending.maxDelayDays", this), _maxDelayDays);
         ethicHubStorage.setAddress(keccak256("lending.community", this), _community);
         ethicHubStorage.setAddress(keccak256("lending.localNode", this), localNode);
-        ethicHubStorage.setAddress(keccak256("lending.arbiter", this), arbiter);
         ethicHubStorage.setUint(keccak256("lending.tier", this), _tier);
         ethicHubStorage.setUint(keccak256("lending.communityMembers", this), _communityMembers);
         tier = _tier;
@@ -133,8 +134,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     }
 
-    function setBorrower(address _borrower) external {
-        require(msg.sender == arbiter);
+    function setBorrower(address _borrower) external checkIfArbiter {
         require(_borrower != address(0));
         require(ethicHubStorage.getBool(keccak256("user", "representative", _borrower)));
         borrower = _borrower;

@@ -1,7 +1,7 @@
 /*
     Smart contract of user status.
 
-    Copyright (C) 2018 EthicHub 
+    Copyright (C) 2018 EthicHub
     This file is part of platform contracts.
 
     This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         public
     {
         // Version
-        version = 1;
+        version = 2;
     }
 
     /**
@@ -71,7 +71,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         emit UserStatusChanged(target, profile, false);
     }
 
-    
+
     /**
      * @dev View registration status of an address for participation.
      * @return isRegistered boolean registration status of address for a specific profile.
@@ -197,29 +197,5 @@ contract EthicHubUser is Ownable, EthicHubBase {
         }
     }
 
-    /**
-     * @dev register a arbiter address.
-     */
-    function registerArbiter(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
-        changeUserStatus(target, "arbiter", true);
-    }
-
-    /**
-     * @dev unregister a arbiter address.
-     */
-    function unregisterArbiter(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "arbiter", target));
-        if (isRegistered) {
-            deleteUserStatus(target, "arbiter");
-        }
-    }
 
 }

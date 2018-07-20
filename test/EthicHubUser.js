@@ -121,21 +121,7 @@ contract('User', function (whitelisted_accounts) {
           is_registered.should.be.equal(false);
        });
 
-       it('register/unregister arbiter', async function () {
-          let prof = "arbiter";
-          let is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
-          is_registered.should.be.equal(false);
-          await this.users.registerArbiter(whitelisted_accounts[0], {from:owner}).should.be.fulfilled;
-          is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
-          is_registered.should.be.equal(true);
-          await this.users.unregisterArbiter(whitelisted_accounts[0], {from:owner}).should.be.fulfilled;
-          is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
-          is_registered.should.be.equal(false);
-       });
 
    });
 
 });
-
-
-
