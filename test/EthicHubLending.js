@@ -691,6 +691,32 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         });
 
+        it('Should not allow to send funds back if not borrower', async function() {
+          await increaseTimeTo(this.fundingStartTime  + duration.days(1));
+
+          const investment2 = ether(1);
+          const investment3 = ether(0.5);
+          const investment4 = ether(1.5);
+
+          const investor2InitialBalance = await web3.eth.getBalance(investor2);
+          const investor3InitialBalance = await web3.eth.getBalance(investor3);
+          const investor4InitialBalance = await web3.eth.getBalance(investor4);
+
+          await this.lending.sendTransaction({value: investment2, from: investor2}).should.be.fulfilled;
+          await this.lending.sendTransaction({value: investment3, from: investor3}).should.be.fulfilled;
+          await this.lending.sendTransaction({value: investment4, from: investor4}).should.be.fulfilled;
+          const investor2SendTransactionBalance = await web3.eth.getBalance(investor2);
+          const investor3SendTransactionBalance = await web3.eth.getBalance(investor3);
+          const investor4SendTransactionBalance = await web3.eth.getBalance(investor4);
+          await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+          await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+          await this.lending.setBorrowerReturnEthPerFiatRate(this.finalEthPerFiatRate, {from: owner}).should.be.fulfilled;
+          //console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
+          const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
+          await this.lending.sendTransaction({value: borrowerReturnAmount, from: investor2}).should.be.rejectedWith(EVMRevert);
+      
+        });
+
         it('Should not allow reclaim twice the funds', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1));
 
@@ -793,7 +819,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.sendTransaction({value: ether(1), from: borrower}).should.be.rejectedWith(EVMRevert);
         })
 
-        it.only('Should only allow borrower to send partial return', async function() {
+        it('Should only allow borrower to send partial return', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1));
             await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
             await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;

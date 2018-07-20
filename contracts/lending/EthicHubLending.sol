@@ -273,6 +273,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     function returnBorrowedEth() internal {
         require(state == LendingState.AwaitingReturn);
+        require(msg.sender == borrower);
         require(borrowerReturnEthPerFiatRate > 0);
         bool projectRepayed = false;
         uint excessRepayment = 0;

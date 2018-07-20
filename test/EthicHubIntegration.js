@@ -141,7 +141,6 @@ contract('EthicHubUser', function() {
         let registrationStatus = await userManagerInstance.viewRegistrationStatus(borrower, 'representative');
         registrationStatus.should.be.equal(true);
     });
-    it('should register arbiter');
 
     it('change user status', async function() {
         await userManagerInstance.unregisterInvestor(investor1);
