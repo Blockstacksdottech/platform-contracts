@@ -8,7 +8,8 @@ mainmenu () {
   echo "2 - EthicHubReputation"
   echo "3 - EthicHubBase"
   echo "4 - EthicHubUser"
-  echo "5 - EthicHubIntegration"
+  echo "5 - EthicHubArbitrage"
+  echo "6 - EthicHubIntegration"
   echo "x - exit program"
 
   read  -n 1 -p "Input Selection:" mainmenuinput
@@ -16,13 +17,15 @@ mainmenu () {
   if [ "$mainmenuinput" = "1" ]; then
             bash $SCRIPT_PATH test/EthicHubLending.js ./test/helper_contracts/MockStorage.sol ./test/helper_contracts/MockReputation.sol
         elif [ "$mainmenuinput" = "2" ]; then
-            bash $SCRIPT_PATH test/EthicHubReputation.js  ./test/helper_contracts/MockStorage.sol 
+            bash $SCRIPT_PATH test/EthicHubReputation.js  ./test/helper_contracts/MockStorage.sol
         elif [ "$mainmenuinput" = "3" ]; then
-            bash $SCRIPT_PATH test test/EthicHubBase.js ./test/helper_contracts/MockStorage.sol ./test/helper_contracts/MockEthicHubContract.sol 
+            bash $SCRIPT_PATH test test/EthicHubBase.js ./test/helper_contracts/MockStorage.sol ./test/helper_contracts/MockEthicHubContract.sol
         elif [ "$mainmenuinput" = "4" ]; then
-            bash $SCRIPT_PATH  test test/EthicHubUser.js 
+            bash $SCRIPT_PATH  test test/EthicHubUser.js
         elif [ "$mainmenuinput" = "5" ]; then
-            bash $SCRIPT_PATH test test/EthicHubIntegration.js  
+              bash $SCRIPT_PATH test test/EthicHubArbitrage.js ./test/helper_contracts/MockStorage.sol
+        elif [ "$mainmenuinput" = "6" ]; then
+            bash $SCRIPT_PATH test test/EthicHubIntegration.js
 
         elif [ "$mainmenuinput" = "x" ];then
             exit 0

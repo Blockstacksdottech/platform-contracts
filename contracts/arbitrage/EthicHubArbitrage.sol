@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
-import "./EthicHubBase.sol";
+import "../EthicHubBase.sol";
 
 /**
  * @title EthicHubArbitrage
@@ -19,36 +19,36 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
         uint256 created                              // Timestamp
     );
 
-    event ArbiterRevoked {
+    event ArbiterRevoked (
         address indexed _arbiter,                    // Address of the arbiter
         address indexed _lendingContract,            // Address of the lending contract
         uint256 created                              // Timestamp
-    }
+    );
 
     constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
         // Version
         version = 1;
     }
 
-    function assignArbiterForLendingContract(address _arbiter, address _lendingAddress) public onlyOwner {
+    function assignArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {
         require(_arbiter != address(0));
         require(_lendingContract != address(0));
-        require(_lendingContract == ethicHubStorage.setAddress(keccak256("contract.address", _lendingAddress)));
-        ethicHubStorage.setAddress(keccak256("arbiter", _lendingAddress), _arbiter);
-        emit ArbiterAssigned(_arbiter, _lendingAddress, now);
+        require(_lendingContract == ethicHubStorage.getAddress(keccak256("contract.address", _lendingContract)));
+        ethicHubStorage.setAddress(keccak256("arbiter", _lendingContract), _arbiter);
+        emit ArbiterAssigned(_arbiter, _lendingContract, now);
     }
 
-    function revokeArbiterForLendingContract(address _arbiter, address _lendingAddress) public onlyOwner {
+    function revokeArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {
         require(_arbiter != address(0));
         require(_lendingContract != address(0));
-        require(_lendingContract == ethicHubStorage.setAddress(keccak256("contract.address", _lendingAddress)));
-        require(arbiterForLendingContract(_lendingAddress) == _arbiter);
-        ethicHubStorage.deleteAddress(keccak256("arbiter", _lendingAddress));
-        emit ArbiterRevoked(_arbiter, _lendingAddress, now);
+        require(_lendingContract == ethicHubStorage.getAddress(keccak256("contract.address", _lendingContract)));
+        require(arbiterForLendingContract(_lendingContract) == _arbiter);
+        ethicHubStorage.deleteAddress(keccak256("arbiter", _lendingContract));
+        emit ArbiterRevoked(_arbiter, _lendingContract, now);
     }
 
-    function arbiterForLendingContract(address _lendingAddress) public view {
-        return ethicHubStorage.getAddress(keccak256("arbiter", _lendingAddress))
+    function arbiterForLendingContract(address _lendingContract) public view returns(address) {
+        return ethicHubStorage.getAddress(keccak256("arbiter", _lendingContract));
     }
 
 }
