@@ -1511,14 +1511,15 @@ contract('EthicHubLending with surplus', function() {
             reportMethodGasUsed('report', 'ownerLending', 'lendingInstance.sendFundsToBorrower', transaction.tx);
 
             //Registering arbitrage mechanism
-            console.log(arbitrage.new);
             arbitrageInstance = await arbitrage.new(storageInstance.address, {from:ownerTruffle});
-            await cmcInstance.upgradeContract('arbitrage',arbitrageInstance.address);
-            //Chaning borrower
-            await arbitrageInstance.assignArbiterForLendingContract(arbiter,lendingInstance.address);
-            let borrower2 = teamEH;
-            lendingInstance.setBorrower(borrower2, {from:arbiter});
+            await cmcInstance.upgradeContract(arbitrageInstance.address, 'arbitrage');
 
+            //Chaning borrower
+            await arbitrageInstance.assignArbiterForLendingContract(arbiter, lendingInstance.address).should.be.fulfilled;
+
+            let borrower2 = teamEH;
+            await userManagerInstance.registerRepresentative(borrower2);
+            lendingInstance.setBorrower(borrower2, {from:arbiter});
 
             // Send surplus 2 eth
             transaction = await lendingInstance.sendTransaction({value: surplus, from: borrower}).should.be.rejectedWith(EVMRevert);
@@ -1550,9 +1551,9 @@ contract('EthicHubLending with surplus', function() {
             const borrowerReturnAmount = await lendingInstance.borrowerReturnAmount();
 
             //Change borrower again
-            let borrower3 = localNode;
+            let borrower3 = localNode1;
+            await userManagerInstance.registerRepresentative(borrower3);
             lendingInstance.setBorrower(borrower3, {from:arbiter});
-
             transaction = await lendingInstance.sendTransaction({value: borrowerReturnAmount, from: borrower2}).should.be.rejectedWith(EVMRevert);
             transaction = await lendingInstance.sendTransaction({value: borrowerReturnAmount.mul(0.5), from: borrower3}).should.be.fulfilled;
 

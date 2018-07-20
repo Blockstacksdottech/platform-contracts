@@ -63,6 +63,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     event onInitalRateSet(uint rate);
     event onReturnRateSet(uint rate);
     event onReturnAmount(address indexed borrower, uint amount);
+    event onBorrowerChanged(address indexed newBorrower);
 
     // modifiers
     modifier checkProfileRegistered(string profile) {
@@ -121,7 +122,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_maxDelayDays != 0);
         require(state == LendingState.Uninitialized);
         require(_tier > 0);
-        require(_communityMembers >= 20);
+        require(_communityMembers > 0);
         require(ethicHubStorage.getBool(keccak256("user", "community", _community)));
         ethicHubStorage.setUint(keccak256("lending.maxDelayDays", this), _maxDelayDays);
         ethicHubStorage.setAddress(keccak256("lending.community", this), _community);
@@ -138,6 +139,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_borrower != address(0));
         require(ethicHubStorage.getBool(keccak256("user", "representative", _borrower)));
         borrower = _borrower;
+        emit onBorrowerChanged(borrower);
     }
 
     function() public payable whenNotPaused {
