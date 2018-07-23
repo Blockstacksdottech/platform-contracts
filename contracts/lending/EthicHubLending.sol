@@ -321,20 +321,21 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         if (investors[contributor].amount == 0) {
             investorCount = investorCount.add(1);
         }
-        investors[contributor].amount = investors[contributor].amount.add(msg.value);
-
         if (excessContribValue > 0) {
             msg.sender.transfer(excessContribValue);
+            investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribValue);
+            emit onContribution(newTotalContributed, contributor, msg.value.sub(excessContribValue), investorCount);
+        } else {
+            investors[contributor].amount = investors[contributor].amount.add(msg.value);
+            emit onContribution(newTotalContributed, contributor, msg.value, investorCount);
         }
-        emit onContribution(newTotalContributed, contributor, msg.value, investorCount);
     }
 
     function calculatePaymentGoal(uint goal, uint oldTotal, uint contribValue) internal pure returns(uint, bool, uint) {
         uint newTotal = oldTotal.add(contribValue);
         bool goalReached = false;
         uint excess = 0;
-        if (newTotal >= goal &&
-            oldTotal < goal) {
+        if (newTotal >= goal && oldTotal < goal) {
             goalReached = true;
             excess = newTotal.sub(goal);
             contribValue = contribValue.sub(excess);

@@ -691,6 +691,62 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         });
 
+        it.only('Should return investors with excess contribution', async function() {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1));
+
+            const investment2 = ether(1);
+            const investment3 = ether(0.5);
+            const investment4 = ether(2);
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2);
+            const investor3InitialBalance = await web3.eth.getBalance(investor3);
+            const investor4InitialBalance = await web3.eth.getBalance(investor4);
+
+            await this.lending.sendTransaction({value: investment2, from: investor2}).should.be.fulfilled;
+            await this.lending.sendTransaction({value: investment3, from: investor3}).should.be.fulfilled;
+            await this.lending.sendTransaction({value: investment4, from: investor4}).should.be.fulfilled;
+
+            let investor4Contribution = await this.lending.checkInvestorContribution(investor4);
+            investor4Contribution.should.be.bignumber.equal(ether(1.5));
+            const investor2SendTransactionBalance = await web3.eth.getBalance(investor2);
+            const investor3SendTransactionBalance = await web3.eth.getBalance(investor3);
+            const investor4SendTransactionBalance = await web3.eth.getBalance(investor4);
+            await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            await this.lending.setBorrowerReturnEthPerFiatRate(this.finalEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            //console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
+            const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
+            await this.lending.sendTransaction({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled;
+            await this.lending.reclaimContributionWithInterest(investor2, {from: investor2});
+            await this.lending.reclaimContributionWithInterest(investor3, {from: investor3});
+            await this.lending.reclaimContributionWithInterest(investor4, {from: investor4});
+
+            await this.lending.reclaimLocalNodeFee().should.be.fulfilled;
+            await this.lending.reclaimEthicHubTeamFee().should.be.fulfilled;
+
+            const balance = await web3.eth.getBalance(this.lending.address);
+            balance.toNumber().should.be.below(2);
+
+            const investor2FinalBalance = await web3.eth.getBalance(investor2);
+            const expectedInvestor2Balance = getExpectedInvestorBalance(investor2InitialBalance, investment2, this);
+            //console.log("---> Investor 2");
+            //checkInvestmentResults(investor2InitialBalance,investor2SendTransactionBalance,expectedInvestor2Balance,investor2FinalBalance);
+            checkLostinTransactions(expectedInvestor2Balance,investor2FinalBalance);
+
+            const investor3FinalBalance = await web3.eth.getBalance(investor3);
+            const expectedInvestor3Balance = getExpectedInvestorBalance(investor3InitialBalance, investment3, this);
+            //console.log("---> Investor 3");
+            //checkInvestmentResults(investor3InitialBalance,investor3SendTransactionBalance,expectedInvestor3Balance,investor3FinalBalance);
+            checkLostinTransactions(expectedInvestor3Balance,investor3FinalBalance);
+
+            const investor4FinalBalance = await web3.eth.getBalance(investor4);
+            const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, investment4, this);
+            //console.log("---> Investor 4");
+            //checkInvestmentResults(investor4InitialBalance,investor4SendTransactionBalance,expectedInvestor4Balance,investor4FinalBalance);
+            checkLostinTransactions(expectedInvestor4Balance,investor4FinalBalance);
+
+        });
+
         it('Should not allow to send funds back if not borrower', async function() {
           await increaseTimeTo(this.fundingStartTime  + duration.days(1));
 
@@ -714,7 +770,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
           //console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
           const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
           await this.lending.sendTransaction({value: borrowerReturnAmount, from: investor2}).should.be.rejectedWith(EVMRevert);
-      
+
         });
 
         it('Should not allow reclaim twice the funds', async function() {
