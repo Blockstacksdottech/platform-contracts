@@ -691,7 +691,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         });
 
-        it.only('Should return investors with excess contribution', async function() {
+        it('Should return investors with excess contribution', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1));
 
             const investment2 = ether(1);
