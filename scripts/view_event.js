@@ -20,4 +20,8 @@ loader.load(web3, 'EthicHubLending',contractAddress).then( async (contractInstan
             console.log(events) // same results as the optional callback above
     });
 
+    contractInstance.once('allEvents', {
+            fromBlock: 0
+    }, function(error, events){ console.log(events); });
+
 });
