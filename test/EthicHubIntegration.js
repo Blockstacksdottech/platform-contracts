@@ -199,7 +199,9 @@ contract('EthicHubLending (Lending owner != LocalNode)', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
         //Gives set permissions on storage
@@ -339,7 +341,10 @@ contract('EthicHubLending (Lending owner == LocalNode)', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode2,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
+
         )
         await userManagerInstance.registerCommunity(community);
 
@@ -482,7 +487,9 @@ contract('EthicHubLending (LocalNode not exists)', function() {
                 2,//_lendingDays
                 storage.address, //_storageAddress
                 localNode1,
-                teamEH
+                teamEH, 
+                3, //ethichub fee
+                4 //localNode fee
             )
             await userManagerInstance.registerCommunity(community);
             //Gives set permissions on storage
@@ -532,7 +539,9 @@ contract('EthicHubLending not funded', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
         await userManagerInstance.registerRepresentative(borrower);
@@ -665,7 +674,9 @@ contract('EthicHubLending not returned on time', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
 
@@ -817,7 +828,9 @@ contract('EthicHubLending declare default', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
         //Gives set permissions on storage
@@ -965,7 +978,9 @@ contract('EthicHubLending with surplus', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
         //Gives set permissions on storage
@@ -1125,7 +1140,9 @@ contract('Ethichub test olds contracts', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
         //Gives set permissions on storage
@@ -1438,7 +1455,9 @@ contract('EthicHubLending with surplus', function() {
             2,//_lendingDays
             storage.address, //_storageAddress
             localNode1,
-            teamEH
+            teamEH, 
+            3, //ethichub fee
+            4 //localNode fee
         )
         await userManagerInstance.registerCommunity(community);
         //Gives set permissions on storage
