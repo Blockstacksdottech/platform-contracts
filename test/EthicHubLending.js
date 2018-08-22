@@ -57,7 +57,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                 this.lendingDays,
                                                 this.mockStorage.address,
                                                 localNode,
-                                                ethicHubTeam
+                                                ethicHubTeam,
+                                                this.ethichubFee,
+                                                this.localNodeFee
                                             );
         await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), arbiter);
 
@@ -82,7 +84,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     localNode,
-                                                    ethicHubTeam
+                                                    ethicHubTeam,
+                                                    this.ethichubFee,
+                                                    this.localNodeFee
                                                 );
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
             var isRunning = await someLending.isContribPeriodRunning();
@@ -104,7 +108,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     borrower,
-                                                    ethicHubTeam
+                                                    ethicHubTeam,
+                                                    this.ethichubFee,
+                                                    this.localNodeFee
                                                 ).should.be.rejectedWith(EVMRevert);
 
         });
@@ -120,7 +126,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                     this.lendingDays,
                                                     this.mockStorage.address,
                                                     localNode,
-                                                    ethicHubTeam
+                                                    ethicHubTeam,
+                                                    this.ethichubFee,
+                                                    this.localNodeFee
                                                 ).should.be.rejectedWith(EVMRevert);
 
         });

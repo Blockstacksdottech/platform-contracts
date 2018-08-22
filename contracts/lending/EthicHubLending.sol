@@ -35,8 +35,8 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     address public ethicHubTeam;
     uint256 public borrowerReturnDate;
     uint256 public borrowerReturnEthPerFiatRate;
-    uint256 public constant ethichubFee = 3;
-    uint256 public constant localNodeFee = 4;
+    uint256 public ethichubFee;
+    uint256 public localNodeFee;
     uint256 public tier;
     // interest rate is using base uint 100 and 100% 10000, this means 1% is 100
     // this guarantee we can have a 2 decimal presicion in our calculation
@@ -92,7 +92,9 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 _lendingDays,
         address _storageAddress,
         address _localNode,
-        address _ethicHubTeam
+        address _ethicHubTeam,
+        uint256 _ethichubFee, 
+        uint256 _localNodeFee 
         )
         EthicHubBase(_storageAddress)
         public {
@@ -115,6 +117,8 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         annualInterest = _annualInterest;
         totalLendingAmount = _totalLendingAmount;
         lendingDays = _lendingDays;
+        ethichubFee = _ethichubFee;
+        localNodeFee = _localNodeFee;
         state = LendingState.Uninitialized;
     }
 
