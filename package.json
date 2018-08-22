@@ -38,6 +38,7 @@
   },
   "homepage": "https://github.com/EthicHub/platform-contracts#readme",
   "dependencies": {
+    "babel-preset-es2015": "^6.24.1",
     "dotenv": "^5.0.1",
     "openzeppelin-solidity": "1.10.0",
     "temp": "^0.8.3",
