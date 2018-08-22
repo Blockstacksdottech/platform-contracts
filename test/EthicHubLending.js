@@ -37,8 +37,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         this.ethichubFee = 3;
         this.localNodeFee = 4;
         //400 pesos per eth
-        this.initialEthPerFiatRate = 400;
-        this.finalEthPerFiatRate = 480;
+        this.initialEthPerFiatRate = 538520;//400
+        this.finalEthPerFiatRate = 269260;//480
         this.lendingDays = 90;
         this.delayMaxDays = 90;
         this.members = 20;
@@ -969,6 +969,57 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         })
 
    })
+
+    describe('Small quantities', async function() {
+      it.only('project with small quantities', async function() {
+        let interestPercentage = 10
+        let lendingDays = 2
+        let delayMaxDays = 2
+        let tier = 1
+        let members = 20
+        let fiatPerPerson = 30
+        let fiat_amount = fiatPerPerson * members
+        let creationEthPrice = 5389
+        let creation_total_lending_amount = fiat_amount / creationEthPrice
+        console.log(creation_total_lending_amount)
+        let totalLendingAmount = web3_1_0.utils.toWei(`${creation_total_lending_amount}`,'ether')
+        console.log(`Creation totalLendingAmount: ${totalLendingAmount}`)
+        let smallLending = await EthicHubLending.new(
+                                                this.fundingStartTime,
+                                                this.fundingEndTime,
+                                                borrower,
+                                                interestPercentage,
+                                                totalLendingAmount,
+                                                lendingDays,
+                                                this.mockStorage.address,
+                                                localNode,
+                                                ethicHubTeam
+                                            );
+
+
+        await smallLending.saveInitialParametersToStorage(delayMaxDays, tier, members,community);
+        await this.lending.sendTransaction({value: ether(0.1), from: investor}).should.be.fulfilled;
+        await this.lending.sendTransaction({value: ether(0.1), from: investor2}).should.be.fulfilled;
+
+        await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+
+        let initalRate = 538520
+        let finalRate = 269260
+        await this.lending.finishInitialExchangingPeriod(initalRate, {from: owner}).should.be.fulfilled;
+        console.log(`initialEthPerFiatRate: ${await this.lending.initialEthPerFiatRate}`)
+        await this.lending.setBorrowerReturnEthPerFiatRate(finalRate, {from: owner}).should.be.fulfilled;
+        console.log(`borrowerReturnEthPerFiatRate: ${await this.lending.borrowerReturnEthPerFiatRate}`)
+        const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
+        console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
+
+        await this.lending.sendTransaction({value: ether(0.3), from: borrower}).should.be.fulfilled;
+        console.log("lol")
+        await this.lending.reclaimContributionWithInterest(investor, {from: investor});
+        await this.lending.reclaimContributionWithInterest(investor2, {from: investor2});
+
+      })
+
+    })
 
 
 
