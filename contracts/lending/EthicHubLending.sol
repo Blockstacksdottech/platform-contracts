@@ -64,6 +64,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     event onReturnRateSet(uint rate);
     event onReturnAmount(address indexed borrower, uint amount);
     event onBorrowerChanged(address indexed newBorrower);
+    event onInvestorChanged(address indexed oldInvestor, address indexed newInvestor);
 
     // modifiers
     modifier checkProfileRegistered(string profile) {
@@ -140,6 +141,20 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(ethicHubStorage.getBool(keccak256("user", "representative", _borrower)));
         borrower = _borrower;
         emit onBorrowerChanged(borrower);
+    }
+
+    function changeInvestorAddress(address oldInvestor, address newInvestor) external checkIfArbiter {
+        require(newInvestor != address(0));
+        require(ethicHubStorage.getBool(keccak256("user", "investor", newInvestor)));
+        //oldInvestor should have invested in this project
+        require(investors[oldInvestor].amount != 0);
+        //newInvestor should not have invested anything in this project to not complicate return calculation
+        require(investors[newInvestor].amount == 0);
+        investors[newInvestor].amount = investors[oldInvestor].amount;
+        investors[newInvestor].isCompensated = investors[oldInvestor].isCompensated;
+        investors[newInvestor].surplusEthReclaimed = investors[oldInvestor].surplusEthReclaimed;
+        delete investors[oldInvestor];
+        emit onInvestorChanged(oldInvestor, newInvestor);
     }
 
     function() public payable whenNotPaused {

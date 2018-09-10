@@ -960,6 +960,49 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.setBorrower(investor3, {from: owner}).should.be.rejectedWith(EVMRevert);
         })
 
+    })
+
+    describe('Change investor', async function() {
+
+        it('Should allow to change investor with registered arbiter', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
+            await this.lending.sendTransaction({value:ether(1), from: investor}).should.be.fulfilled;
+            await this.lending.changeInvestorAddress(investor, investor2, {from: arbiter}).should.be.fulfilled;
+
+            var contributionAmount = await this.lending.checkInvestorContribution(investor2);
+            contributionAmount.should.be.bignumber.equal(new BigNumber(ether(1)));
+            contributionAmount = await this.lending.checkInvestorContribution(investor);
+            contributionAmount.should.be.bignumber.equal(0);
+
+        })
+
+        it('Should not allow to change investor to unregistered investor', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), false);
+            await this.lending.sendTransaction({value:ether(1), from: investor}).should.be.fulfilled;
+            await this.lending.changeInvestorAddress(investor, investor2, {from: arbiter}).should.be.rejectedWith(EVMRevert);
+        })
+
+        it('Should not allow to change new investor who have already invested', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
+            await this.lending.sendTransaction({value:ether(1), from: investor}).should.be.fulfilled;
+            await this.lending.sendTransaction({value:ether(1), from: investor2}).should.be.fulfilled;
+            await this.lending.changeInvestorAddress(investor, investor2, {from: arbiter}).should.be.rejectedWith(EVMRevert);
+        })
+
+
+        it('Should not allow to change borrower with unregistered arbiter', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
+            await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
+            await this.lending.changeInvestorAddress(investor, investor2, {from: owner}).should.be.rejectedWith(EVMRevert);
+        })
+
    })
 
 
