@@ -94,8 +94,8 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         address _storageAddress,
         address _localNode,
         address _ethicHubTeam,
-        uint256 _ethichubFee, 
-        uint256 _localNodeFee 
+        uint256 _ethichubFee,
+        uint256 _localNodeFee
         )
         EthicHubBase(_storageAddress)
         public {
@@ -109,7 +109,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
         require(_annualInterest > 0 && _annualInterest < 100);
-        version = 2;
+        version = 3;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;

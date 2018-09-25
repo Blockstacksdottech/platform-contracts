@@ -1036,7 +1036,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                                                 lendingDays,
                                                 this.mockStorage.address,
                                                 localNode,
-                                                ethicHubTeam
+                                                ethicHubTeam,
+                                                this.ethichubFee,
+                                                this.localNodeFee
                                             );
 
 
