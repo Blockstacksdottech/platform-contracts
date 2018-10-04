@@ -3,22 +3,45 @@ require('babel-polyfill');
 require('dotenv').config();
 
 var HDWalletProvider = require("truffle-hdwallet-provider");
-let mnemonic = process.env.MNEMONIC;
+let mnemonic = process.env.KOVAN_MNEMONIC;
 var Web3 = require('web3');
-var web3 = new Web3(new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/"+process.env.INFURA_KEY));
+var web3 = new Web3(new HDWalletProvider(mnemonic, "https://kovan.infura.io/"+process.env.INFURA_KEY));
+
 var cmc;
 var storageAddress;
 
 const loader = require('./contract_loader.js');
+if (process.argv.length <= 2) {
+    console.log("Usage: " + __filename + " <contract>");
+    process.exit(-1);
+}
 
+var contract_key = process.argv[2];
+var contractParams = {
+  users: {
+    role: "users",
+    file: "EthicHubUser"
+  },
+  reputation: {
+    role: "reputation",
+    file: "EthicHubReputation"
+  }
+}
 
-loader.load(web3, 'EthicHubCMC').then( cmcInstance => {
+var selectedContract = contractParams[contract_key]
+if (selectedContract=== undefined) {
+  console.log("Unkown: " + contract_key);
+  process.exit(-1);
+}
+console.log(selectedContract)
+
+loader.load(web3, 'EthicHubCMC',process.env.CMC_ADDRESS).then( cmcInstance => {
     cmc = cmcInstance;
-    return loader.load(web3, 'EthicHubStorage').then( async (storageInstance) =>  {
+    return loader.load(web3, 'EthicHubStorage',process.env.STORAGE_ADDRESS).then( async (storageInstance) =>  {
         storageAddress = await storageInstance.options.address;
         return web3.eth.getAccounts().then(accounts => {
 
-            const deployable = loader.getDeployable(web3,'EthicHubReputation');
+            const deployable = loader.getDeployable(web3,selectedContract.file);
             return deployable.contract.deploy({
               data: deployable.byteCode,
               arguments: [storageAddress]
@@ -26,7 +49,7 @@ loader.load(web3, 'EthicHubCMC').then( cmcInstance => {
             .send({
               from: accounts[0],
               gas: 4000000,
-              gasPrice: '3000000000000',
+              gasPrice: '174238330085',
             })
             .on('error', function(error){
                 console.log("--> Error:")
@@ -38,12 +61,13 @@ loader.load(web3, 'EthicHubCMC').then( cmcInstance => {
             .on('confirmation', function(confirmationNumber, receipt){
                 console.log(`Confirmation number: ${confirmationNumber}`);
             })
-            .then(function(newReputationInstance){
+            .then(function(newContractInstance){
                 console.log("Deployed");
                 console.log(newContractInstance.options.address) // instance with the new contract address
 
-                return cmc.upgradeContract(newContractInstance.options.address,"reputation").then(() => {
-                    console.log("Reputation upgraded");
+                return cmc.upgradeContract(newContractInstance.options.address,contractParams.role).then(() => {
+                    console.log(" upgraded:");
+                    console.log(contractParams);
                     return cmc;
                 })
             });
