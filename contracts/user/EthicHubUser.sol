@@ -197,5 +197,29 @@ contract EthicHubUser is Ownable, EthicHubBase {
         }
     }
 
+    /**
+     * @dev register a paymentGateway address.
+     */
+    function registerPaymentGateway(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        changeUserStatus(target, "paymentGateway", true);
+    }
+
+    /**
+     * @dev unregister a paymentGateway address.
+     */
+    function unregisterPaymentGateway(address target)
+        external
+        onlyOwner
+    {
+        require(target != address(0));
+        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "paymentGateway", target));
+        if (isRegistered) {
+            deleteUserStatus(target, "paymentGateway");
+        }
+    }
 
 }
