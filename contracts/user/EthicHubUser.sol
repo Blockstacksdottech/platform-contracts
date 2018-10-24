@@ -36,7 +36,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         public
     {
         // Version
-        version = 2;
+        version = 3;
     }
 
     /**
