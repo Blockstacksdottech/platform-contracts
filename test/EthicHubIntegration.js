@@ -102,6 +102,7 @@ const investor2 = web3.eth.accounts[6];
 const investor3 = web3.eth.accounts[7];
 const community = web3.eth.accounts[8];
 const arbiter = web3.eth.accounts[9];
+const paymentGateway = web3.eth.accounts[9];
 
 contract('EthicHubUser', function() {
     let instances;
@@ -140,6 +141,11 @@ contract('EthicHubUser', function() {
     it('should register representative', async function() {
         await userManagerInstance.registerRepresentative(borrower);
         let registrationStatus = await userManagerInstance.viewRegistrationStatus(borrower, 'representative');
+        registrationStatus.should.be.equal(true);
+    });
+    it('should register paymentGateway', async function() {
+        await userManagerInstance.registerPaymentGateway(paymentGateway);
+        let registrationStatus = await userManagerInstance.viewRegistrationStatus(paymentGateway, 'paymentGateway');
         registrationStatus.should.be.equal(true);
     });
 
