@@ -84,6 +84,13 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         _;
     }
 
+    modifier onlyInvestorOrPaymentGateway() {
+        bool isInvestor = ethicHubStorage.getBool(keccak256("user", "investor", msg.sender));
+        bool isPaymentGateway = ethicHubStorage.getBool(keccak256("user", "paymentGateway", msg.sender));
+        require(isPaymentGateway || isInvestor);
+        _;
+    }
+
     constructor(
         uint256 _fundingStartTime,
         uint256 _fundingEndTime,
@@ -109,7 +116,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
         require(_annualInterest > 0 && _annualInterest < 100);
-        version = 2;
+        version = 3;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -169,6 +176,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             // borrower can send surplus eth back to contract to avoid paying interest
             sendBackSurplusEth();
         } else {
+            require(ethicHubStorage.getBool(keccak256("user", "investor", msg.sender)));
             contributeWithAddress(msg.sender);
         }
     }
@@ -315,12 +323,18 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         }
     }
 
+    // @notice make cotribution throught a paymentGateway
+    // @param contributor Address
+    function contributeForAddress(address contributor) external checkProfileRegistered('paymentGateway') payable whenNotPaused {
+        contributeWithAddress(contributor);
+    }
+
     // @notice Function to participate in contribution period
     //  Amounts from the same address should be added up
     //  If cap is reached, end time should be modified
     //  Funds should be transferred into multisig wallet
     // @param contributor Address
-    function contributeWithAddress(address contributor) internal checkProfileRegistered('investor') whenNotPaused {
+    function contributeWithAddress(address contributor) internal whenNotPaused {
         require(state == LendingState.AcceptingContributions);
         require(msg.value >= minContribAmount);
         require(isContribPeriodRunning());

@@ -186,6 +186,17 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         });
 
+        it('should allow to invest throught paymentGateway', async function () {
+            const paymentGateway = owner;
+            await this.mockStorage.setBool(utils.soliditySha3("user", "paymentGateway", paymentGateway),true);
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1))
+            var isRunning = await this.lending.isContribPeriodRunning();
+            isRunning.should.be.equal(true);
+            await this.lending.contributeForAddress(investor, {value:ether(1), from: paymentGateway}).should.be.fulfilled;
+            const contributionAmount = await this.lending.checkInvestorContribution(investor);
+            contributionAmount.should.be.bignumber.equal(new BigNumber(ether(1)));
+        });
+
     });
 
     describe('Partial returning of funds', function() {
@@ -1013,56 +1024,56 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
    })
 
-    describe('Small quantities', async function() {
-      it.only('project with small quantities', async function() {
-        let interestPercentage = 10
-        let lendingDays = 2
-        let delayMaxDays = 2
-        let tier = 1
-        let members = 20
-        let fiatPerPerson = 30
-        let fiat_amount = fiatPerPerson * members
-        let creationEthPrice = 5389
-        let creation_total_lending_amount = fiat_amount / creationEthPrice
-        console.log(creation_total_lending_amount)
-        let totalLendingAmount = web3_1_0.utils.toWei(`${creation_total_lending_amount}`,'ether')
-        console.log(`Creation totalLendingAmount: ${totalLendingAmount}`)
-        let smallLending = await EthicHubLending.new(
-                                                this.fundingStartTime,
-                                                this.fundingEndTime,
-                                                borrower,
-                                                interestPercentage,
-                                                totalLendingAmount,
-                                                lendingDays,
-                                                this.mockStorage.address,
-                                                localNode,
-                                                ethicHubTeam
-                                            );
+    //describe('Small quantities', async function() {
+    //  it('project with small quantities', async function() {
+    //    let interestPercentage = 10
+    //    let lendingDays = 2
+    //    let delayMaxDays = 2
+    //    let tier = 1
+    //    let members = 20
+    //    let fiatPerPerson = 30
+    //    let fiat_amount = fiatPerPerson * members
+    //    let creationEthPrice = 5389
+    //    let creation_total_lending_amount = fiat_amount / creationEthPrice
+    //    console.log(creation_total_lending_amount)
+    //    let totalLendingAmount = web3_1_0.utils.toWei(`${creation_total_lending_amount}`,'ether')
+    //    console.log(`Creation totalLendingAmount: ${totalLendingAmount}`)
+    //    let smallLending = await EthicHubLending.new(
+    //                                            this.fundingStartTime,
+    //                                            this.fundingEndTime,
+    //                                            borrower,
+    //                                            interestPercentage,
+    //                                            totalLendingAmount,
+    //                                            lendingDays,
+    //                                            this.mockStorage.address,
+    //                                            localNode,
+    //                                            ethicHubTeam
+    //                                        );
 
 
-        await smallLending.saveInitialParametersToStorage(delayMaxDays, tier, members,community);
-        await this.lending.sendTransaction({value: ether(0.1), from: investor}).should.be.fulfilled;
-        await this.lending.sendTransaction({value: ether(0.1), from: investor2}).should.be.fulfilled;
+    //    await smallLending.saveInitialParametersToStorage(delayMaxDays, tier, members,community);
+    //    await this.lending.sendTransaction({value: ether(0.1), from: investor}).should.be.fulfilled;
+    //    await this.lending.sendTransaction({value: ether(0.1), from: investor2}).should.be.fulfilled;
 
-        await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+    //    await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
 
-        let initalRate = 538520
-        let finalRate = 269260
-        await this.lending.finishInitialExchangingPeriod(initalRate, {from: owner}).should.be.fulfilled;
-        console.log(`initialEthPerFiatRate: ${await this.lending.initialEthPerFiatRate}`)
-        await this.lending.setBorrowerReturnEthPerFiatRate(finalRate, {from: owner}).should.be.fulfilled;
-        console.log(`borrowerReturnEthPerFiatRate: ${await this.lending.borrowerReturnEthPerFiatRate}`)
-        const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
-        console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
+    //    let initalRate = 538520
+    //    let finalRate = 269260
+    //    await this.lending.finishInitialExchangingPeriod(initalRate, {from: owner}).should.be.fulfilled;
+    //    console.log(`initialEthPerFiatRate: ${await this.lending.initialEthPerFiatRate}`)
+    //    await this.lending.setBorrowerReturnEthPerFiatRate(finalRate, {from: owner}).should.be.fulfilled;
+    //    console.log(`borrowerReturnEthPerFiatRate: ${await this.lending.borrowerReturnEthPerFiatRate}`)
+    //    const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
+    //    console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
 
-        await this.lending.sendTransaction({value: ether(0.3), from: borrower}).should.be.fulfilled;
-        console.log("lol")
-        await this.lending.reclaimContributionWithInterest(investor, {from: investor});
-        await this.lending.reclaimContributionWithInterest(investor2, {from: investor2});
+    //    await this.lending.sendTransaction({value: ether(0.3), from: borrower}).should.be.fulfilled;
+    //    console.log("lol")
+    //    await this.lending.reclaimContributionWithInterest(investor, {from: investor});
+    //    await this.lending.reclaimContributionWithInterest(investor2, {from: investor2});
 
-      })
+    //  })
 
-    })
+    //})
 
 
 
