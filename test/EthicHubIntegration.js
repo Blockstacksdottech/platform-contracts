@@ -234,9 +234,10 @@ contract('EthicHubLending (Lending owner != LocalNode)', function() {
             // Some initial parameters
             const initialEthPerFiatRate = 100;
             const finalEthPerFiatRate = 100;
-            const investment1 = ether(0.5);
-            const investment2 = ether(0.5);
+            const investment1 = ether(0.985);
+            const investment2 = ether(0.05);
             const investment3 = ether(1.5);
+            const totalLendingAmount = await lendingInstance.totalLendingAmount();
             let transaction;
 
             // Register all actors
@@ -274,7 +275,7 @@ contract('EthicHubLending (Lending owner != LocalNode)', function() {
             transaction = await lendingInstance.sendTransaction({value: investment2, from: investor2}).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor2', 'lendingInstance.sendTransaction', transaction.tx);
             const contribution2 = await lendingInstance.checkInvestorContribution(investor2);
-            contribution2.should.be.bignumber.equal(investment2);
+            contribution2.should.be.bignumber.equal(totalLendingAmount - investment1);
             // Goal is reached, no accepts more invesments
             transaction = await lendingInstance.sendTransaction({value: investment3, from: investor3}).should.be.rejectedWith(EVMRevert);
             //reportMethodGasUsed('report', 'investor3', 'lendingInstance.sendTransaction', transaction.tx);

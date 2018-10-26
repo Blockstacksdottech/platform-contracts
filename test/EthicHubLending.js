@@ -197,6 +197,14 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             contributionAmount.should.be.bignumber.equal(new BigNumber(ether(1)));
         });
 
+        it('should allow to invest amount < 0.1 eth', async function () {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1))
+            var isRunning = await this.lending.isContribPeriodRunning();
+            isRunning.should.be.equal(true);
+            await this.lending.sendTransaction({value:ether(0.01), from: investor}).should.be.fulfilled;
+            const contributionAmount = await this.lending.checkInvestorContribution(investor);
+            contributionAmount.should.be.bignumber.equal(new BigNumber(ether(0.01)));
+        });
     });
 
     describe('Partial returning of funds', function() {

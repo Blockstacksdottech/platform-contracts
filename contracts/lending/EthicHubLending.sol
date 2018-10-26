@@ -8,7 +8,7 @@ import "../EthicHubBase.sol";
 
 contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     using SafeMath for uint256;
-    uint256 public minContribAmount = 0.1 ether;                          // 0.01 ether
+    //uint256 public minContribAmount = 0.1 ether;                          // 0.1 ether
     enum LendingState {
         Uninitialized,
         AcceptingContributions,
@@ -336,7 +336,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     // @param contributor Address
     function contributeWithAddress(address contributor) internal whenNotPaused {
         require(state == LendingState.AcceptingContributions);
-        require(msg.value >= minContribAmount);
+        //require(msg.value >= minContribAmount);
         require(isContribPeriodRunning());
 
         uint oldTotalContributed = totalContributed;
