@@ -11,9 +11,12 @@ var cmc;
 var storageAddress;
 
 const loader = require('./contract_loader.js');
-if (process.argv.length <= 2) {
-    console.log("Usage: " + __filename + " <contract>");
+if (process.argv.length <= 3) {
+    console.log("Usage: " + __filename + " <contract_role> <network_id>" );
     process.exit(-1);
+} else {
+  console.log("TODO: network dependent address")
+  process.exit(-1);
 }
 
 var contract_key = process.argv[2];
@@ -35,11 +38,11 @@ if (selectedContract=== undefined) {
 }
 console.log(selectedContract)
 
-loader.load(web3, 'EthicHubCMC',process.env.CMC_ADDRESS).then( cmcInstance => {
+loader.load(web3, 'EthicHubCMC',process.env.KOVAN_CMC_ADDRESS).then( cmcInstance => {
     cmc = cmcInstance;
-    return loader.load(web3, 'EthicHubStorage',process.env.STORAGE_ADDRESS).then( async (storageInstance) =>  {
+    return loader.load(web3, 'EthicHubStorage',process.env.KOVAN_STORAGE_ADDRESS).then( async (storageInstance) =>  {
         storageAddress = await storageInstance.options.address;
-        return web3.eth.getAccounts().then(accounts => {
+         return web3.eth.getAccounts().then(accounts => {
 
             const deployable = loader.getDeployable(web3,selectedContract.file);
             return deployable.contract.deploy({
@@ -49,7 +52,7 @@ loader.load(web3, 'EthicHubCMC',process.env.CMC_ADDRESS).then( cmcInstance => {
             .send({
               from: accounts[0],
               gas: 4000000,
-              gasPrice: '174238330085',
+              gasPrice: '1000000000',
             })
             .on('error', function(error){
                 console.log("--> Error:")
@@ -65,38 +68,22 @@ loader.load(web3, 'EthicHubCMC',process.env.CMC_ADDRESS).then( cmcInstance => {
                 console.log("Deployed");
                 console.log(newContractInstance.options.address) // instance with the new contract address
 
-                return cmc.upgradeContract(newContractInstance.options.address,contractParams.role).then(() => {
+                return cmc.methods.upgradeContract("0x85A652DBC608469187Ecfc8A28A3c01CBBC25310",contract_key)
+                .send({
+                      from: accounts[0],
+                      gas: 4000000,
+                      gasPrice: '1000000000',
+                })
+                .on('receipt', function(receipt){
+                  console.log(receipt)
+                })
+                .then(() => {
                     console.log(" upgraded:");
-                    console.log(contractParams);
+                    console.log(contract_key);
                     return cmc;
                 })
-            });
-        });
+             });
+         });
 
-    });
+    })
 })
-
-
-
-
-
-// loader.getContractWrapper(web3, 'EthicHubReputation').deploy({
-//     data: '0x12345...',
-//     arguments: [123, 'My String']
-// })
-// .send({
-//     from: '0x1234567890123456789012345678901234567891',
-//     gas: 1500000,
-//     gasPrice: '30000000000000'
-// }, function(error, transactionHash){ ... })
-// .on('error', function(error){ ... })
-// .on('transactionHash', function(transactionHash){ ... })
-// .on('receipt', function(receipt){
-//    console.log(receipt.contractAddress) // contains the new contract address
-// })
-// .on('confirmation', function(confirmationNumber, receipt){ ... })
-// .then(function(newContractInstance){
-//     console.log(newContractInstance.options.address) // instance with the new contract address
-// });
-//await cmcInstance.upgradeContract(reputation.address,"reputation");
-//var contractInstance = MyContract.new([contructorParam1] [, contructorParam2], { from: myAccount, gas: 1000000});
