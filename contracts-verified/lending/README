@@ -1,0 +1,3 @@
+0. EthicHubLending v.3 contract (kovan:0xBbe20973c0c4D8a293c28542503d335529a92E7B, mainnet:0x62BF3Cb3a143b03214cc71E497EcB743B8C1Ff75).
+1. py-solc: python -m solc.install v0.4.23
+2. solidity_flattener --output EthicHubLendingFlattened.sol EthicHubLending.sol
