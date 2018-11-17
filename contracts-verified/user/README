@@ -1,10 +1,10 @@
-Version 3:
+Version 3: (commit:607cf814)
 ----------
 0. EthicHubUser v.3 contract (kovan:0xDa15086c932D2ed4e9d6C2F3823329aB5DaA9737).
 1. py-solc: python -m solc.install v0.4.25
 2. solidity_flattener --output EthicHubUserFlattenedv3.sol EthicHubUserv3.sol
 
-Version 2:
+Version 2: (commit:18cc45eb)
 ----------
 0. EthicHubUser v.2 contract (kovan:0xe8b974d68b512beaa37aa1726ee2150983494241, mainnet:0x0cd9228652DAd50A4a1eDD724C1EC017dc19c16c).
 1. py-solc: python -m solc.install v0.4.24
