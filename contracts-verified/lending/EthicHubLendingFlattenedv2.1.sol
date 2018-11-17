@@ -1,34 +1,5 @@
 pragma solidity ^0.4.13;
 
-contract EthicHubStorageInterface {
-
-    //modifier for access in sets and deletes
-    modifier onlyEthicHubContracts() {_;}
-
-    // Setters
-    function setAddress(bytes32 _key, address _value) external;
-    function setUint(bytes32 _key, uint _value) external;
-    function setString(bytes32 _key, string _value) external;
-    function setBytes(bytes32 _key, bytes _value) external;
-    function setBool(bytes32 _key, bool _value) external;
-    function setInt(bytes32 _key, int _value) external;
-    // Deleters
-    function deleteAddress(bytes32 _key) external;
-    function deleteUint(bytes32 _key) external;
-    function deleteString(bytes32 _key) external;
-    function deleteBytes(bytes32 _key) external;
-    function deleteBool(bytes32 _key) external;
-    function deleteInt(bytes32 _key) external;
-
-    // Getters
-    function getAddress(bytes32 _key) external view returns (address);
-    function getUint(bytes32 _key) external view returns (uint);
-    function getString(bytes32 _key) external view returns (string);
-    function getBytes(bytes32 _key) external view returns (bytes);
-    function getBool(bytes32 _key) external view returns (bool);
-    function getInt(bytes32 _key) external view returns (int);
-}
-
 contract Ownable {
   address public owner;
 
@@ -81,6 +52,48 @@ contract Ownable {
     emit OwnershipTransferred(owner, _newOwner);
     owner = _newOwner;
   }
+}
+
+contract EthicHubStorageInterface {
+
+    //modifier for access in sets and deletes
+    modifier onlyEthicHubContracts() {_;}
+
+    // Setters
+    function setAddress(bytes32 _key, address _value) external;
+    function setUint(bytes32 _key, uint _value) external;
+    function setString(bytes32 _key, string _value) external;
+    function setBytes(bytes32 _key, bytes _value) external;
+    function setBool(bytes32 _key, bool _value) external;
+    function setInt(bytes32 _key, int _value) external;
+    // Deleters
+    function deleteAddress(bytes32 _key) external;
+    function deleteUint(bytes32 _key) external;
+    function deleteString(bytes32 _key) external;
+    function deleteBytes(bytes32 _key) external;
+    function deleteBool(bytes32 _key) external;
+    function deleteInt(bytes32 _key) external;
+
+    // Getters
+    function getAddress(bytes32 _key) external view returns (address);
+    function getUint(bytes32 _key) external view returns (uint);
+    function getString(bytes32 _key) external view returns (string);
+    function getBytes(bytes32 _key) external view returns (bytes);
+    function getBool(bytes32 _key) external view returns (bool);
+    function getInt(bytes32 _key) external view returns (int);
+}
+
+contract EthicHubBase {
+
+    uint8 public version;
+
+    EthicHubStorageInterface public ethicHubStorage = EthicHubStorageInterface(0);
+
+    constructor(address _storageAddress) public {
+        require(_storageAddress != address(0));
+        ethicHubStorage = EthicHubStorageInterface(_storageAddress);
+    }
+
 }
 
 library SafeMath {
@@ -180,22 +193,9 @@ contract Pausable is Ownable {
   }
 }
 
-contract EthicHubBase {
-
-    uint8 public version;
-
-    EthicHubStorageInterface public ethicHubStorage = EthicHubStorageInterface(0);
-
-    constructor(address _storageAddress) public {
-        require(_storageAddress != address(0));
-        ethicHubStorage = EthicHubStorageInterface(_storageAddress);
-    }
-
-}
-
 contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     using SafeMath for uint256;
-    //uint256 public minContribAmount = 0.1 ether;                          // 0.1 ether
+    uint256 public minContribAmount = 0.1 ether;                          // 0.01 ether
     enum LendingState {
         Uninitialized,
         AcceptingContributions,
@@ -251,7 +251,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     event onReturnRateSet(uint rate);
     event onReturnAmount(address indexed borrower, uint amount);
     event onBorrowerChanged(address indexed newBorrower);
-    event onInvestorChanged(address indexed oldInvestor, address indexed newInvestor);
 
     // modifiers
     modifier checkProfileRegistered(string profile) {
@@ -268,13 +267,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     modifier onlyOwnerOrLocalNode() {
         require(localNode == msg.sender || owner == msg.sender);
-        _;
-    }
-
-    modifier onlyInvestorOrPaymentGateway() {
-        bool isInvestor = ethicHubStorage.getBool(keccak256("user", "investor", msg.sender));
-        bool isPaymentGateway = ethicHubStorage.getBool(keccak256("user", "paymentGateway", msg.sender));
-        require(isPaymentGateway || isInvestor);
         _;
     }
 
@@ -303,7 +295,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
         require(_annualInterest > 0 && _annualInterest < 100);
-        version = 3;
+        version = 2;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -341,20 +333,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         emit onBorrowerChanged(borrower);
     }
 
-    function changeInvestorAddress(address oldInvestor, address newInvestor) external checkIfArbiter {
-        require(newInvestor != address(0));
-        require(ethicHubStorage.getBool(keccak256("user", "investor", newInvestor)));
-        //oldInvestor should have invested in this project
-        require(investors[oldInvestor].amount != 0);
-        //newInvestor should not have invested anything in this project to not complicate return calculation
-        require(investors[newInvestor].amount == 0);
-        investors[newInvestor].amount = investors[oldInvestor].amount;
-        investors[newInvestor].isCompensated = investors[oldInvestor].isCompensated;
-        investors[newInvestor].surplusEthReclaimed = investors[oldInvestor].surplusEthReclaimed;
-        delete investors[oldInvestor];
-        emit onInvestorChanged(oldInvestor, newInvestor);
-    }
-
     function() public payable whenNotPaused {
         require(state == LendingState.AwaitingReturn || state == LendingState.AcceptingContributions || state == LendingState.ExchangingToFiat);
         if(state == LendingState.AwaitingReturn) {
@@ -363,7 +341,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             // borrower can send surplus eth back to contract to avoid paying interest
             sendBackSurplusEth();
         } else {
-            require(ethicHubStorage.getBool(keccak256("user", "investor", msg.sender)));
             contributeWithAddress(msg.sender);
         }
     }
@@ -510,20 +487,14 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         }
     }
 
-    // @notice make cotribution throught a paymentGateway
-    // @param contributor Address
-    function contributeForAddress(address contributor) external checkProfileRegistered('paymentGateway') payable whenNotPaused {
-        contributeWithAddress(contributor);
-    }
-
     // @notice Function to participate in contribution period
     //  Amounts from the same address should be added up
     //  If cap is reached, end time should be modified
     //  Funds should be transferred into multisig wallet
     // @param contributor Address
-    function contributeWithAddress(address contributor) internal whenNotPaused {
+    function contributeWithAddress(address contributor) internal checkProfileRegistered('investor') whenNotPaused {
         require(state == LendingState.AcceptingContributions);
-        //require(msg.value >= minContribAmount);
+        require(msg.value >= minContribAmount);
         require(isContribPeriodRunning());
 
         uint oldTotalContributed = totalContributed;
