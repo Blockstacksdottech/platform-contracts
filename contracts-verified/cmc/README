@@ -1,0 +1,3 @@
+0. EthicHubCMC v.1 contract (kovan:0x40e15a130b71db4ef32892d18ff304549ea7a9c7, mainnet:0x06B300e1eF7c4Cce6560c5c7719c92cde07Ad944).
+1. py-solc: python -m solc.install v0.4.23
+2. solidity_flattener --output EthicHubCMCFlattened.sol EthicHubCMC.sol
