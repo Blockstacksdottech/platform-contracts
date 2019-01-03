@@ -102,7 +102,7 @@ Each lending contracts corresponds to a project. Holds the logic for the crowdle
 
 The simplified state machine is:
 
-![EthicHub Lending state machine](https://storage.googleapis.com/general-material/simplified_lending_state_machine.png)
+![EthicHub Lending state machine](https://s3-eu-west-1.amazonaws.com/ethichub-media/git-readme/simplified_lending_state_machine.png)
 
 Lenders, borrowers and local nodes interact with these contracts through [EthicHub's Platform](https://mvp.ethichub.com).
 
