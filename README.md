@@ -1,4 +1,4 @@
-![EthicHub Logo](https://storage.googleapis.com/general-material/banner3.png)
+![EthicHub Logo](https://s3-eu-west-1.amazonaws.com/ethichub-media/git-readme/banner3.png)
 
 # EthicHub Alpha Contracts
 The backbone of EthicHub's Ethical Crowdlending Platform.
@@ -40,7 +40,7 @@ Inspired by [RocketPool's Hub&Spoke architecture](https://medium.com/rocket-pool
 - Flexible role based access control
 - [K.I.S.S](https://en.wikipedia.org/wiki/KISS_principle)
 
-![EthicHub contract architecture ](https://storage.googleapis.com/general-material/alpha_contracts_architecture.png)
+![EthicHub contract architecture ](https://s3-eu-west-1.amazonaws.com/ethichub-media/git-readme/contract_architecture.png)
 
 ## [Storage](./contracts/storage/EthicHubStorage.sol)
 
@@ -106,7 +106,8 @@ The simplified state machine is:
 
 Lenders, borrowers and local nodes interact with these contracts through [EthicHub's Platform](https://mvp.ethichub.com).
 
-
+## [Arbitrage](./contracts/reputation/EthicHubArbitrage.sol)
+In emergency cases, EthicHub could appoint an special role to be able to change a borrower or investor address in a lending contract, or extract funds locked in the contract (with the conditions that all of the contributors, local node and team get their share first). This contract will be able to appoint that role. In the future the owner of this contract could be owned by a voting/governance token to keep the appointment of arbiters decentralized.
 
 
 

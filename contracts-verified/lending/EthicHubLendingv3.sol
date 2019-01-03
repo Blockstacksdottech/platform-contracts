@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import "../reputation/EthicHubReputationInterface.sol";
-import "../EthicHubBase.sol";
+import '../EthicHubBase.sol';
 
 contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     using SafeMath for uint256;
@@ -20,8 +20,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
     mapping(address => Investor) public investors;
     uint256 public investorCount;
-    uint256 public reclaimedContributions;
-    uint256 public reclaimedSurpluses;
     uint256 public fundingStartTime;                                     // Start time of contribution period in UNIX time
     uint256 public fundingEndTime;                                       // End time of contribution period in UNIX time
     uint256 public totalContributed;
@@ -103,8 +101,8 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         address _storageAddress,
         address _localNode,
         address _ethicHubTeam,
-        uint256 _ethichubFee,
-        uint256 _localNodeFee
+        uint256 _ethichubFee, 
+        uint256 _localNodeFee 
         )
         EthicHubBase(_storageAddress)
         public {
@@ -118,9 +116,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0);
         require(_lendingDays > 0);
         require(_annualInterest > 0 && _annualInterest < 100);
-        version = 4;
-        reclaimedContributions = 0;
-        reclaimedSurpluses = 0;
+        version = 3;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -248,8 +244,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 contribution = checkInvestorReturns(beneficiary);
         require(contribution > 0);
         investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-        doReclaim(beneficiary, contribution);
+        beneficiary.transfer(contribution);
     }
 
     /**
@@ -263,8 +258,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 contribution = investors[beneficiary].amount;
         require(contribution > 0);
         investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-        doReclaim(beneficiary, contribution);
+        beneficiary.transfer(contribution);
     }
 
     function reclaimSurplusEth(address beneficiary) external {
@@ -275,9 +269,8 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 surplusContribution = investors[beneficiary].amount.mul(surplusEth).div(surplusEth.add(totalLendingAmount));
         require(surplusContribution > 0);
         investors[beneficiary].surplusEthReclaimed = true;
-        reclaimedSurpluses = reclaimedSurpluses.add(1);
         emit onSurplusReclaimed(beneficiary, surplusContribution);
-        doReclaim(beneficiary, surplusContribution);
+        beneficiary.transfer(surplusContribution);
     }
 
     function reclaimContributionWithInterest(address beneficiary) external {
@@ -286,8 +279,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 contribution = checkInvestorReturns(beneficiary);
         require(contribution > 0);
         investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-        doReclaim(beneficiary, contribution);
+        beneficiary.transfer(contribution);
     }
 
     function reclaimLocalNodeFee() external {
@@ -296,7 +288,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 fee = totalLendingFiatAmount.mul(localNodeFee).mul(interestBaseUint).div(interestBasePercent).div(borrowerReturnEthPerFiatRate);
         require(fee > 0);
         localNodeFeeReclaimed = true;
-        doReclaim(localNode, fee);
+        localNode.transfer(fee);
     }
 
     function reclaimEthicHubTeamFee() external {
@@ -305,26 +297,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         uint256 fee = totalLendingFiatAmount.mul(ethichubFee).mul(interestBaseUint).div(interestBasePercent).div(borrowerReturnEthPerFiatRate);
         require(fee > 0);
         ethicHubTeamFeeReclaimed = true;
-        doReclaim(ethicHubTeam, fee);
-    }
-
-    function reclaimLeftoverEth() external checkIfArbiter {
-      require(state == LendingState.ContributionReturned || state == LendingState.Default);
-      require(localNodeFeeReclaimed);
-      require(ethicHubTeamFeeReclaimed);
-      require(investorCount == reclaimedContributions);
-      if(surplusEth > 0) {
-        require(investorCount == reclaimedSurpluses);
-      }
-      doReclaim(ethicHubTeam, this.balance);
-    }
-
-    function doReclaim(address target, uint256 amount) internal {
-      if(this.balance < amount) {
-        target.transfer(this.balance);
-      } else {
-        target.transfer(amount);
-      }
+        ethicHubTeam.transfer(fee);
     }
 
     function returnBorrowedEth() internal {
@@ -349,8 +322,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             msg.sender.transfer(excessRepayment);
         }
     }
-
-
 
     // @notice make cotribution throught a paymentGateway
     // @param contributor Address

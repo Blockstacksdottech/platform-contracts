@@ -54,7 +54,9 @@ module.exports = async (deployer, network, accounts) => {
         2,//_lendingDays
         storage.address, //_storageAddress
         localNode,//localNode
-        accounts[4]//team
+        accounts[4], //team
+        3, //ethichub fee
+        4 //localNode fee
     ).then(() => {
         return lending.deployed().then(async (lendingInstance) => {
 

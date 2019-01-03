@@ -1,31 +1,83 @@
-/*
-    Smart contract of user status.
+pragma solidity ^0.4.13;
 
-    Copyright (C) 2018 EthicHub
-    This file is part of platform contracts.
+contract Ownable {
+  address public owner;
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-pragma solidity ^0.4.23;
 
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
-import '../EthicHubBase.sol';
-import '../reputation/EthicHubReputationInterface.sol';
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-/* @title User
-@dev This is an extension to add user
-*/
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+contract EthicHubBase {
+
+    uint8 public version;
+
+    EthicHubStorageInterface public ethicHubStorage = EthicHubStorageInterface(0);
+
+    constructor(address _storageAddress) public {
+        require(_storageAddress != address(0));
+        ethicHubStorage = EthicHubStorageInterface(_storageAddress);
+    }
+
+}
+
+contract EthicHubReputationInterface {
+    modifier onlyUsersContract(){_;}
+    modifier onlyLendingContract(){_;}
+    function burnReputation(uint delayDays)  external;
+    function incrementReputation(uint completedProjectsByTier)  external;
+    function initLocalNodeReputation(address localNode)  external;
+    function initCommunityReputation(address community)  external;
+    function getCommunityReputation(address target) public view returns(uint256);
+    function getLocalNodeReputation(address target) public view returns(uint256);
+}
+
 contract EthicHubUser is Ownable, EthicHubBase {
 
 
@@ -223,3 +275,33 @@ contract EthicHubUser is Ownable, EthicHubBase {
     }
 
 }
+
+contract EthicHubStorageInterface {
+
+    //modifier for access in sets and deletes
+    modifier onlyEthicHubContracts() {_;}
+
+    // Setters
+    function setAddress(bytes32 _key, address _value) external;
+    function setUint(bytes32 _key, uint _value) external;
+    function setString(bytes32 _key, string _value) external;
+    function setBytes(bytes32 _key, bytes _value) external;
+    function setBool(bytes32 _key, bool _value) external;
+    function setInt(bytes32 _key, int _value) external;
+    // Deleters
+    function deleteAddress(bytes32 _key) external;
+    function deleteUint(bytes32 _key) external;
+    function deleteString(bytes32 _key) external;
+    function deleteBytes(bytes32 _key) external;
+    function deleteBool(bytes32 _key) external;
+    function deleteInt(bytes32 _key) external;
+
+    // Getters
+    function getAddress(bytes32 _key) external view returns (address);
+    function getUint(bytes32 _key) external view returns (uint);
+    function getString(bytes32 _key) external view returns (string);
+    function getBytes(bytes32 _key) external view returns (bytes);
+    function getBool(bytes32 _key) external view returns (bool);
+    function getInt(bytes32 _key) external view returns (int);
+}
+

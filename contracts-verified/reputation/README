@@ -1,0 +1,3 @@
+0. EthicHubReputation v.1 contract (kovan:0x46640cE0144305892B629600B4c406e39724d8BE, mainnet:0x84d3967868cfa33fef807c500031c2565f033849).
+1. py-solc: python -m solc.install v0.4.23
+2. solidity_flattener --output EthicHubReputationFlattened.sol EthicHubReputation.sol

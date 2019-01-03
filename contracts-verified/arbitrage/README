@@ -1,0 +1,3 @@
+0. EthicHubArbiter v.1 contract (kovan:0x3e280B6a400B48dE3c578f2c5283E638525AdFcD, mainnet:no hay).
+1. py-solc: python -m solc.install v0.4.25
+2. solidity_flattener --output EthicHubArbitrageFlattened.sol EthicHubArbitrage.sol
