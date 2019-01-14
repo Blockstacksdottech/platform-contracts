@@ -1,6 +1,6 @@
 {
   "name": "ethichub_platform",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Smart contracts of the EthicHub platform",
   "scripts": {
     "test": "scripts/test.sh",
@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EthicHub/platform-contracts.git"
+    "url": "git+https://gitlab.com/EthicHub/platform-contracts.git"
   },
   "keywords": [
     "ethichub",
@@ -34,9 +34,9 @@
   "author": "EthicHub Dev Team: Raúl Martínez, Quijion Jiang, Diego Pardilla",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/EthicHub/platform-contracts/issues"
+    "url": "https://gitlab.com/EthicHub/platform-contracts/issues"
   },
-  "homepage": "https://github.com/EthicHub/platform-contracts#readme",
+  "homepage": "https://gitlab.com/EthicHub/platform-contracts#readme",
   "dependencies": {
     "babel-preset-es2015": "^6.24.1",
     "dotenv": "^5.0.1",

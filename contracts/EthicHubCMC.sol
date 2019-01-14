@@ -16,6 +16,12 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         uint256 created                                         // Creation timestamp
     );
 
+    event LendingContractAdded (
+        address indexed _newContractAddress,                    // Address of the new contract
+        uint256 created                                         // Creation timestamp
+    );
+
+
     modifier onlyOwnerOrLocalNode() {
         bool isLocalNode = ethicHubStorage.getBool(keccak256("user", "localNode", msg.sender));
         require(isLocalNode || owner == msg.sender);
@@ -24,12 +30,13 @@ contract EthicHubCMC is EthicHubBase, Ownable {
 
     constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
         // Version
-        version = 1;
+        version = 2;
     }
 
     function addNewLendingContract(address _lendingAddress) public onlyOwnerOrLocalNode {
         require(_lendingAddress != address(0));
         ethicHubStorage.setAddress(keccak256("contract.address", _lendingAddress), _lendingAddress);
+        emit LendingContractAdded(_lendingAddress, now);
     }
 
     function upgradeContract(address _newContractAddress, string _contractName) public onlyOwner {
@@ -41,5 +48,5 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         ethicHubStorage.deleteAddress(keccak256("contract.address", oldAddress));
         emit ContractUpgraded(oldAddress, _newContractAddress, now);
     }
-    
+
 }
