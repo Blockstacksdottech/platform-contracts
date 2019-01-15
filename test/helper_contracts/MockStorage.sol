@@ -16,7 +16,7 @@ contract MockStorage is EthicHubStorageInterface {
     /// @dev constructor
     constructor() public {
         // Set the main owner upon deployment
-        boolStorage[keccak256("access.role", "owner", msg.sender)] = true;
+        boolStorage[keccak256(abi.encodePacked("access.role", "owner", msg.sender))] = true;
     }
 
 

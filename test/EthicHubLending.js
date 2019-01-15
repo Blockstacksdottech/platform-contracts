@@ -15,7 +15,7 @@ const AwaitingReturn = 3;
 const ProjectNotFunded = 4;
 const ContributionReturned = 5;
 const Default = 6;
-const LatestVersion = 4;
+const LatestVersion = 5;
 
 const should = require('chai')
   .use(require('chai-as-promised'))
