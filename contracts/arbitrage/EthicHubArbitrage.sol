@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity 0.4.25;
 
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import "../EthicHubBase.sol";
@@ -31,22 +31,22 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
     function assignArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {
         require(_arbiter != address(0));
         require(_lendingContract != address(0));
-        require(_lendingContract == ethicHubStorage.getAddress(keccak256("contract.address", _lendingContract)));
-        ethicHubStorage.setAddress(keccak256("arbiter", _lendingContract), _arbiter);
+        require(_lendingContract == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", _lendingContract))));
+        ethicHubStorage.setAddress(keccak256(abi.encodePacked("arbiter", _lendingContract)), _arbiter);
         emit ArbiterAssigned(_arbiter, _lendingContract);
     }
 
     function revokeArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {
         require(_arbiter != address(0));
         require(_lendingContract != address(0));
-        require(_lendingContract == ethicHubStorage.getAddress(keccak256("contract.address", _lendingContract)));
+        require(_lendingContract == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", _lendingContract))));
         require(arbiterForLendingContract(_lendingContract) == _arbiter);
-        ethicHubStorage.deleteAddress(keccak256("arbiter", _lendingContract));
+        ethicHubStorage.deleteAddress(keccak256(abi.encodePacked("arbiter", _lendingContract)));
         emit ArbiterRevoked(_arbiter, _lendingContract);
     }
 
     function arbiterForLendingContract(address _lendingContract) public view returns(address) {
-        return ethicHubStorage.getAddress(keccak256("arbiter", _lendingContract));
+        return ethicHubStorage.getAddress(keccak256(abi.encodePacked("arbiter", _lendingContract)));
     }
 
 }

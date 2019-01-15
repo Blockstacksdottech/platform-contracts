@@ -1,4 +1,4 @@
-pragma solidity ^0.4.20;
+pragma solidity 0.4.25;
 
 import '../../contracts/storage/EthicHubStorageInterface.sol';
 
@@ -14,7 +14,7 @@ contract MockStorage is EthicHubStorageInterface {
     mapping(bytes32 => int256)     private intStorage;
 
     /// @dev constructor
-    function MockStorage() public {
+    constructor() public {
         // Set the main owner upon deployment
         boolStorage[keccak256("access.role", "owner", msg.sender)] = true;
     }

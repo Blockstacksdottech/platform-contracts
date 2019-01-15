@@ -17,7 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.25;
 
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import '../EthicHubBase.sol';
@@ -36,7 +36,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         public
     {
         // Version
-        version = 3;
+        version = 4;
     }
 
     /**
@@ -51,7 +51,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
     {
         require(target != address(0));
         require(bytes(profile).length != 0);
-        ethicHubStorage.setBool(keccak256("user", profile, target), isRegistered);
+        ethicHubStorage.setBool(keccak256(abi.encodePacked("user", profile, target)), isRegistered);
         emit UserStatusChanged(target, profile, isRegistered);
     }
 
@@ -67,7 +67,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
     {
         require(target != address(0));
         require(bytes(profile).length != 0);
-        ethicHubStorage.deleteBool(keccak256("user", profile, target));
+        ethicHubStorage.deleteBool(keccak256(abi.encodePacked("user", profile, target)));
         emit UserStatusChanged(target, profile, false);
     }
 
@@ -82,7 +82,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
     {
         require(target != address(0));
         require(bytes(profile).length != 0);
-        isRegistered = ethicHubStorage.getBool(keccak256("user", profile, target));
+        isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", profile, target)));
     }
 
     /**
@@ -93,10 +93,10 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "localNode", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "localNode", target)));
         if (!isRegistered) {
             changeUserStatus(target, "localNode", true);
-            EthicHubReputationInterface rep = EthicHubReputationInterface (ethicHubStorage.getAddress(keccak256("contract.name", "reputation")));
+            EthicHubReputationInterface rep = EthicHubReputationInterface (ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation"))));
             rep.initLocalNodeReputation(target);
         }
     }
@@ -109,7 +109,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "localNode", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "localNode", target)));
         if (isRegistered) {
             deleteUserStatus(target, "localNode");
         }
@@ -123,10 +123,10 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "community", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "community", target)));
         if (!isRegistered) {
             changeUserStatus(target, "community", true);
-            EthicHubReputationInterface rep = EthicHubReputationInterface(ethicHubStorage.getAddress(keccak256("contract.name", "reputation")));
+            EthicHubReputationInterface rep = EthicHubReputationInterface(ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation"))));
             rep.initCommunityReputation(target);
         }
     }
@@ -139,7 +139,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "community", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "community", target)));
         if (isRegistered) {
             deleteUserStatus(target, "community");
         }
@@ -166,7 +166,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "investor", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", target)));
         if (isRegistered) {
             deleteUserStatus(target, "investor");
         }
@@ -191,7 +191,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "representative", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", target)));
         if (isRegistered) {
             deleteUserStatus(target, "representative");
         }
@@ -216,7 +216,7 @@ contract EthicHubUser is Ownable, EthicHubBase {
         onlyOwner
     {
         require(target != address(0));
-        bool isRegistered = ethicHubStorage.getBool(keccak256("user", "paymentGateway", target));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", target)));
         if (isRegistered) {
             deleteUserStatus(target, "paymentGateway");
         }

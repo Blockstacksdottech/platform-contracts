@@ -1,4 +1,4 @@
-pragma solidity ^0.4.20;
+pragma solidity 0.4.25;
 
 import "../../contracts/EthicHubBase.sol";
 
@@ -6,7 +6,7 @@ import "../../contracts/EthicHubBase.sol";
 contract MockEthicHubContract is EthicHubBase {
 
     /// @dev constructor
-    function MockEthicHubContract(address _storageAddress, uint8 _version) EthicHubBase(_storageAddress) public {
+    constructor(address _storageAddress, uint8 _version) EthicHubBase(_storageAddress) public {
       // Version
         version = _version;
     }
