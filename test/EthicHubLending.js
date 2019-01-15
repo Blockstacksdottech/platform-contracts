@@ -214,6 +214,10 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         });
     });
 
+    describe('Early return of funds', function() {
+      
+    });
+
     describe('Partial returning of funds', function() {
         it('full payment of the loan in several transfers should be allowed', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1))
@@ -561,14 +565,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
             await this.lending.setBorrowerReturnEthPerFiatRate(this.finalEthPerFiatRate, {from: owner}).should.be.rejectedWith(EVMRevert);
         });
-
-        //We can't track borrower because of exchange
-        // it('should not allow to return contribution before setting exchange rate', async function() {
-        //     await increaseTimeTo(this.fundingStartTime  + duration.days(1))
-        //     await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
-        //     await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
-        //     await this.lending.sendTransaction({from: owner, value: ether(2)}).should.be.rejectedWith(EVMRevert);
-        // });
 
         it('should allow the return of proper amount', async function() {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1))
