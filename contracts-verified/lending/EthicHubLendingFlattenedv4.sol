@@ -503,12 +503,12 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
       if(surplusEth > 0) {
         require(investorCount == reclaimedSurpluses);
       }
-      doReclaim(ethicHubTeam, this.balance);
+      doReclaim(ethicHubTeam, address(this).balance);
     }
 
     function doReclaim(address target, uint256 amount) internal {
-      if(this.balance < amount) {
-        target.transfer(this.balance);
+      if(address(this).balance < amount) {
+        target.transfer(address(this).balance);
       } else {
         target.transfer(amount);
       }

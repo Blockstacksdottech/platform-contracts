@@ -97,7 +97,7 @@ contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
         emit ReputationUpdated(localNode, newLocalNodeReputation);
     }
 
-    function incrementCommunityReputation(uint previousReputation, uint completedProjectsByTier) public view returns(uint) {
+    function incrementCommunityReputation(uint previousReputation, uint completedProjectsByTier) public pure returns(uint) {
         require(completedProjectsByTier > 0);
         uint nextRep = previousReputation.add(reputationStep.div(completedProjectsByTier));
         if (nextRep >= maxReputation) {
@@ -107,7 +107,7 @@ contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
         }
     }
 
-    function incrementLocalNodeReputation(uint previousReputation, uint tier, uint borrowers) public view returns(uint) {
+    function incrementLocalNodeReputation(uint previousReputation, uint tier, uint borrowers) public pure returns(uint) {
         require(tier >= 1);
         //this should 20 but since it's hardcoded in EthicHubLending, let's be safe.
         //TODO store min borrowers in EthicHubStorage
@@ -121,7 +121,7 @@ contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
         }
     }
 
-    function burnLocalNodeReputation(uint delayDays, uint maxDelayDays, uint prevReputation) public view returns(uint) {
+    function burnLocalNodeReputation(uint delayDays, uint maxDelayDays, uint prevReputation) public pure returns(uint) {
         if (delayDays >= maxDelayDays){
             return 0;
         }
