@@ -215,8 +215,51 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
     });
 
     describe('Early return of funds', function() {
-      
+        it.only('returning in same date should amount to totalLendingAmount plus fees', async function() {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1))
+            await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
+            await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            await this.lending.setBorrowerReturnEthPerFiatRate(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
+            const localNodeFeeForAmount = this.totalLendingAmount.mul(this.localNodeFee).div(new BigNumber(100))
+            const ethichubFeeForAmount = this.totalLendingAmount.mul(this.ethichubFee).div(new BigNumber(100))
+            const expectedAmount = this.totalLendingAmount.add(ethichubFeeForAmount).add(localNodeFeeForAmount)
+            borrowerReturnAmount.should.be.bignumber.equal(expectedAmount)
+            await this.lending.sendTransaction({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled;
+            const state = await this.lending.state();
+            state.should.be.bignumber.equal(ContributionReturned);
+        })
+
+        it.only('returning in half total date should amount to totalLendingAmount + interest 2 plus fees', async function() {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1))
+            await this.lending.sendTransaction({value: this.totalLendingAmount, from: investor}).should.be.fulfilled;
+            await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            await increaseTimeTo(this.fundingStartTime  + duration.days(this.lendingDays / 2))
+            await this.lending.setBorrowerReturnEthPerFiatRate(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+    
+
+            const expectedAmount = this.totalLendingAmount.div(2).add(ethichubFeeForAmount).add(localNodeFeeForAmount)
+            borrowerReturnAmount.should.be.bignumber.equal(expectedAmount)
+        })
     });
+
+    describe('Days calculator', function() {
+        it('should calculate correct days', async function() {
+            const expectedDaysPassed = 55;
+            const daysPassed = await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime + duration.days(expectedDaysPassed));
+            daysPassed.should.be.bignumber.equal(new BigNumber(expectedDaysPassed))
+            const sameAsLendingDays = await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime + duration.days(this.lendingDays));
+            new BigNumber(this.lendingDays).should.be.bignumber.equal(sameAsLendingDays)
+            const lessThanADay = await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime + duration.hours(23));
+            new BigNumber(0).should.be.bignumber.equal(lessThanADay)
+        })
+
+        it('should fail to operate for time travelers (sorry)', async function() {
+            const daysPassed = await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime - duration.days(2)).should.be.rejectedWith(EVMRevert)
+        })
+    })
 
     describe('Partial returning of funds', function() {
         it('full payment of the loan in several transfers should be allowed', async function() {
