@@ -1,6 +1,6 @@
 {
   "name": "ethichub_platform",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Smart contracts of the EthicHub platform",
   "scripts": {
     "test": "scripts/test.sh",
