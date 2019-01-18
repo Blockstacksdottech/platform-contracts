@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity 0.4.25;
 
 //import "../ownership/Ownable.sol";
 
@@ -22,12 +22,12 @@ contract EthicHubStorage {
     /// @dev Only allow access from the latest version of a contract in the Rocket Pool network after deployment
     modifier onlyEthicHubContracts() {
         // Maje sure the access is permitted to only contracts in our Dapp
-        require(addressStorage[keccak256("contract.address", msg.sender)] != 0x0);
+        require(addressStorage[keccak256(abi.encodePacked("contract.address", msg.sender))] != 0x0);
         _;
     }
 
     constructor() public {
-		addressStorage[keccak256("contract.address", msg.sender)] = msg.sender;
+		addressStorage[keccak256(abi.encodePacked("contract.address", msg.sender))] = msg.sender;
     }
 
 	/**** Get Methods ***********/
