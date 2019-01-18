@@ -421,11 +421,11 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
 
     function updateReputation() internal {
-        uint delayDays = getDelayDays(now);
         EthicHubReputationInterface reputation = EthicHubReputationInterface(
             ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation")))
             );
         require(reputation != address(0));
+        uint delayDays = getDelayDays(now);
         if (delayDays > 0) {
             ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.delayDays", this)), delayDays);
             reputation.burnReputation(delayDays);
@@ -466,7 +466,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     function lendingInterestRatePercentage() public view returns(uint256){
         return annualInterest.mul(interestBaseUint)
             // current days
-            .mul(getDaysPassedBetweenDates(fundingEndTime, now).add(getDelayDays(now))).div(365)
+            .mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365)
             .add(localNodeFee.mul(interestBaseUint))
             .add(ethichubFee.mul(interestBaseUint))
             .add(interestBasePercent);
@@ -474,7 +474,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     // lendingInterestRate with 2 decimal
     function investorInterest() public view returns(uint256){
-        return annualInterest.mul(interestBaseUint).mul(lendingDays.add(getDelayDays(now))).div(365).add(interestBasePercent);
+        return annualInterest.mul(interestBaseUint).mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365).add(interestBasePercent);
     }
 
     function borrowerReturnFiatAmount() public view returns(uint256) {
@@ -498,7 +498,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         if (state == LendingState.ContributionReturned) {
             investorAmount = investors[investor].amount;
             if (surplusEth > 0){
-                investorAmount  = investors[investor].amount.mul(totalLendingAmount).div(totalContributed);
+                investorAmount = investors[investor].amount.mul(totalLendingAmount).div(totalContributed);
             }
             return investorAmount.mul(initialEthPerFiatRate).mul(investorInterest()).div(borrowerReturnEthPerFiatRate).div(interestBasePercent);
         } else if (state == LendingState.Default){
