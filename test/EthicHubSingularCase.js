@@ -121,11 +121,11 @@ for (var i = 0; i < NUMBER_INVESTORS; i++) {
 }
 // investments the first investor is 0
 const INVESTMENTS=[
-    {investor:'0',investment:1000000000000000000},
-    {investor:'1',investment:1990000000000000000},
-    {investor:'2',investment:340000000000000000},
-    {investor:'3',investment:130860000000000000},
-    {investor:'1',investment:250000000000000000}
+    {investor:'0',investment:new BigNumber('1000000000000000000')},
+    {investor:'1',investment:new BigNumber('1990000000000000000')},
+    {investor:'2',investment:new BigNumber('340000000000000000')},
+    {investor:'3',investment:new BigNumber('130860000000000000')},
+    {investor:'1',investment:new BigNumber('250000000000000000')}
 ]
 //const INVESTMENTS=[
 //    {investor:'0',investment:'1000000000000000000'},
