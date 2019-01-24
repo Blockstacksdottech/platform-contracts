@@ -105,6 +105,7 @@ const INTEREST=15;
 const MAX_DELAY_DAYS=30;
 const LOCAL_NODE_FEE=4;
 const TEAM_FEE=3;
+const TOTAL_LENDING_FIAT_AMOUNT = new BigNumber('1906591172015499119158500');
 
 // Actors
 const owner = web3.eth.accounts[0]; // Always 0 position
@@ -249,9 +250,16 @@ describe('Test Single Case contract', function() {
             var contribution = await lendingInstance.checkInvestorContribution(investors[i]);
             contribution.should.be.bignumber.equal(investor_contribution);
         }
+        // Check surplus
+        var surplusEth = await lendingInstance.surplusEth();
+        surplusEth.should.be.bignumber.equal(0);
         // Send funds to borrower
         transaction = await lendingInstance.sendFundsToBorrower({from: owner}).should.be.fulfilled;
         transaction = await lendingInstance.finishInitialExchangingPeriod(INIT_ETH_RATE, {from: owner}).should.be.fulfilled;
+        // Check total lending fiat amount
+        var totalLendingFiatAmount = await lendingInstance.totalLendingFiatAmount();
+        console.log(totalLendingFiatAmount);
+        totalLendingFiatAmount.should.be.bignumber.equal(TOTAL_LENDING_FIAT_AMOUNT);
         await increaseTimePastEndingTime(lendingInstance, LENDING_DAYS + 1)
         //console.log('=== SEND FUNDS BORROWER ===');
         //await traceBalancesAllActors();
