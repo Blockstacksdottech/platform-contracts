@@ -122,11 +122,11 @@ for (var i = 0; i < NUMBER_INVESTORS; i++) {
 }
 // investments the first investor is 0
 const INVESTMENTS=[
-    {investor:'0',investment:new BigNumber('1000000000000000000')},
-    {investor:'1',investment:new BigNumber('1990000000000000000')},
-    {investor:'2',investment:new BigNumber('340000000000000000')},
-    {investor:'3',investment:new BigNumber('130860000000000000')},
-    {investor:'1',investment:new BigNumber('250000000000000000')}
+    {investor:'0',investment:new BigNumber('1000000000000000000'), originalInvestor:"0x90299EC59b94398a3a31a795Bc585F743d0e5Cc9"},
+    {investor:'1',investment:new BigNumber('1990000000000000000'), originalInvestor:"0x7E032A1Bed85664209B3C22D12caec40fdF73089"},
+    {investor:'2',investment:new BigNumber('340000000000000000'), originalInvestor:"0xFF876a47bA394f9e7877a4d12AC9C656f704e0A3"},
+    {investor:'3',investment:new BigNumber('130860000000000000'), originalInvestor:"0xFe3138E427389a5560B8B89F07DB14de714795e3"},
+    {investor:'1',investment:new BigNumber('250000000000000000'), originalInvestor:"0x7E032A1Bed85664209B3C22D12caec40fdF73089"}
 ]
 
 const RETURNS=[
