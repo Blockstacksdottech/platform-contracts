@@ -63,6 +63,10 @@ typings/
 # virtualenv for node
 .node_env
 
+# virtualenv for python
+.venv
+
+
 # vim swap files
 *.swp
 *.swo

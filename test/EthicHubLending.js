@@ -15,7 +15,7 @@ const AwaitingReturn = 3;
 const ProjectNotFunded = 4;
 const ContributionReturned = 5;
 const Default = 6;
-const LatestVersion = 5;
+const LatestVersion = 6;
 
 const should = require('chai')
   .use(require('chai-as-promised'))
@@ -816,6 +816,45 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             //checkInvestmentResults(investor4InitialBalance,investor4SendTransactionBalance,expectedInvestor4Balance,investor4FinalBalance);
             checkLostinTransactions(expectedInvestor4Balance,investor4FinalBalance);
 
+        });
+
+
+        it('Should show same returns for investors different time after returned', async function() {
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1));
+
+            const investment2 = ether(1);
+            const investment3 = ether(0.5);
+            const investment4 = ether(1.5);
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2);
+            const investor3InitialBalance = await web3.eth.getBalance(investor3);
+            const investor4InitialBalance = await web3.eth.getBalance(investor4);
+
+            await this.lending.sendTransaction({value: investment2, from: investor2}).should.be.fulfilled;
+            await this.lending.sendTransaction({value: investment3, from: investor3}).should.be.fulfilled;
+            await this.lending.sendTransaction({value: investment4, from: investor4}).should.be.fulfilled;
+            const investor2SendTransactionBalance = await web3.eth.getBalance(investor2);
+            const investor3SendTransactionBalance = await web3.eth.getBalance(investor3);
+            const investor4SendTransactionBalance = await web3.eth.getBalance(investor4);
+            
+            await this.lending.sendFundsToBorrower({from:owner}).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            increaseTimePastEndingTime(this.lending,this.lendingDays)
+            await this.lending.setBorrowerReturnEthPerFiatRate(this.finalEthPerFiatRate, {from: owner}).should.be.fulfilled;
+            //console.log("borrowerReturnAmount: " + utils.fromWei(utils.toBN(borrowerReturnAmount)));
+            const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
+            var investorInterest = await this.lending.investorInterest()
+            console.log(investorInterest)
+            await this.lending.sendTransaction({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled;
+
+            let firstCheck = await this.lending.checkInvestorReturns(investor2).should.be.fulfilled;
+            investorInterest = await this.lending.investorInterest()
+            console.log(investorInterest)
+            increaseTimePastEndingTime(this.lending,this.lendingDays + 20)
+            investorInterest = await this.lending.investorInterest()
+            console.log(investorInterest)
+            let secondCheck = await this.lending.checkInvestorReturns(investor2).should.be.fulfilled;
+            firstCheck.should.be.bignumber.equal(secondCheck)
         });
 
         it('Should return investors with excess contribution', async function() {

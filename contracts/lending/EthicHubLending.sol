@@ -30,6 +30,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     uint256 public annualInterest;
     uint256 public totalLendingAmount;
     uint256 public lendingDays;
+    uint256 public borrowerReturnDays;
     uint256 public initialEthPerFiatRate;
     uint256 public totalLendingFiatAmount;
     address public borrower;
@@ -117,9 +118,10 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0, "_totalLendingAmount must be > 0");
         require(_lendingDays > 0, "_lendingDays must be > 0");
         require(_annualInterest > 0 && _annualInterest < 100, "_annualInterest must be between 0 and 100");
-        version = 5;
+        version = 6;
         reclaimedContributions = 0;
         reclaimedSurpluses = 0;
+        borrowerReturnDays = 0;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -333,7 +335,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
 
     function returnBorrowedEth() internal {
-        require(state == LendingState.AwaitingReturn, "State is not awaiting return");
+        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
         require(msg.sender == borrower, "Only the borrower can repay");
         require(borrowerReturnEthPerFiatRate > 0, "Second exchange rate not set");
         bool projectRepayed = false;
@@ -343,6 +345,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         (newReturnedEth, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedEth, msg.value);
         returnedEth = newReturnedEth;
         if (projectRepayed == true) {
+            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
             state = LendingState.ContributionReturned;
             emit StateChange(uint(state));
             updateReputation();
@@ -461,12 +464,23 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         return lastDate.sub(firstDate).div(60).div(60).div(24);
     }
 
+    /** Returns lending days for interest calculations. Once payed, it will return fundingEndTime + days passed until proyect repayment 
+    /* @return days
+    */
+    function getLendingDays() public view returns(uint) {
+        if(borrowerReturnDays > 0) {
+            return borrowerReturnDays;
+        } else {
+            return getDaysPassedBetweenDates(fundingEndTime, now);
+        }
+    }
+
     // lendingInterestRate with 2 decimal
     // 15 * (lending days)/ 365 + 4% local node fee + 3% LendingDev fee
     function lendingInterestRatePercentage() public view returns(uint256){
         return annualInterest.mul(interestBaseUint)
             // current days
-            .mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365)
+            .mul(getLendingDays()).div(365)
             .add(localNodeFee.mul(interestBaseUint))
             .add(ethichubFee.mul(interestBaseUint))
             .add(interestBasePercent);
@@ -474,7 +488,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     // lendingInterestRate with 2 decimal
     function investorInterest() public view returns(uint256){
-        return annualInterest.mul(interestBaseUint).mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365).add(interestBasePercent);
+        return annualInterest.mul(interestBaseUint).mul(getLendingDays()).div(365).add(interestBasePercent);
     }
 
     function borrowerReturnFiatAmount() public view returns(uint256) {
