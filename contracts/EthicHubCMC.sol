@@ -30,7 +30,7 @@ contract EthicHubCMC is EthicHubBase, Ownable {
 
     constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
         // Version
-        version = 4;
+        version = 3;
     }
 
     function addNewLendingContract(address _lendingAddress) public onlyOwnerOrLocalNode {
