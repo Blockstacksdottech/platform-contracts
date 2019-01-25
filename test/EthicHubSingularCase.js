@@ -122,11 +122,11 @@ for (var i = 0; i < NUMBER_INVESTORS; i++) {
 }
 // investments the first investor is 0
 const INVESTMENTS=[
-    {investor:'0',investment:new BigNumber('1000000000000000000'), originalInvestor:"0x90299EC59b94398a3a31a795Bc585F743d0e5Cc9"},
-    {investor:'1',investment:new BigNumber('1990000000000000000'), originalInvestor:"0x7E032A1Bed85664209B3C22D12caec40fdF73089"},
-    {investor:'2',investment:new BigNumber('340000000000000000'), originalInvestor:"0xFF876a47bA394f9e7877a4d12AC9C656f704e0A3"},
-    {investor:'3',investment:new BigNumber('130860000000000000'), originalInvestor:"0xFe3138E427389a5560B8B89F07DB14de714795e3"},
-    {investor:'1',investment:new BigNumber('250000000000000000'), originalInvestor:"0x7E032A1Bed85664209B3C22D12caec40fdF73089"}
+    {investor:'0',investment:new BigNumber('1000000000000000000'), originalInvestor:'0x90299EC59b94398a3a31a795Bc585F743d0e5Cc9'},
+    {investor:'1',investment:new BigNumber('1990000000000000000'), originalInvestor:'0x7E032A1Bed85664209B3C22D12caec40fdF73089'},
+    {investor:'2',investment:new BigNumber('340000000000000000'), originalInvestor:'0xFF876a47bA394f9e7877a4d12AC9C656f704e0A3'},
+    {investor:'3',investment:new BigNumber('130860000000000000'), originalInvestor:'0xFe3138E427389a5560B8B89F07DB14de714795e3'},
+    {investor:'1',investment:new BigNumber('250000000000000000'), originalInvestor:'0x7E032A1Bed85664209B3C22D12caec40fdF73089'}
 ]
 
 const RETURNS=[
@@ -263,7 +263,7 @@ describe('Test Single Case contract', function() {
     it('should pass if lending contract owner is the same owner address', async function() {
         owner.should.be.equal(await lendingInstance.owner());
     });
-    it.skip('investments reaches goal', async function() {
+    it('investments reaches goal', async function() {
         await increaseTimeTo(latestTime() + duration.days(1));
         // Init Reputation
         const initialCommunityReputation = await reputationInstance.getCommunityReputation(community).should.be.fulfilled;
@@ -307,16 +307,16 @@ describe('Test Single Case contract', function() {
         //TODO decimal precision
         //totalLendingFiatAmount.should.be.bignumber.equal(TOTAL_LENDING_FIAT_AMOUNT);
         var difference = 0
-        console.log('expected total fiat amount')
+        console.log(' --- expected total fiat amount')
         console.log(TOTAL_LENDING_FIAT_AMOUNT)
-        console.log('contract')
+        console.log(' --- contract')
         console.log(totalLendingFiatAmount)
         if(TOTAL_LENDING_FIAT_AMOUNT.gt(totalLendingFiatAmount)) {
           difference = TOTAL_LENDING_FIAT_AMOUNT.sub(totalLendingFiatAmount)
         } else {
           difference = totalLendingFiatAmount.sub(TOTAL_LENDING_FIAT_AMOUNT)
         }
-        console.log("difference")
+        console.log('difference')
         console.log(difference)
         difference.should.be.bignumber.lte(new BigNumber(100000000));
         increaseTimePastEndingTime(lendingInstance, LENDING_DAYS)
@@ -325,8 +325,8 @@ describe('Test Single Case contract', function() {
         // Borrower return amount
         await lendingInstance.setBorrowerReturnEthPerFiatRate(FINAL_ETH_RATE, {from: owner}).should.be.fulfilled;
         const borrowerReturnAmount = await lendingInstance.borrowerReturnAmount();
-        console.log('returnAmount: ' + borrowerReturnAmount)
-        console.log('expected: ' + BORROWER_RETURN_AMOUNT)
+        console.log(' --- returnAmount: ' + borrowerReturnAmount)
+        console.log(' --- expected: ' + BORROWER_RETURN_AMOUNT)
 
         //borrowerReturnAmount.should.be.bignumber.equal(BORROWER_RETURN_AMOUNT)
         var state = await lendingInstance.state()
@@ -338,32 +338,46 @@ describe('Test Single Case contract', function() {
           let amount = RETURNS[i]
           returnedTotal.add(amount)
           let transaction = await lendingInstance.sendTransaction({value: amount, from: borrower}).should.be.fulfilled;
-
-          console.log(transaction)
-          console.log("next")
+        
+          //console.log(transaction)
+          state = await lendingInstance.state()
+          console.log(state)
+          if(state.toString() === '5') {
+            console.log(' --- Numbers of returns is different. Transactions not done:')
+            RETURNS.forEach((returnTransactionParams, index) => {
+                if(index > i) {
+                    console.log(returnTransactionParams)
+                }
+            }) 
+            break
+          } else {
+            console.log(' --- next')
+          }
         }
-        console.log("contract:")
+        state.should.be.bignumber.equal(5)
+        console.log(' --- contract:')
         console.log(borrowerReturnAmount)
-        console.log("total sent")
+        console.log(' --- total sent')
         console.log(returnedTotal)
-        console.log("total sent minus excess in production")
+        console.log(' --- total sent minus excess in production')
         let expectedReturn = returnedTotal.sub(EXCESS_IN_RETURN)
         console.log(expectedReturn)
 
         state = await lendingInstance.state()
         console.log(`state = ${state}`)
         //borrowerReturnAmount.should.be.bignumber.equal(expectedReturn)
-
+        console.log(' --- Reclaiming for all stakeholders')
         let reclaimActions = getReclaimActions(lendingInstance)
         for (var i = 0; i < NUMBER_INVESTORS; i++) {
           let reclaim = reclaimActions[i]
+          console.log(reclaim)
           var transaction
           if (reclaim.hasTarget) {
             transaction = await reclaim.action(reclaim.sender, {from: reclaim.sender}).should.be.fulfilled;
           } else {
             transaction = await reclaim.action({from: reclaim.sender}).should.be.fulfilled;
           }
-          console.log(transaction)
+          //console.log(transaction)
         }
 
         // Show balances
@@ -396,7 +410,7 @@ function traceBalancesAllActors() {
 
 function checkLostinTransactions(expected, actual) {
     const lost = expected.sub(actual);
-    //console.log("Perdida:" + utils.fromWei(utils.toBN(Math.floor(lost.toNumber())), 'ether'));
+    //console.log('Perdida:' + utils.fromWei(utils.toBN(Math.floor(lost.toNumber())), 'ether'));
     // /* Should be below 0.02 eth */
     lost.should.be.bignumber.below('20000000000000000');
 }
@@ -434,14 +448,12 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
     const minPeopleCommunity = 20;
     const minProject = 1 * minPeopleCommunity;
     const incrLocalNodeMultiplier = 5;
-    const maxDelayDays = await storageInstance.getUint(utils.soliditySha3("lending.maxDelayDays", lendingInstance.address));
-    const projectTier = await storageInstance.getUint(utils.soliditySha3("lending.tier", lendingInstance.address));
-    const communityMembers = await storageInstance.getUint(utils.soliditySha3("lending.communityMembers", lendingInstance.address));
-    // Init Reputation
-    //const reputationAddress = await storageInstance.getAddress(utils.soliditySha3("contract.name", "reputation"));
-    //const reputationInstance = await reputation.at(reputationAddress);
-    //console.log('Initial (Community) Reputation: ' + initialCommunityReputation);
-    //console.log('Initial (Local Node) Reputation: ' + initialLocalNodeReputation);
+    const maxDelayDays = await storageInstance.getUint(utils.soliditySha3('lending.maxDelayDays', lendingInstance.address));
+    const projectTier = await storageInstance.getUint(utils.soliditySha3('lending.tier', lendingInstance.address));
+    const communityMembers = await storageInstance.getUint(utils.soliditySha3('lending.communityMembers', lendingInstance.address));
+
+    console.log(' --- Initial (Community) Reputation: ' + initialCommunityReputation);
+    console.log(' --- Initial (Local Node) Reputation: ' + initialLocalNodeReputation);
 
     var expectedCommunityRep = initialCommunityReputation;
     var expectedLocalNodeRep = initialLocalNodeReputation;
@@ -449,7 +461,7 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
     var decrement = 0;
     // Decrement
     if (delayDays > 0){
-        //console.log('=== DECREMENT ===');
+        console.log('=== DECREMENT ===');
         decrement = initialLocalNodeReputation.mul(delayDays).div(maxDelayDays);
         if (delayDays < maxDelayDays && decrement < reputationStep) {
             expectedLocalNodeRep = Math.floor(initialLocalNodeReputation.sub(decrement).toNumber());
@@ -462,8 +474,8 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
             expectedCommunityRep = 0;
         }
     } else {
-        //console.log('=== INCREMENT ===');
-        const completedProjectsByTier = await storageInstance.getUint(utils.soliditySha3("community.completedProjectsByTier",lendingInstance.address, projectTier));
+        console.log('=== INCREMENT ===');
+        const completedProjectsByTier = await storageInstance.getUint(utils.soliditySha3('community.completedProjectsByTier',lendingInstance.address, projectTier));
         if (completedProjectsByTier > 0){
             increment = 100 / completedProjectsByTier;
             expectedCommunityRep = Math.floor(initialCommunityReputation.add(increment).toNumber());
@@ -471,17 +483,17 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
             expectedLocalNodeRep = initialLocalNodeReputation.add(increment).toNumber();
         }
     }
-    //console.log('Exp Community Reputation: ' + expectedCommunityRep);
-    //console.log('Exp Local Node Reputation: ' + expectedLocalNodeRep);
-    const communityAddress = await storageInstance.getAddress(utils.soliditySha3("lending.community",lendingInstance.address));
+    console.log(' --- Exp Community Reputation: ' + expectedCommunityRep);
+    console.log(' --- Exp Local Node Reputation: ' + expectedLocalNodeRep);
+    const communityAddress = await storageInstance.getAddress(utils.soliditySha3('lending.community',lendingInstance.address));
     communityAddress.should.be.equal(community);
     const communityRep = await reputationInstance.getCommunityReputation(community);
-    //console.log('Final Community Reputation: ' + communityRep);
+    console.log(' --- Final Community Reputation: ' + communityRep);
     communityRep.should.be.bignumber.equal(expectedCommunityRep);
-    const localNodeAddress = await storageInstance.getAddress(utils.soliditySha3("lending.localNode",lendingInstance.address));
+    const localNodeAddress = await storageInstance.getAddress(utils.soliditySha3('lending.localNode',lendingInstance.address));
     localNodeAddress.should.be.equal(localNode);
     const localNodeRep = await reputationInstance.getLocalNodeReputation(localNode);
-    //console.log('Final Local Node Reputation: ' + localNodeRep);
+    console.log(' --- Final Local Node Reputation: ' + localNodeRep);
     localNodeRep.should.be.bignumber.equal(expectedLocalNodeRep);
 }
 
