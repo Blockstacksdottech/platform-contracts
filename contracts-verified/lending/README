@@ -1,6 +1,6 @@
 Version 6 (commit:604dfff3):
 ----------
-0. EthicHubLending v.6 contract (kovan:0x9FE18e7fA8E64A4A653079897F2fE88750D2A959, mainnet:).
+0. EthicHubLending v.6 contract (kovan:0x9FE18e7fA8E64A4A653079897F2fE88750D2A959, mainnet:0xeFeaC98FEeCd1Aae363a6945be42828F55830e07).
 1. py-solc: python -m solc.install v0.4.25
 2. solidity_flattener --output EthicHubLendingFlattenedv6.sol EthicHubLendingv6.sol
 
