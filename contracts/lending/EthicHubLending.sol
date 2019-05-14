@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import "/home/dondrup/workspace/ethichub/platform-contracts/node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import "../reputation/EthicHubReputationInterface.sol";
