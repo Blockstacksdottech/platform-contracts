@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "/home/dondrup/workspace/ethichub/platform-contracts/node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import "../reputation/EthicHubReputationInterface.sol";
@@ -36,7 +36,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     address public borrower;
     address public localNode;
     address public ethicHubTeam;
-    uint256 public borrowerReturnDate;
+    //uint256 public borrowerReturnDate;
     uint256 public borrowerReturnEthPerFiatRate;
     uint256 public ethichubFee;
     uint256 public localNodeFee;
@@ -87,12 +87,12 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         _;
     }
 
-    modifier onlyInvestorOrPaymentGateway() {
-        bool isInvestor = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", msg.sender)));
-        bool isPaymentGateway = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", msg.sender)));
-        require(isPaymentGateway || isInvestor, "Sender not authorized");
-        _;
-    }
+    //modifier onlyInvestorOrPaymentGateway() {
+    //    bool isInvestor = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", msg.sender)));
+    //    bool isPaymentGateway = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", msg.sender)));
+    //    require(isPaymentGateway || isInvestor, "Sender not authorized");
+    //    _;
+    //}
 
     constructor(
         uint256 _fundingStartTime,
