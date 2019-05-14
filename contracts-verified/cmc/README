@@ -1,3 +1,17 @@
+Version 3 (commit:aec287d8):
+----------
+0. EthicHubUser v.3 contract (kovan:, mainnet:).
+1. py-solc: python -m solc.install v0.4.25
+2. solidity_flattener --output EthicHubCMCFlattenedv3.sol EthicHubCMCv3.sol
+
+Version 2 (commit:03595fca):
+------------
+0. EthicHubCMC v.2 contract (kovan:non deployed, mainnet:non deployed).
+1. py-solc: python -m solc.install v0.4.25
+2. solidity_flattener --output EthicHubCMCFlattenedv2.sol EthicHubCMCv2.sol
+
+Version 1 (commit:d6460fbc):
+------------
 0. EthicHubCMC v.1 contract (kovan:0x40e15a130b71db4ef32892d18ff304549ea7a9c7, mainnet:0x06B300e1eF7c4Cce6560c5c7719c92cde07Ad944).
 1. py-solc: python -m solc.install v0.4.23
-2. solidity_flattener --output EthicHubCMCFlattened.sol EthicHubCMC.sol
+2. solidity_flattener --output EthicHubCMCFlattenedv1.sol EthicHubCMCv1.sol

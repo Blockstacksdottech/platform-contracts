@@ -118,7 +118,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0, "_totalLendingAmount must be > 0");
         require(_lendingDays > 0, "_lendingDays must be > 0");
         require(_annualInterest > 0 && _annualInterest < 100, "_annualInterest must be between 0 and 100");
-        version = 7;
+        version = 6;
         reclaimedContributions = 0;
         reclaimedSurpluses = 0;
         borrowerReturnDays = 0;
@@ -385,7 +385,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             investorCount = investorCount.add(1);
         }
         if (excessContribValue > 0) {
-            contributor.transfer(excessContribValue);
+            msg.sender.transfer(excessContribValue);
             investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribValue);
             emit onContribution(newTotalContributed, contributor, msg.value.sub(excessContribValue), investorCount);
         } else {
@@ -464,12 +464,23 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         return lastDate.sub(firstDate).div(60).div(60).div(24);
     }
 
+    /** Returns lending days for interest calculations. Once payed, it will return fundingEndTime + days passed until proyect repayment 
+    /* @return days
+    */
+    function getLendingDays() public view returns(uint) {
+        if(borrowerReturnDays > 0) {
+            return borrowerReturnDays;
+        } else {
+            return getDaysPassedBetweenDates(fundingEndTime, now);
+        }
+    }
+
     // lendingInterestRate with 2 decimal
     // 15 * (lending days)/ 365 + 4% local node fee + 3% LendingDev fee
     function lendingInterestRatePercentage() public view returns(uint256){
         return annualInterest.mul(interestBaseUint)
             // current days
-            .mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365)
+            .mul(getLendingDays()).div(365)
             .add(localNodeFee.mul(interestBaseUint))
             .add(ethichubFee.mul(interestBaseUint))
             .add(interestBasePercent);
@@ -477,7 +488,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     // lendingInterestRate with 2 decimal
     function investorInterest() public view returns(uint256){
-        return annualInterest.mul(interestBaseUint).mul(borrowerReturnDays).div(365).add(interestBasePercent);
+        return annualInterest.mul(interestBaseUint).mul(getLendingDays()).div(365).add(interestBasePercent);
     }
 
     function borrowerReturnFiatAmount() public view returns(uint256) {

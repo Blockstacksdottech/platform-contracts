@@ -30,7 +30,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     uint256 public annualInterest;
     uint256 public totalLendingAmount;
     uint256 public lendingDays;
-    uint256 public borrowerReturnDays;
     uint256 public initialEthPerFiatRate;
     uint256 public totalLendingFiatAmount;
     address public borrower;
@@ -118,10 +117,9 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0, "_totalLendingAmount must be > 0");
         require(_lendingDays > 0, "_lendingDays must be > 0");
         require(_annualInterest > 0 && _annualInterest < 100, "_annualInterest must be between 0 and 100");
-        version = 7;
+        version = 5;
         reclaimedContributions = 0;
         reclaimedSurpluses = 0;
-        borrowerReturnDays = 0;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -335,7 +333,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
 
     function returnBorrowedEth() internal {
-        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
+        require(state == LendingState.AwaitingReturn, "State is not awaiting return");
         require(msg.sender == borrower, "Only the borrower can repay");
         require(borrowerReturnEthPerFiatRate > 0, "Second exchange rate not set");
         bool projectRepayed = false;
@@ -345,7 +343,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         (newReturnedEth, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedEth, msg.value);
         returnedEth = newReturnedEth;
         if (projectRepayed == true) {
-            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
             state = LendingState.ContributionReturned;
             emit StateChange(uint(state));
             updateReputation();
@@ -385,7 +382,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             investorCount = investorCount.add(1);
         }
         if (excessContribValue > 0) {
-            contributor.transfer(excessContribValue);
+            msg.sender.transfer(excessContribValue);
             investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribValue);
             emit onContribution(newTotalContributed, contributor, msg.value.sub(excessContribValue), investorCount);
         } else {
@@ -477,7 +474,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     // lendingInterestRate with 2 decimal
     function investorInterest() public view returns(uint256){
-        return annualInterest.mul(interestBaseUint).mul(borrowerReturnDays).div(365).add(interestBasePercent);
+        return annualInterest.mul(interestBaseUint).mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365).add(interestBasePercent);
     }
 
     function borrowerReturnFiatAmount() public view returns(uint256) {

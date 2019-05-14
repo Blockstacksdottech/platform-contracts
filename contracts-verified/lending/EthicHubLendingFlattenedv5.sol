@@ -1,10 +1,186 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.4.13;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
-import "../reputation/EthicHubReputationInterface.sol";
-import "../EthicHubBase.sol";
+contract EthicHubStorageInterface {
+
+    //modifier for access in sets and deletes
+    modifier onlyEthicHubContracts() {_;}
+
+    // Setters
+    function setAddress(bytes32 _key, address _value) external;
+    function setUint(bytes32 _key, uint _value) external;
+    function setString(bytes32 _key, string _value) external;
+    function setBytes(bytes32 _key, bytes _value) external;
+    function setBool(bytes32 _key, bool _value) external;
+    function setInt(bytes32 _key, int _value) external;
+    // Deleters
+    function deleteAddress(bytes32 _key) external;
+    function deleteUint(bytes32 _key) external;
+    function deleteString(bytes32 _key) external;
+    function deleteBytes(bytes32 _key) external;
+    function deleteBool(bytes32 _key) external;
+    function deleteInt(bytes32 _key) external;
+
+    // Getters
+    function getAddress(bytes32 _key) external view returns (address);
+    function getUint(bytes32 _key) external view returns (uint);
+    function getString(bytes32 _key) external view returns (string);
+    function getBytes(bytes32 _key) external view returns (bytes);
+    function getBool(bytes32 _key) external view returns (bool);
+    function getInt(bytes32 _key) external view returns (int);
+}
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract EthicHubBase {
+
+    uint8 public version;
+
+    EthicHubStorageInterface public ethicHubStorage = EthicHubStorageInterface(0);
+
+    constructor(address _storageAddress) public {
+        require(_storageAddress != address(0));
+        ethicHubStorage = EthicHubStorageInterface(_storageAddress);
+    }
+
+}
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
 
 contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     using SafeMath for uint256;
@@ -30,7 +206,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     uint256 public annualInterest;
     uint256 public totalLendingAmount;
     uint256 public lendingDays;
-    uint256 public borrowerReturnDays;
     uint256 public initialEthPerFiatRate;
     uint256 public totalLendingFiatAmount;
     address public borrower;
@@ -118,10 +293,9 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0, "_totalLendingAmount must be > 0");
         require(_lendingDays > 0, "_lendingDays must be > 0");
         require(_annualInterest > 0 && _annualInterest < 100, "_annualInterest must be between 0 and 100");
-        version = 7;
+        version = 5;
         reclaimedContributions = 0;
         reclaimedSurpluses = 0;
-        borrowerReturnDays = 0;
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -335,7 +509,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
 
     function returnBorrowedEth() internal {
-        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
+        require(state == LendingState.AwaitingReturn, "State is not awaiting return");
         require(msg.sender == borrower, "Only the borrower can repay");
         require(borrowerReturnEthPerFiatRate > 0, "Second exchange rate not set");
         bool projectRepayed = false;
@@ -345,7 +519,6 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         (newReturnedEth, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedEth, msg.value);
         returnedEth = newReturnedEth;
         if (projectRepayed == true) {
-            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
             state = LendingState.ContributionReturned;
             emit StateChange(uint(state));
             updateReputation();
@@ -385,7 +558,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             investorCount = investorCount.add(1);
         }
         if (excessContribValue > 0) {
-            contributor.transfer(excessContribValue);
+            msg.sender.transfer(excessContribValue);
             investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribValue);
             emit onContribution(newTotalContributed, contributor, msg.value.sub(excessContribValue), investorCount);
         } else {
@@ -477,7 +650,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     // lendingInterestRate with 2 decimal
     function investorInterest() public view returns(uint256){
-        return annualInterest.mul(interestBaseUint).mul(borrowerReturnDays).div(365).add(interestBasePercent);
+        return annualInterest.mul(interestBaseUint).mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365).add(interestBasePercent);
     }
 
     function borrowerReturnFiatAmount() public view returns(uint256) {
@@ -522,3 +695,15 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         surplusEthReclaimed = investors[userAddress].surplusEthReclaimed;
     }
 }
+
+contract EthicHubReputationInterface {
+    modifier onlyUsersContract(){_;}
+    modifier onlyLendingContract(){_;}
+    function burnReputation(uint delayDays)  external;
+    function incrementReputation(uint completedProjectsByTier)  external;
+    function initLocalNodeReputation(address localNode)  external;
+    function initCommunityReputation(address community)  external;
+    function getCommunityReputation(address target) public view returns(uint256);
+    function getLocalNodeReputation(address target) public view returns(uint256);
+}
+
