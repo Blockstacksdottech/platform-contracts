@@ -385,7 +385,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             investorCount = investorCount.add(1);
         }
         if (excessContribValue > 0) {
-            msg.sender.transfer(excessContribValue);
+            contributor.transfer(excessContribValue);
             investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribValue);
             emit onContribution(newTotalContributed, contributor, msg.value.sub(excessContribValue), investorCount);
         } else {

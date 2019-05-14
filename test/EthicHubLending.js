@@ -187,14 +187,16 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         it('should return extra value over cap to last investor', async function () {
             await increaseTimeTo(this.fundingStartTime  + duration.days(1))
             var initialBalance = await web3.eth.getBalance(investor2);
+            //console.log("initialBalance: " + utils.fromWei(utils.toBN(initialBalance)))
             await this.lending.sendTransaction({value:ether(2), from: investor}).should.be.fulfilled;
             await this.lending.sendTransaction({value:ether(1.5), from: investor2}).should.be.fulfilled;
             var afterInvestmentBalance = await web3.eth.getBalance(investor2);
+            //console.log("afterInvestmentBalance: " + utils.fromWei(utils.toBN(afterInvestmentBalance)))
 
         });
 
         it('should allow to invest throught paymentGateway', async function () {
-            const paymentGateway = owner;
+            const paymentGateway = ethicHubTeam;
             await this.mockStorage.setBool(utils.soliditySha3("user", "paymentGateway", paymentGateway),true);
             await increaseTimeTo(this.fundingStartTime  + duration.days(1))
             var isRunning = await this.lending.isContribPeriodRunning();
@@ -202,6 +204,30 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.contributeForAddress(investor, {value:ether(1), from: paymentGateway}).should.be.fulfilled;
             const contributionAmount = await this.lending.checkInvestorContribution(investor);
             contributionAmount.should.be.bignumber.equal(new BigNumber(ether(1)));
+        });
+
+        it('should return extra value over cap to last investor throught paymentGateway', async function () {
+            const paymentGateway = ethicHubTeam;
+            await this.mockStorage.setBool(utils.soliditySha3("user", "paymentGateway", paymentGateway),true);
+            await increaseTimeTo(this.fundingStartTime  + duration.days(1))
+            const isRunning = await this.lending.isContribPeriodRunning();
+            isRunning.should.be.equal(true);
+            const initialBalance = await web3.eth.getBalance(investor);
+            const initialBalanceGW = await web3.eth.getBalance(paymentGateway);
+            const initialAmount = initialBalance.add(initialBalanceGW)
+            //console.log("initialBalance investor: " + utils.fromWei(utils.toBN(initialBalance)))
+            //console.log("initialBalance gateway: " + utils.fromWei(utils.toBN(initialBalanceGW)))
+            await this.lending.sendTransaction({value:ether(1), from: investor2}).should.be.fulfilled;
+            await this.lending.sendTransaction({value:ether(1), from: investor3}).should.be.fulfilled;
+            await this.lending.contributeForAddress(investor, {value:ether(5), from: paymentGateway}).should.be.fulfilled;
+            const afterInvestmentBalance = await web3.eth.getBalance(investor);
+            const afterInvestmentBalanceGW = await web3.eth.getBalance(paymentGateway);
+            //console.log("afterInvestmentBalance investor: " + utils.fromWei(utils.toBN(afterInvestmentBalance)))
+            //console.log("afterInvestmentBalance gateway: " + utils.fromWei(utils.toBN(afterInvestmentBalanceGW)))
+            const contributionAmount = await this.lending.checkInvestorContribution(investor);
+            contributionAmount.should.be.bignumber.equal(new BigNumber(ether(1)));
+            const afterAmount = afterInvestmentBalance.add(afterInvestmentBalanceGW).add(contributionAmount)
+            checkLostinTransactions(initialAmount,afterAmount);
         });
 
         it('should allow to invest amount < 0.1 eth', async function () {
