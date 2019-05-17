@@ -1732,6 +1732,15 @@ contract('EthicHubLending with surplus', function() {
             let borrower4 = investor1;
             lendingInstance.setBorrower(borrower4, {from:arbiter}).should.be.rejectedWith(EVMRevert);
 
+            //remove Arbitrage contract
+            var arbitrageAddress = await storageInstance.getAddress(utils.soliditySha3("contract.name", "arbitrage"));
+            arbitrageAddress.should.be.equal(arbitrageInstance.address);
+            await cmcInstance.removeContract(arbitrageInstance.address, 'arbitrage');
+            arbitrageAddress = await storageInstance.getAddress(utils.soliditySha3("contract.name", "arbitrage"));
+            arbitrageAddress.should.be.equal('0x0000000000000000000000000000000000000000');
+            arbitrageAddress = await storageInstance.getAddress(utils.soliditySha3("contract.address", arbitrageInstance.address));
+            arbitrageAddress.should.be.equal('0x0000000000000000000000000000000000000000');
+
             //finish returning
             transaction = await lendingInstance.sendTransaction({value: borrowerReturnAmount, from: borrower3}).should.be.fulfilled;
 

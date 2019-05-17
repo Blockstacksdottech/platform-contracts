@@ -16,6 +16,11 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         uint256 created                                         // Creation timestamp
     );
 
+    event ContractRemoved (
+        address indexed _contractAddress,                       // Address of the contract being removed
+        uint256 removed                                         // Remove timestamp
+    );
+
     event LendingContractAdded (
         address indexed _newContractAddress,                    // Address of the new contract
         uint256 created                                         // Creation timestamp
@@ -30,7 +35,7 @@ contract EthicHubCMC is EthicHubBase, Ownable {
 
     constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
         // Version
-        version = 3;
+        version = 4;
     }
 
     function addNewLendingContract(address _lendingAddress) public onlyOwnerOrLocalNode {
@@ -49,4 +54,12 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         emit ContractUpgraded(oldAddress, _newContractAddress, now);
     }
 
+    function removeContract(address _contractAddress, string _contractName) public onlyOwner {
+        require(_contractAddress != address(0));
+        address contractAddress = ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", _contractName)));
+        require(_contractAddress == contractAddress);
+        ethicHubStorage.deleteAddress(keccak256(abi.encodePacked("contract.address", _contractAddress)));
+        ethicHubStorage.deleteAddress(keccak256(abi.encodePacked("contract.name", _contractName)));
+        emit ContractRemoved(_contractAddress, now);
+    }
 }
