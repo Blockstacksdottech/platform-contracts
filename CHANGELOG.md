@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2019-05-20
+### Added
+- Remove contract function on CMC contract
+- Add on deploy contract script in migrations, the contract.name = cmc
+
+### Fixed
+- Deploy and verified v4 users contract
+- Deploy and verified v2 reputation contract
+- Deploy and verified v4 cmc contract
+
 ## [0.1.7] - 2019-05-14
 ### Added
 - Verified contract of user v4
@@ -26,5 +36,6 @@ project and the day that is claimed
 - In lending contract unused global variable borrowerReturnDate
 - In lending contract unused modifier onlyInvestorOrPaymentGateway
 
-[Unreleased]: https://gitlab.com/EthicHub/platform-contracts/compare/v0.1.7...master
+[Unreleased]: https://gitlab.com/EthicHub/platform-contracts/compare/v0.1.8...master
 [0.1.7]: https://gitlab.com/EthicHub/platform-contracts/compare/v0.1.6...v0.1.7
+[0.1.8]: https://gitlab.com/EthicHub/platform-contracts/compare/v0.1.7...v0.1.8
