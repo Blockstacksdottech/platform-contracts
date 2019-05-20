@@ -1,6 +1,6 @@
 Version 2 (commit:c2b75627):
 ----------
-0. EthicHubUser v.2 contract (kovan:, mainnet:).
+0. EthicHubUser v.2 contract (kovan:0x30f42C3Ff0C51bCEc9CC29CbEeC342B23cB5F04D, mainnet:0xbffFC6416022ebdf211312aa9f1EB87443912159).
 1. py-solc: python -m solc.install v0.4.25
 2. solidity_flattener --output EthicHubReputationFlattenedv2.sol EthicHubReputationv2.sol
 
