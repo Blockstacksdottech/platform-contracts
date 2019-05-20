@@ -26,6 +26,7 @@ module.exports = async (deployer, network) => {
                 //Give CMC access to storage
                 console.log("--> Registering EthichubCMC in the network...");
                 await storageInstance.setAddress(utils.soliditySha3("contract.address", cmc.address), cmc.address);
+                await storageInstance.setAddress(utils.soliditySha3("contract.name", "cmc"), cmc.address);
                 console.log("--> EthichubCMC registered");
 
                 //Deploy reputation
