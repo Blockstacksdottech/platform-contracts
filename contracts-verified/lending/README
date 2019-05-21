@@ -1,6 +1,6 @@
 Version 7 (commit:e9642902):
 ----------
-0. EthicHubLending v.7 contract (kovan:0xEE19059bF936854464CEBeDd52321Ce3ce6E6658, mainnet:).
+0. EthicHubLending v.7 contract (kovan:0xEE19059bF936854464CEBeDd52321Ce3ce6E6658, mainnet:0x2a84Aa3B15369E850AA82136D8E7D2CAf71E656B).
 1. py-solc: python -m solc.install v0.4.25
 2. solidity_flattener --output EthicHubLendingFlattenedv7.sol EthicHubLendingv7.sol
 
