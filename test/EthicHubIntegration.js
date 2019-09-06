@@ -40,6 +40,7 @@ const userManager = artifacts.require('./user/EthicHubUser.sol');
 const lending = artifacts.require('./lending/EthicHubLending.sol');
 const reputation = artifacts.require('./reputation/EthicHubReputation.sol');
 const arbitrage = artifacts.require('./arbitrage/EthicHubArbitrage.sol');
+const multisig = artifacts.require('./multisig/MultiSigWallet.sol');
 
 const Uninitialized = 0;
 const AcceptingContributions = 1;
@@ -97,6 +98,8 @@ const localNode2 = web3.eth.accounts[1];
 const borrower = web3.eth.accounts[2];
 const localNode1 = web3.eth.accounts[3];
 const teamEH = web3.eth.accounts[4];
+const teamEH_part1 = web3.eth.accounts[4];
+const teamEH_part2 = web3.eth.accounts[9];
 const investor1 = web3.eth.accounts[5];
 const investor2 = web3.eth.accounts[6];
 const investor3 = web3.eth.accounts[7];
@@ -148,7 +151,17 @@ contract('EthicHubUser', function() {
         let registrationStatus = await userManagerInstance.viewRegistrationStatus(paymentGateway, 'paymentGateway');
         registrationStatus.should.be.equal(true);
     });
-
+    it('should register EH address', async function() {
+        let multiSigInstance = await multisig.new(
+            //Arguments
+            [teamEH_part1, teamEH_part2],//_owners List
+            2//_required Number of required confirmations
+        );
+        let owners = await multiSigInstance.getOwners();
+        let teamEH = multiSigInstance.address;
+        owners[0].should.be.equal(teamEH_part1);
+        owners[1].should.be.equal(teamEH_part2);
+    });
     it('change user status', async function() {
         await userManagerInstance.unregisterInvestor(investor1);
         let registrationStatus = await userManagerInstance.viewRegistrationStatus(investor1, 'investor');
@@ -195,6 +208,12 @@ contract('EthicHubLending (Lending owner != LocalNode)', function() {
         // register first LocalNode necessary on lending contract
         await userManagerInstance.registerLocalNode(localNode1);
         await userManagerInstance.registerRepresentative(borrower);
+        let multiSigInstance = await multisig.new(
+            //Arguments
+            [teamEH_part1, teamEH_part2],//_owners List
+            2//_required Number of required confirmations
+        );
+        let teamEH = multiSigInstance.address;
         lendingInstance = await lending.new(
             //Arguments
             latestTime() + duration.days(1),//_fundingStartTime
