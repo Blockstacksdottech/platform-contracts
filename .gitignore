@@ -72,3 +72,7 @@ typings/
 *.swo
 
 build/
+
+# OpenZeppelin SDK
+.openzeppelin/dev-*.json
+.openzeppelin/.session
