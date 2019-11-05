@@ -18,21 +18,28 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
+
 'use strict';
+
 import ether from './helpers/ether';
-import {advanceBlock} from './helpers/advanceToBlock';
-import {increaseTimeTo, duration} from './helpers/increaseTime';
+import {
+    advanceBlock
+} from './helpers/advanceToBlock';
+import {
+    increaseTimeTo,
+    duration
+} from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import EVMRevert from './helpers/EVMRevert';
 
 const EthereumTx = require('ethereumjs-tx');
-const BigNumber = web3.BigNumber
 const should = require('chai')
     .use(require('chai-as-promised'))
     .use(require('chai-bignumber')(BigNumber))
     .should()
 const web3_1_0 = require('web3');
-const utils = web3_1_0.utils;
+const utils = require("web3-utils");
+const BigNumber = utils.BN
 const fs = require('fs');
 const storage = artifacts.require('./storage/EthicHubStorage.sol');
 const cmc = artifacts.require('./EthicHubCMC.sol');
@@ -81,7 +88,7 @@ function now() {
     return Math.round((new Date()).getTime() / 1000);
 }
 
-function deployedContracts (debug = false) {
+function deployedContracts(debug = false) {
     const instances = Promise.all([
         storage.deployed(),
         userManager.deployed(),
@@ -93,24 +100,24 @@ function deployedContracts (debug = false) {
 }
 
 // Initial parameters
-const TIER=1;
-const INITIAL_WEIS=3539238226800208500 // Initial weis
-const INIT_ETH_RATE=538701 // When exchange contract to borrower
-const FINAL_ETH_RATE=242925 // When exchange borrower to contract
-const COMMUNITY_NUMBER=19;
+const TIER = 1;
+const INITIAL_WEIS = 3539238226800208500 // Initial weis
+const INIT_ETH_RATE = 538701 // When exchange contract to borrower
+const FINAL_ETH_RATE = 242925 // When exchange borrower to contract
+const COMMUNITY_NUMBER = 19;
 //const FIAT_PER_PERSON=1000;
-const FUNDING_DAYS=15;
-const LENDING_DAYS=77;
-const INTEREST=15;
-const MAX_DELAY_DAYS=30;
-const LOCAL_NODE_FEE=4;
-const TEAM_FEE=3;
+const FUNDING_DAYS = 15;
+const LENDING_DAYS = 77;
+const INTEREST = 15;
+const MAX_DELAY_DAYS = 30;
+const LOCAL_NODE_FEE = 4;
+const TEAM_FEE = 3;
 const TOTAL_LENDING_FIAT_AMOUNT = new BigNumber('1906591172015499119158500');
 const BORROWER_RETURN_AMOUNT = new BigNumber('8858575510358727408')
 
 // Actors
 const owner = web3.eth.accounts[0]; // Always 0 position
-const NUMBER_INVESTORS=4;
+const NUMBER_INVESTORS = 4;
 const localNode = web3.eth.accounts[NUMBER_INVESTORS + 1];
 const community = web3.eth.accounts[NUMBER_INVESTORS + 2];
 const teamEH = web3.eth.accounts[NUMBER_INVESTORS + 3];
@@ -118,63 +125,81 @@ const borrower = web3.eth.accounts[NUMBER_INVESTORS + 4];
 const paymentGateway = web3.eth.accounts[NUMBER_INVESTORS + 5];
 var investors = [];
 for (var i = 0; i < NUMBER_INVESTORS; i++) {
-  investors[i] = web3.eth.accounts[i + 1];
+    investors[i] = web3.eth.accounts[i + 1];
 }
 // investments the first investor is 0
-const INVESTMENTS=[
-    {investor:'0',investment:new BigNumber('1000000000000000000'), originalInvestor:"0x90299EC59b94398a3a31a795Bc585F743d0e5Cc9"},
-    {investor:'1',investment:new BigNumber('1990000000000000000'), originalInvestor:"0x7E032A1Bed85664209B3C22D12caec40fdF73089"},
-    {investor:'2',investment:new BigNumber('340000000000000000'), originalInvestor:"0xFF876a47bA394f9e7877a4d12AC9C656f704e0A3"},
-    {investor:'3',investment:new BigNumber('130860000000000000'), originalInvestor:"0xFe3138E427389a5560B8B89F07DB14de714795e3"},
-    {investor:'1',investment:new BigNumber('250000000000000000'), originalInvestor:"0x7E032A1Bed85664209B3C22D12caec40fdF73089"}
+const INVESTMENTS = [{
+        investor: '0',
+        investment: new BigNumber('1000000000000000000'),
+        originalInvestor: "0x90299EC59b94398a3a31a795Bc585F743d0e5Cc9"
+    },
+    {
+        investor: '1',
+        investment: new BigNumber('1990000000000000000'),
+        originalInvestor: "0x7E032A1Bed85664209B3C22D12caec40fdF73089"
+    },
+    {
+        investor: '2',
+        investment: new BigNumber('340000000000000000'),
+        originalInvestor: "0xFF876a47bA394f9e7877a4d12AC9C656f704e0A3"
+    },
+    {
+        investor: '3',
+        investment: new BigNumber('130860000000000000'),
+        originalInvestor: "0xFe3138E427389a5560B8B89F07DB14de714795e3"
+    },
+    {
+        investor: '1',
+        investment: new BigNumber('250000000000000000'),
+        originalInvestor: "0x7E032A1Bed85664209B3C22D12caec40fdF73089"
+    }
 ]
 
-const RETURNS=[
-  new BigNumber('8657779357692697862'),
-  new BigNumber('220056000000000'),
-  new BigNumber('188440380000000000')
+const RETURNS = [
+    new BigNumber('8657779357692697862'),
+    new BigNumber('220056000000000'),
+    new BigNumber('188440380000000000')
 ]
 const EXCESS_IN_RETURN = new BigNumber('188000436000000000')
 
 function getReclaimActions(lendingContract) {
-  return [
-    {
-      sender: investors[1],
-      action: lendingContract.reclaimContributionWithInterest,
-      expected: new BigNumber('4739035099193008911'),
-      hasTarget: true
-    },
-    {
-      sender: investors[2],
-      action: lendingContract.reclaimContributionWithInterest,
-      expected: new BigNumber('779681133658536585'),
-      hasTarget: true
-    },
-    {
-      sender: investors[0],
-      action: lendingContract.reclaimContributionWithInterest,
-      expected: new BigNumber('2295840878048780487'),
-      hasTarget: true
-    },
-    {
-      sender: owner,
-      action: lendingContract.reclaimLocalNodeFee,
-      expected: new BigNumber('313939063005536543'),
-      hasTarget: false
-    },
-    {
-      sender: owner,
-      action: lendingContract.reclaimEthicHubTeamFee,
-      expected: new BigNumber('235454297254152407'),
-      hasTarget: true
-    },
-    {
-      sender: investors[3],
-      action: lendingContract.reclaimContributionWithInterest,
-      expected: new BigNumber('307224183986341463'),
-      hasTarget: true
-    },
-  ]
+    return [{
+            sender: investors[1],
+            action: lendingContract.reclaimContributionWithInterest,
+            expected: new BigNumber('4739035099193008911'),
+            hasTarget: true
+        },
+        {
+            sender: investors[2],
+            action: lendingContract.reclaimContributionWithInterest,
+            expected: new BigNumber('779681133658536585'),
+            hasTarget: true
+        },
+        {
+            sender: investors[0],
+            action: lendingContract.reclaimContributionWithInterest,
+            expected: new BigNumber('2295840878048780487'),
+            hasTarget: true
+        },
+        {
+            sender: owner,
+            action: lendingContract.reclaimLocalNodeFee,
+            expected: new BigNumber('313939063005536543'),
+            hasTarget: false
+        },
+        {
+            sender: owner,
+            action: lendingContract.reclaimEthicHubTeamFee,
+            expected: new BigNumber('235454297254152407'),
+            hasTarget: true
+        },
+        {
+            sender: investors[3],
+            action: lendingContract.reclaimContributionWithInterest,
+            expected: new BigNumber('307224183986341463'),
+            hasTarget: true
+        },
+    ]
 }
 
 describe('Test Single Case contract', function() {
@@ -231,14 +256,15 @@ describe('Test Single Case contract', function() {
         };
     });
     it('should deploy lending contract', async function() {
+        const latestTimeValue = await latestTime()
         lendingInstance = await lending.new(
             //Arguments
-            latestTime() + duration.days(1),//_fundingStartTime
-            latestTime() + duration.days(FUNDING_DAYS + 1),//_fundingEndTime
-            borrower,//_representative
-            INTEREST,//_annualInterest
-            INITIAL_WEIS,//_totalLendingAmount
-            LENDING_DAYS,//_lendingDays
+            latestTimeValue + duration.days(1), //_fundingStartTime
+            latestTimeValue + duration.days(FUNDING_DAYS + 1), //_fundingEndTime
+            borrower, //_representative
+            INTEREST, //_annualInterest
+            INITIAL_WEIS, //_totalLendingAmount
+            LENDING_DAYS, //_lendingDays
             storageInstance.address, //_storageAddress
             localNode,
             teamEH,
@@ -250,10 +276,10 @@ describe('Test Single Case contract', function() {
         console.log('--> EthicHubLending deployed');
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
-            MAX_DELAY_DAYS,//maxDefaultDays
-            TIER,//tier
-            COMMUNITY_NUMBER,//community members
-            community//community rep wallet
+            MAX_DELAY_DAYS, //maxDefaultDays
+            TIER, //tier
+            COMMUNITY_NUMBER, //community members
+            community //community rep wallet
         );
     });
     it('should pass if lending contract is on storage contract', async function() {
@@ -274,7 +300,10 @@ describe('Test Single Case contract', function() {
         isRunning.should.be.equal(true);
         var total_contribution = new BigNumber(0);
         for (var i = 0; i < INVESTMENTS.length; i++) {
-            var transaction = await lendingInstance.sendTransaction({value: INVESTMENTS[i]['investment'], from: investors[INVESTMENTS[i]['investor']]}).should.be.fulfilled;
+            var transaction = await lendingInstance.sendTransaction({
+                value: INVESTMENTS[i]['investment'],
+                from: investors[INVESTMENTS[i]['investor']]
+            }).should.be.fulfilled;
             total_contribution = total_contribution.add(INVESTMENTS[i]['investment']);
         };
         // Check investments
@@ -283,10 +312,10 @@ describe('Test Single Case contract', function() {
             for (var j = 0; j < INVESTMENTS.length; j++) {
                 if (i == INVESTMENTS[j]['investor']) {
                     if (j == INVESTMENTS.length - 1) {
-                      let excess = total_contribution.sub(utils.toBN(INITIAL_WEIS));
-                      investor_contribution = investor_contribution.add(INVESTMENTS[j]['investment']).sub(excess);
+                        let excess = total_contribution.sub(utils.toBN(INITIAL_WEIS));
+                        investor_contribution = investor_contribution.add(INVESTMENTS[j]['investment']).sub(excess);
                     } else {
-                      investor_contribution = investor_contribution.add(INVESTMENTS[j]['investment']);
+                        investor_contribution = investor_contribution.add(INVESTMENTS[j]['investment']);
                     }
                 }
             }
@@ -297,8 +326,12 @@ describe('Test Single Case contract', function() {
         var surplusEth = await lendingInstance.surplusEth();
         surplusEth.should.be.bignumber.equal(0);
         // Send funds to borrower
-        transaction = await lendingInstance.sendFundsToBorrower({from: owner}).should.be.fulfilled;
-        transaction = await lendingInstance.finishInitialExchangingPeriod(INIT_ETH_RATE, {from: owner}).should.be.fulfilled;
+        transaction = await lendingInstance.sendFundsToBorrower({
+            from: owner
+        }).should.be.fulfilled;
+        transaction = await lendingInstance.finishInitialExchangingPeriod(INIT_ETH_RATE, {
+            from: owner
+        }).should.be.fulfilled;
         // Check total lending fiat amount
         var totalLendingFiatAmount = await lendingInstance.totalLendingFiatAmount();
         console.log(totalLendingFiatAmount);
@@ -311,10 +344,10 @@ describe('Test Single Case contract', function() {
         console.log(TOTAL_LENDING_FIAT_AMOUNT)
         console.log('contract')
         console.log(totalLendingFiatAmount)
-        if(TOTAL_LENDING_FIAT_AMOUNT.gt(totalLendingFiatAmount)) {
-          difference = TOTAL_LENDING_FIAT_AMOUNT.sub(totalLendingFiatAmount)
+        if (TOTAL_LENDING_FIAT_AMOUNT.gt(totalLendingFiatAmount)) {
+            difference = TOTAL_LENDING_FIAT_AMOUNT.sub(totalLendingFiatAmount)
         } else {
-          difference = totalLendingFiatAmount.sub(TOTAL_LENDING_FIAT_AMOUNT)
+            difference = totalLendingFiatAmount.sub(TOTAL_LENDING_FIAT_AMOUNT)
         }
         console.log("difference")
         console.log(difference)
@@ -323,7 +356,9 @@ describe('Test Single Case contract', function() {
         //console.log('=== SEND FUNDS BORROWER ===');
         //await traceBalancesAllActors();
         // Borrower return amount
-        await lendingInstance.setBorrowerReturnEthPerFiatRate(FINAL_ETH_RATE, {from: owner}).should.be.fulfilled;
+        await lendingInstance.setBorrowerReturnEthPerFiatRate(FINAL_ETH_RATE, {
+            from: owner
+        }).should.be.fulfilled;
         const borrowerReturnAmount = await lendingInstance.borrowerReturnAmount();
         console.log('returnAmount: ' + borrowerReturnAmount)
         console.log('expected: ' + BORROWER_RETURN_AMOUNT)
@@ -333,14 +368,17 @@ describe('Test Single Case contract', function() {
         console.log(`state = ${state}`)
         var returnedTotal = new BigNumber(0)
         for (var i = 0; i < RETURNS.length; i++) {
-          console.log(`Returning ${i} of ${RETURNS.length}`)
+            console.log(`Returning ${i} of ${RETURNS.length}`)
 
-          let amount = RETURNS[i]
-          returnedTotal.add(amount)
-          let transaction = await lendingInstance.sendTransaction({value: amount, from: borrower}).should.be.fulfilled;
+            let amount = RETURNS[i]
+            returnedTotal.add(amount)
+            let transaction = await lendingInstance.sendTransaction({
+                value: amount,
+                from: borrower
+            }).should.be.fulfilled;
 
-          console.log(transaction)
-          console.log("next")
+            console.log(transaction)
+            console.log("next")
         }
         console.log("contract:")
         console.log(borrowerReturnAmount)
@@ -356,14 +394,18 @@ describe('Test Single Case contract', function() {
 
         let reclaimActions = getReclaimActions(lendingInstance)
         for (var i = 0; i < NUMBER_INVESTORS; i++) {
-          let reclaim = reclaimActions[i]
-          var transaction
-          if (reclaim.hasTarget) {
-            transaction = await reclaim.action(reclaim.sender, {from: reclaim.sender}).should.be.fulfilled;
-          } else {
-            transaction = await reclaim.action({from: reclaim.sender}).should.be.fulfilled;
-          }
-          console.log(transaction)
+            let reclaim = reclaimActions[i]
+            var transaction
+            if (reclaim.hasTarget) {
+                transaction = await reclaim.action(reclaim.sender, {
+                    from: reclaim.sender
+                }).should.be.fulfilled;
+            } else {
+                transaction = await reclaim.action({
+                    from: reclaim.sender
+                }).should.be.fulfilled;
+            }
+            console.log(transaction)
         }
 
         // Show balances
@@ -412,23 +454,23 @@ function getTransactionCost(txHash) {
     return txCost;
 }
 
-function reportMethodGasUsed (filename, role, methodName, txHash, remove = false) {
+function reportMethodGasUsed(filename, role, methodName, txHash, remove = false) {
     if (remove)
         fs.openSync(filename + '.csv', 'w');
     const gasUsed = web3.eth.getTransactionReceipt(txHash).gasUsed;
     fs.appendFileSync(filename + '.csv', role + ',' + methodName + ',' + gasUsed + '\n');
 }
 
-function getExpectedInvestorBalance(initialAmount,contribution,initialEthPerFiatRate, lendingInterestRatePercentage, finalEthPerFiatRate) {
+function getExpectedInvestorBalance(initialAmount, contribution, initialEthPerFiatRate, lendingInterestRatePercentage, finalEthPerFiatRate) {
 
-        const received = contribution.mul(initialEthPerFiatRate)
-                            .mul(lendingInterestRatePercentage)
-                            .div(finalEthPerFiatRate).div(10000);
-        return initialAmount.sub(contribution).add(received);
+    const received = contribution.mul(initialEthPerFiatRate)
+        .mul(lendingInterestRatePercentage)
+        .div(finalEthPerFiatRate).div(10000);
+    return initialAmount.sub(contribution).add(received);
 
-    }
+}
 
-async function checkReputation(localNode, community, initialLocalNodeReputation, initialCommunityReputation, lendingInstance, storageInstance, reputationInstance, delayDays){
+async function checkReputation(localNode, community, initialLocalNodeReputation, initialCommunityReputation, lendingInstance, storageInstance, reputationInstance, delayDays) {
     // Get init params of lending contract
     const reputationStep = 100;
     const minPeopleCommunity = 20;
@@ -448,7 +490,7 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
     var increment = 0;
     var decrement = 0;
     // Decrement
-    if (delayDays > 0){
+    if (delayDays > 0) {
         //console.log('=== DECREMENT ===');
         decrement = initialLocalNodeReputation.mul(delayDays).div(maxDelayDays);
         if (delayDays < maxDelayDays && decrement < reputationStep) {
@@ -463,8 +505,8 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
         }
     } else {
         //console.log('=== INCREMENT ===');
-        const completedProjectsByTier = await storageInstance.getUint(utils.soliditySha3("community.completedProjectsByTier",lendingInstance.address, projectTier));
-        if (completedProjectsByTier > 0){
+        const completedProjectsByTier = await storageInstance.getUint(utils.soliditySha3("community.completedProjectsByTier", lendingInstance.address, projectTier));
+        if (completedProjectsByTier > 0) {
             increment = 100 / completedProjectsByTier;
             expectedCommunityRep = Math.floor(initialCommunityReputation.add(increment).toNumber());
             increment = (projectTier.mul(communityMembers).div(minProject)).mul(incrLocalNodeMultiplier);
@@ -473,12 +515,12 @@ async function checkReputation(localNode, community, initialLocalNodeReputation,
     }
     //console.log('Exp Community Reputation: ' + expectedCommunityRep);
     //console.log('Exp Local Node Reputation: ' + expectedLocalNodeRep);
-    const communityAddress = await storageInstance.getAddress(utils.soliditySha3("lending.community",lendingInstance.address));
+    const communityAddress = await storageInstance.getAddress(utils.soliditySha3("lending.community", lendingInstance.address));
     communityAddress.should.be.equal(community);
     const communityRep = await reputationInstance.getCommunityReputation(community);
     //console.log('Final Community Reputation: ' + communityRep);
     communityRep.should.be.bignumber.equal(expectedCommunityRep);
-    const localNodeAddress = await storageInstance.getAddress(utils.soliditySha3("lending.localNode",lendingInstance.address));
+    const localNodeAddress = await storageInstance.getAddress(utils.soliditySha3("lending.localNode", lendingInstance.address));
     localNodeAddress.should.be.equal(localNode);
     const localNodeRep = await reputationInstance.getLocalNodeReputation(localNode);
     //console.log('Final Local Node Reputation: ' + localNodeRep);
@@ -534,5 +576,5 @@ function rawTransaction(
 async function increaseTimePastEndingTime(lendingContract, increaseDays) {
     const fundingEnd = await lendingContract.fundingEndTime();
     const returnDate = fundingEnd.add(duration.days(increaseDays));
-    increaseTimeTo(returnDate)
+    await (returnDate)
 }

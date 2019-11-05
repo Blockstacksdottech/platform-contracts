@@ -1,17 +1,15 @@
-pragma solidity 0.4.25;
+pragma solidity 0.5.8;
 
 import "./storage/EthicHubStorageInterface.sol";
-
 
 contract EthicHubBase {
 
     uint8 public version;
 
-    EthicHubStorageInterface public ethicHubStorage = EthicHubStorageInterface(0);
+    EthicHubStorageInterface public ethicHubStorage;
 
-    constructor(address _storageAddress) public {
-        require(_storageAddress != address(0));
-        ethicHubStorage = EthicHubStorageInterface(_storageAddress);
+    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot be undefined");
+        ethicHubStorage = _ethicHubStorage;
     }
-
 }

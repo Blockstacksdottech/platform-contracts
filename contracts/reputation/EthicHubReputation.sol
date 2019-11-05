@@ -1,22 +1,24 @@
-pragma solidity 0.4.25;
+pragma solidity 0.5.8;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 import '../EthicHubBase.sol';
 import './EthicHubReputationInterface.sol';
+import "../storage/EthicHubStorageInterface.sol";
 
-contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
+contract EthicHubReputation is EthicHubReputationInterface, EthicHubBase {
+    using SafeMath for uint;
 
-    //10 with 2 decilmals
+    // 10 with 2 decilmals
     uint constant maxReputation = 1000;
     uint constant reputationStep = 100;
-    //Tier 1 x 20 people
+
+    // Tier 1 x 20 people
     uint constant minProyect = 20;
     uint constant public initReputation = 500;
 
-    //0.05
+    // 0.05
     uint constant incrLocalNodeMultiplier = 5;
-
-    using SafeMath for uint;
 
     event ReputationUpdated(address indexed affected, uint newValue);
 
@@ -24,34 +26,41 @@ contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
 
     /// @dev Only allow access from the latest version of a contract in the Rocket Pool network after deployment
     modifier onlyUsersContract() {
-        require(ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "users"))) == msg.sender);
+        require(
+            ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "users"))) == msg.sender,
+            "Caller is not users contract"
+            );
         _;
     }
 
     modifier onlyLendingContract() {
-        require(ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", msg.sender))) == msg.sender);
+        require(
+            ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", msg.sender))) == msg.sender,
+            "Caller is not lending contract"
+            );
         _;
     }
 
     /// @dev constructor
-    constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
-      // Version
-      version = 2;
+    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
+        version = 2;
     }
 
     function burnReputation(uint delayDays) external onlyLendingContract {
         address lendingContract = msg.sender;
+
         //Get temporal parameters
         uint maxDelayDays = ethicHubStorage.getUint(keccak256(abi.encodePacked("lending.maxDelayDays", lendingContract)));
-        require(maxDelayDays != 0);
-        require(delayDays != 0);
+        emit ReputationUpdated(msg.sender, maxDelayDays);
+        require(maxDelayDays != 0, "Max delay should be different than 0");
+        require(delayDays != 0, "Max delayDays should be different than 0");
 
         //Affected players
         address community = ethicHubStorage.getAddress(keccak256(abi.encodePacked("lending.community", lendingContract)));
-        require(community != address(0));
+        require(community != address(0), "Community address should be valid");
         //Affected local node
         address localNode = ethicHubStorage.getAddress(keccak256(abi.encodePacked("lending.localNode", lendingContract)));
-        require(localNode != address(0));
+        require(localNode != address(0), "Community address should be valid");
 
         //***** Community
         uint previousCommunityReputation = ethicHubStorage.getUint(keccak256(abi.encodePacked("community.reputation", community)));
@@ -65,7 +74,6 @@ contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
         uint newLocalNodeReputation = burnLocalNodeReputation(delayDays, maxDelayDays, previousLocalNodeReputation);
         ethicHubStorage.setUint(keccak256(abi.encodePacked("localNode.reputation", localNode)), newLocalNodeReputation);
         emit ReputationUpdated(localNode, newLocalNodeReputation);
-
     }
 
     function incrementReputation(uint completedProjectsByTier) external onlyLendingContract {
@@ -108,10 +116,10 @@ contract EthicHubReputation is EthicHubBase, EthicHubReputationInterface {
     }
 
     function incrementLocalNodeReputation(uint previousReputation, uint tier, uint borrowers) public pure returns(uint) {
-        require(tier >= 1);
+        require(tier >= 1, "Tier needs to be >=1");
         //this should 20 but since it's hardcoded in EthicHubLending, let's be safe.
         //TODO store min borrowers in EthicHubStorage
-        require(borrowers > 0); 
+        require(borrowers > 0, "Borrowers cannot be zero");
         uint increment = (tier.mul(borrowers).div(minProyect)).mul(incrLocalNodeMultiplier);
         uint nextRep = previousReputation.add(increment);
         if (nextRep >= maxReputation) {

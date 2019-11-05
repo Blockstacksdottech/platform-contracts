@@ -2,11 +2,12 @@ require('@babel/register');
 require('@babel/polyfill');
 require('dotenv').config();
 
-var HDWalletProvider = require("truffle-hdwallet-provider");
+var HDWalletProvider = require("@truffle/hdwallet-provider");
 let mnemonic = process.env.MNEMONIC;
 var Web3 = require('web3');
-var web3 = new Web3(new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/"+process.env.INFURA_KEY));
-var BN = web3.utils.BN;
+var web3 = new Web3(new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/" + process.env.INFURA_KEY));
+const { BN } = require('@openzeppelin/test-helpers');
+const utils = require("web3-utils");
 
 function latestTime() {
   return web3.eth.getBlock(web3.eth.blockNumber).timestamp;
@@ -20,8 +21,9 @@ const duration = {
   weeks: function (val) { return val * this.days(7) },
   years: function (val) { return val * this.days(365) }
 };
+
 function ether(n) {
-  return web3.utils.toWei(n, 'ether');
+  return new BN(utils.toWei(n, 'ether'));
 }
 
 function now() {
@@ -47,7 +49,7 @@ switch (process.env.NETWORK_ID) {
     representative = '';
     community = '';
     team = '';
-  break;
+    break;
   case "42":
     userAddress = '0x8E5E619c56a03b0C769f3E07B0A3C2448994f91F';
     account = '0xfBCb86e80FF9C864BA37b9bbf2Be21cC71abcdeE';
@@ -59,101 +61,76 @@ switch (process.env.NETWORK_ID) {
     team = '';
     break;
   default:
-  console.log("Unknown network: "+process.env.NETWORK_ID );
-  process.exit(-1);
+    console.log("Unknown network: " + process.env.NETWORK_ID);
+    process.exit(-1);
 }
 
 
 
 
-loader.load(web3, 'EthicHubCMC', cmcAddress).then( cmcInstance => {
-    cmc = cmcInstance;
-    console.log("got cmc");
-    return loader.load(web3, 'EthicHubStorage',storageAddress).then( async (storageInstance) =>  {
-        console.log("got storage");
-        return web3.eth.getAccounts().then(accounts => {
+loader.load(web3, 'EthicHubCMC', cmcAddress).then(cmcInstance => {
+  cmc = cmcInstance;
+  console.log("got cmc");
+  return loader.load(web3, 'EthicHubStorage', storageAddress).then(async (storageInstance) => {
+    console.log("got storage");
+    return web3.eth.getAccounts().then(accounts => {
 
-            console.log("got accounts");
-            return loader.load(web3, 'EthicHubUser', userAddress).then( async (userInstance) => {
-                console.log("got users");
-                var userManager = userInstance;
-                var tx = await userManager.methods.registerLocalNode(localNode).send({from:accounts[0],gas: 4000000});
-                console.log("Registered localNode");
-                console.log(tx);
-                tx = await userManager.methods.registerRepresentative(accounts[2]).send({from:accounts[0],gas: 4000000});
-                console.log(tx);
-                console.log("registerRepresentative");
+      console.log("got accounts");
+      return loader.load(web3, 'EthicHubUser', userAddress).then(async (userInstance) => {
+        console.log("got users");
+        var userManager = userInstance;
+        var tx = await userManager.methods.registerLocalNode(localNode).send({ from: accounts[0], gas: 4000000 });
+        console.log("Registered localNode");
+        console.log(tx);
+        tx = await userManager.methods.registerRepresentative(accounts[2]).send({ from: accounts[0], gas: 4000000 });
+        console.log(tx);
+        console.log("registerRepresentative");
 
-                tx = await userManager.methods.registerCommunity(community).send({from:accounts[0],gas: 4000000});
-                console.log(tx);
-                console.log("Registered userManager");
+        tx = await userManager.methods.registerCommunity(community).send({ from: accounts[0], gas: 4000000 });
+        console.log(tx);
+        console.log("Registered userManager");
 
-                const fundingStartTime = now() + duration.minutes(15);
-                const fundingEndTime = now() + duration.hours(5);
-                console.log(fundingStartTime);
-                console.log(fundingEndTime);
+        const fundingStartTime = now() + duration.minutes(15);
+        const fundingEndTime = now() + duration.hours(5);
+        console.log(fundingStartTime);
+        console.log(fundingEndTime);
 
-                console.log(ether('1'));
-                const deployable = loader.getDeployable(web3,'EthicHubLending');
-                const lendingInstance = await deployable.contract.deploy({
-                    data: deployable.byteCode,
-                    arguments: [
-                        `${fundingStartTime}`,//_fundingStartTime
-                        `${fundingEndTime}`,//_fundingEndTime
-                        accounts[2],//_borrower
-                        '15',//_annualInterest
-                        ether('1'),//_totalLendingAmount
-                        '2',//_lendingDays
-                        storageAddress, //_storageAddress
-                        localNode,//localNode
-                        team
-                    ]
-                })
-                .send({
-                  from: accounts[0],
-                  gas: 4500000,
-                  gasPrice: '300000000000',
-                });
+        console.log(ether('1'));
+        const deployable = loader.getDeployable(web3, 'EthicHubLending');
+        const lendingInstance = await deployable.contract.deploy({
+          data: deployable.byteCode,
+          arguments: [
+            `${fundingStartTime}`,//_fundingStartTime
+            `${fundingEndTime}`,//_fundingEndTime
+            accounts[2],//_borrower
+            '15',//_annualInterest
+            ether('1'),//_totalLendingAmount
+            '2',//_lendingDays
+            storageAddress, //_storageAddress
+            localNode,//localNode
+            team
+          ]
+        })
+          .send({
+            from: accounts[0],
+            gas: 4500000,
+            gasPrice: '300000000000',
+          });
 
-                console.log("Deployed");
-                console.log(lendingInstance.options.address) // instance with the new contract address
-                await cmc.methods.addNewLendingContract(lendingInstance.options.address).send({from:accounts[0],gas: 4000000});
-                console.log("addNewLendingContract");
-                await lendingInstance.methods.saveInitialParametersToStorage(
-                    '2',//maxDefaultDays
-                    '1',//tier
-                    '20',//community members
-                    community //community rep wallet
-                ).send({from:accounts[0],gas: 4000000});
+        console.log("Deployed");
+        console.log(lendingInstance.options.address) // instance with the new contract address
+        await cmc.methods.addNewLendingContract(lendingInstance.options.address).send({ from: accounts[0], gas: 4000000 });
+        console.log("addNewLendingContract");
+        await lendingInstance.methods.saveInitialParametersToStorage(
+          '2',//maxDefaultDays
+          '1',//tier
+          '20',//community members
+          community //community rep wallet
+        ).send({ from: accounts[0], gas: 4000000 });
 
-            });
-
-        });
+      });
 
     });
+
+  });
 })
-
-
-
-
-
-// loader.getContractWrapper(web3, 'EthicHubReputation').deploy({
-//     data: '0x12345...',
-//     arguments: [123, 'My String']
-// })
-// .send({
-//     from: '0x1234567890123456789012345678901234567891',
-//     gas: 1500000,
-//     gasPrice: '30000000000000'
-// }, function(error, transactionHash){ ... })
-// .on('error', function(error){ ... })
-// .on('transactionHash', function(transactionHash){ ... })
-// .on('receipt', function(receipt){
-//    console.log(receipt.contractAddress) // contains the new contract address
-// })
-// .on('confirmation', function(confirmationNumber, receipt){ ... })
-// .then(function(newContractInstance){
-//     console.log(newContractInstance.options.address) // instance with the new contract address
-// });
-//await cmcInstance.upgradeContract(reputation.address,"reputation");
-//var contractInstance = MyContract.new([contructorParam1] [, contructorParam2], { from: myAccount, gas: 1000000});

@@ -1,6 +1,4 @@
-pragma solidity 0.4.25;
-
-//import "../ownership/Ownable.sol";
+pragma solidity 0.5.8;
 
 /**
  * @title EthicHubStorage
@@ -22,7 +20,7 @@ contract EthicHubStorage {
     /// @dev Only allow access from the latest version of a contract in the Rocket Pool network after deployment
     modifier onlyEthicHubContracts() {
         // Maje sure the access is permitted to only contracts in our Dapp
-        require(addressStorage[keccak256(abi.encodePacked("contract.address", msg.sender))] != 0x0);
+        require(address(addressStorage[keccak256(abi.encodePacked("contract.address", msg.sender))]) != address(0));
         _;
     }
 
@@ -43,12 +41,12 @@ contract EthicHubStorage {
 	}
 
 	/// @param _key The key for the record
-	function getString(bytes32 _key) external view returns (string) {
+	function getString(bytes32 _key) external view returns (string memory) {
 		return stringStorage[_key];
 	}
 
 	/// @param _key The key for the record
-	function getBytes(bytes32 _key) external view returns (bytes) {
+	function getBytes(bytes32 _key) external view returns (bytes memory) {
 		return bytesStorage[_key];
 	}
 
@@ -75,12 +73,12 @@ contract EthicHubStorage {
 	}
 
 	/// @param _key The key for the record
-	function setString(bytes32 _key, string _value) onlyEthicHubContracts external {
+	function setString(bytes32 _key, string calldata _value) onlyEthicHubContracts external {
 		stringStorage[_key] = _value;
 	}
 
 	/// @param _key The key for the record
-	function setBytes(bytes32 _key, bytes _value) onlyEthicHubContracts external {
+	function setBytes(bytes32 _key, bytes calldata _value) onlyEthicHubContracts external {
 		bytesStorage[_key] = _value;
 	}
 

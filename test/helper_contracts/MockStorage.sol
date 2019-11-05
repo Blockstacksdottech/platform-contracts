@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity 0.5.8;
 
 import '../../contracts/storage/EthicHubStorageInterface.sol';
 
@@ -6,12 +6,12 @@ contract MockStorage is EthicHubStorageInterface {
 
     /**** Storage Types *******/
 
-    mapping(bytes32 => uint256)    private uIntStorage;
-    mapping(bytes32 => string)     private stringStorage;
-    mapping(bytes32 => address)    private addressStorage;
-    mapping(bytes32 => bytes)      private bytesStorage;
-    mapping(bytes32 => bool)       private boolStorage;
-    mapping(bytes32 => int256)     private intStorage;
+    mapping(bytes32 => uint256) private uIntStorage;
+    mapping(bytes32 => string) private stringStorage;
+    mapping(bytes32 => address) private addressStorage;
+    mapping(bytes32 => bytes) private bytesStorage;
+    mapping(bytes32 => bool) private boolStorage;
+    mapping(bytes32 => int256) private intStorage;
 
     /// @dev constructor
     constructor() public {
@@ -34,12 +34,12 @@ contract MockStorage is EthicHubStorageInterface {
     }
 
     /// @param _key The key for the record
-    function getString(bytes32 _key) external view returns (string) {
+    function getString(bytes32 _key) external view returns (string memory) {
         return stringStorage[_key];
     }
 
     /// @param _key The key for the record
-    function getBytes(bytes32 _key) external view returns (bytes) {
+    function getBytes(bytes32 _key) external view returns (bytes memory) {
         return bytesStorage[_key];
     }
 
@@ -68,12 +68,12 @@ contract MockStorage is EthicHubStorageInterface {
     }
 
     /// @param _key The key for the record
-    function setString(bytes32 _key, string _value) external {
+    function setString(bytes32 _key, string calldata _value) external {
         stringStorage[_key] = _value;
     }
 
     /// @param _key The key for the record
-    function setBytes(bytes32 _key, bytes _value) external {
+    function setBytes(bytes32 _key, bytes calldata _value) external {
         bytesStorage[_key] = _value;
     }
 

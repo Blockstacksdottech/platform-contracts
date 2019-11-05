@@ -19,7 +19,7 @@ test
 ```
 Since the integration tests and some unit tests are ether intensive, repetitive runs of the whole suit could deplete the test ether. As an alternative:
 
-### All tests in TestRPC with more Eth preloaded
+### All tests in Ganache-cli with more Eth preloaded
 Run:
 ```
 ./scripts/test.sh

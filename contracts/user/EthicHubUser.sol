@@ -17,25 +17,21 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-pragma solidity ^0.4.25;
+pragma solidity 0.5.8;
 
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
-import '../EthicHubBase.sol';
-import '../reputation/EthicHubReputationInterface.sol';
+import "@openzeppelin/contracts/ownership/Ownable.sol";
+
+import "../EthicHubBase.sol";
+import "../storage/EthicHubStorageInterface.sol";
 
 /* @title User
 @dev This is an extension to add user
 */
-contract EthicHubUser is Ownable, EthicHubBase {
-
+contract EthicHubUser is EthicHubBase, Ownable {
 
     event UserStatusChanged(address target, string profile, bool isRegistered);
 
-    constructor(address _storageAddress)
-        EthicHubBase(_storageAddress)
-        public
-    {
-        // Version
+    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
         version = 4;
     }
 
@@ -45,11 +41,12 @@ contract EthicHubUser is Ownable, EthicHubBase {
      * @param profile profile of user.
      * @param isRegistered New registration status of address.
      */
-    function changeUserStatus(address target, string profile, bool isRegistered)
-        internal
-        onlyOwner
-    {
-        require(target != address(0));
+    function changeUserStatus(
+        address target,
+        string memory profile,
+        bool isRegistered
+        ) internal onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         require(bytes(profile).length != 0);
         ethicHubStorage.setBool(keccak256(abi.encodePacked("user", profile, target)), isRegistered);
         emit UserStatusChanged(target, profile, isRegistered);
@@ -61,11 +58,8 @@ contract EthicHubUser is Ownable, EthicHubBase {
      * @param target Address that will be deleted.
      * @param profile profile of user.
      */
-    function deleteUserStatus(address target, string profile)
-        internal
-        onlyOwner
-    {
-        require(target != address(0));
+    function deleteUserStatus(address target, string memory profile) internal onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         require(bytes(profile).length != 0);
         ethicHubStorage.deleteBool(keccak256(abi.encodePacked("user", profile, target)));
         emit UserStatusChanged(target, profile, false);
@@ -76,11 +70,8 @@ contract EthicHubUser is Ownable, EthicHubBase {
      * @dev View registration status of an address for participation.
      * @return isRegistered boolean registration status of address for a specific profile.
      */
-    function viewRegistrationStatus(address target, string profile)
-        view public
-        returns(bool isRegistered)
-    {
-        require(target != address(0));
+    function viewRegistrationStatus(address target, string memory profile) public view returns(bool isRegistered) {
+        require(target != address(0), "Target address cannot be undefined");
         require(bytes(profile).length != 0);
         isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", profile, target)));
     }
@@ -88,27 +79,19 @@ contract EthicHubUser is Ownable, EthicHubBase {
     /**
      * @dev register a localNode address.
      */
-    function registerLocalNode(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function registerLocalNode(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "localNode", target)));
         if (!isRegistered) {
             changeUserStatus(target, "localNode", true);
-            EthicHubReputationInterface rep = EthicHubReputationInterface (ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation"))));
-            rep.initLocalNodeReputation(target);
         }
     }
 
     /**
      * @dev unregister a localNode address.
      */
-    function unregisterLocalNode(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function unregisterLocalNode(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "localNode", target)));
         if (isRegistered) {
             deleteUserStatus(target, "localNode");
@@ -118,54 +101,38 @@ contract EthicHubUser is Ownable, EthicHubBase {
     /**
      * @dev register a community address.
      */
-    function registerCommunity(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function registerCommunity(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "community", target)));
         if (!isRegistered) {
             changeUserStatus(target, "community", true);
-            EthicHubReputationInterface rep = EthicHubReputationInterface(ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation"))));
-            rep.initCommunityReputation(target);
         }
     }
 
     /**
      * @dev unregister a community address.
      */
-    function unregisterCommunity(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function unregisterCommunity(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "community", target)));
         if (isRegistered) {
             deleteUserStatus(target, "community");
         }
     }
 
-
-
     /**
      * @dev register a invertor address.
      */
-    function registerInvestor(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function registerInvestor(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         changeUserStatus(target, "investor", true);
     }
 
     /**
      * @dev unregister a investor address.
      */
-    function unregisterInvestor(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function unregisterInvestor(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", target)));
         if (isRegistered) {
             deleteUserStatus(target, "investor");
@@ -175,22 +142,16 @@ contract EthicHubUser is Ownable, EthicHubBase {
     /**
      * @dev register a community representative address.
      */
-    function registerRepresentative(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function registerRepresentative(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         changeUserStatus(target, "representative", true);
     }
 
     /**
      * @dev unregister a representative address.
      */
-    function unregisterRepresentative(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function unregisterRepresentative(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", target)));
         if (isRegistered) {
             deleteUserStatus(target, "representative");
@@ -200,26 +161,19 @@ contract EthicHubUser is Ownable, EthicHubBase {
     /**
      * @dev register a paymentGateway address.
      */
-    function registerPaymentGateway(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function registerPaymentGateway(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         changeUserStatus(target, "paymentGateway", true);
     }
 
     /**
      * @dev unregister a paymentGateway address.
      */
-    function unregisterPaymentGateway(address target)
-        external
-        onlyOwner
-    {
-        require(target != address(0));
+    function unregisterPaymentGateway(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", target)));
         if (isRegistered) {
             deleteUserStatus(target, "paymentGateway");
         }
     }
-
 }

@@ -1,7 +1,6 @@
-const web3_1_0 = require('web3');
-const BigNumber = web3.BigNumber
-const utils = web3_1_0.utils;
-const fs = require('fs');
+const {
+    BN
+} = require('@openzeppelin/test-helpers');
 
 const cmc = artifacts.require('./EthicHubCMC.sol');
 const userManager = artifacts.require('./user/EthicHubUser.sol');
@@ -9,24 +8,36 @@ const lending = artifacts.require('./lending/EthicHubLending.sol');
 const storage = artifacts.require('./storage/EthicHubStorage.sol');
 
 function latestTime() {
-  return web3.eth.getBlock(web3.eth.blockNumber).timestamp;
+    return web3.eth.getBlock(web3.eth.blockNumber).timestamp;
 }
 
 const duration = {
-  seconds: function (val) { return val },
-  minutes: function (val) { return val * this.seconds(60) },
-  hours: function (val) { return val * this.minutes(60) },
-  days: function (val) { return val * this.hours(24) },
-  weeks: function (val) { return val * this.days(7) },
-  years: function (val) { return val * this.days(365) }
+    seconds: function(val) {
+        return val
+    },
+    minutes: function(val) {
+        return val * this.seconds(60)
+    },
+    hours: function(val) {
+        return val * this.minutes(60)
+    },
+    days: function(val) {
+        return val * this.hours(24)
+    },
+    weeks: function(val) {
+        return val * this.days(7)
+    },
+    years: function(val) {
+        return val * this.days(365)
+    }
 };
 
 function ether(n) {
-  return new web3.BigNumber(web3.toWei(n, 'ether'))
+    return new BN(web3.toWei(n, 'ether'))
 }
 
 function now() {
-  return Math.round((new Date()).getTime() / 1000);
+    return Math.round((new Date()).getTime() / 1000);
 }
 
 module.exports = async (deployer, network, accounts) => {
@@ -46,14 +57,14 @@ module.exports = async (deployer, network, accounts) => {
     return deployer.deploy(
         lending,
         //Arguments
-        now() + duration.days(1),//_fundingStartTime
-        now() + duration.days(35),//_fundingEndTime
-        accounts[2],//_borrower
-        10,//_annualInterest
-        ether(1),//_totalLendingAmount
-        2,//_lendingDays
+        now() + duration.days(1), //_fundingStartTime
+        now() + duration.days(35), //_fundingEndTime
+        accounts[2], //_borrower
+        10, //_annualInterest
+        ether(1), //_totalLendingAmount
+        2, //_lendingDays
         storage.address, //_storageAddress
-        localNode,//localNode
+        localNode, //localNode
         accounts[4], //team
         3, //ethichub fee
         4 //localNode fee
@@ -69,9 +80,9 @@ module.exports = async (deployer, network, accounts) => {
             console.log("--> EthicHubLending deployed");
             //Lending saves parameters in storage
             await lendingInstance.saveInitialParametersToStorage(
-                2,//maxDefaultDays
-                1,//tier
-                20,//community members
+                2, //maxDefaultDays
+                1, //tier
+                20, //community members
                 community //community rep wallet
             )
             console.log("--> EthicHub network ready");

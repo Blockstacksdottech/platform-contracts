@@ -1,7 +1,10 @@
-pragma solidity 0.4.25;
+pragma solidity 0.5.8;
 
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
+
 import "./EthicHubBase.sol";
+import "./storage/EthicHubStorageInterface.sol";
 
 /**
  * @title EthichubCMC
@@ -11,30 +14,29 @@ import "./EthicHubBase.sol";
 contract EthicHubCMC is EthicHubBase, Ownable {
 
     event ContractUpgraded (
-        address indexed _oldContractAddress,                    // Address of the contract being upgraded
-        address indexed _newContractAddress,                    // Address of the new contract
-        uint256 created                                         // Creation timestamp
+        address indexed _oldContractAddress, // Address of the contract being upgraded
+        address indexed _newContractAddress, // Address of the new contract
+        uint256 created // Creation timestamp
     );
 
     event ContractRemoved (
-        address indexed _contractAddress,                       // Address of the contract being removed
-        uint256 removed                                         // Remove timestamp
+        address indexed _contractAddress, // Address of the contract being removed
+        uint256 removed // Remove timestamp
     );
 
     event LendingContractAdded (
-        address indexed _newContractAddress,                    // Address of the new contract
-        uint256 created                                         // Creation timestamp
+        address indexed _newContractAddress, // Address of the new contract
+        uint256 created // Creation timestamp
     );
 
 
     modifier onlyOwnerOrLocalNode() {
         bool isLocalNode = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "localNode", msg.sender)));
-        require(isLocalNode || owner == msg.sender);
+        require(isLocalNode || owner() == msg.sender);
         _;
     }
 
-    constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
-        // Version
+    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
         version = 4;
     }
 
@@ -44,7 +46,7 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         emit LendingContractAdded(_lendingAddress, now);
     }
 
-    function upgradeContract(address _newContractAddress, string _contractName) public onlyOwner {
+    function upgradeContract(address _newContractAddress, string memory _contractName) public onlyOwner {
         require(_newContractAddress != address(0));
         require(keccak256(abi.encodePacked("contract.name","")) != keccak256(abi.encodePacked("contract.name",_contractName)));
         address oldAddress = ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", _contractName)));
@@ -54,7 +56,7 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         emit ContractUpgraded(oldAddress, _newContractAddress, now);
     }
 
-    function removeContract(address _contractAddress, string _contractName) public onlyOwner {
+    function removeContract(address _contractAddress, string memory _contractName) public onlyOwner {
         require(_contractAddress != address(0));
         address contractAddress = ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", _contractName)));
         require(_contractAddress == contractAddress);

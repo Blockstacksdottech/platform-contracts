@@ -1,14 +1,15 @@
-pragma solidity 0.4.25;
+pragma solidity 0.5.8;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
-import "../reputation/EthicHubReputationInterface.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/lifecycle/Pausable.sol";
+
 import "../EthicHubBase.sol";
+import "../storage/EthicHubStorageInterface.sol";
 
-contract EthicHubLending is EthicHubBase, Ownable, Pausable {
+contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     using SafeMath for uint256;
-    //uint256 public minContribAmount = 0.1 ether;                          // 0.1 ether
+
     enum LendingState {
         Uninitialized,
         AcceptingContributions,
@@ -18,35 +19,44 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         ContributionReturned,
         Default
     }
+
     mapping(address => Investor) public investors;
+
     uint256 public investorCount;
     uint256 public reclaimedContributions;
     uint256 public reclaimedSurpluses;
-    uint256 public fundingStartTime;                                     // Start time of contribution period in UNIX time
-    uint256 public fundingEndTime;                                       // End time of contribution period in UNIX time
+    uint256 public fundingStartTime; // Start time of contribution period in UNIX time
+    uint256 public fundingEndTime; // End time of contribution period in UNIX time
     uint256 public totalContributed;
+
     bool public capReached;
+
     LendingState public state;
+
     uint256 public annualInterest;
     uint256 public totalLendingAmount;
     uint256 public lendingDays;
     uint256 public borrowerReturnDays;
     uint256 public initialEthPerFiatRate;
     uint256 public totalLendingFiatAmount;
-    address public borrower;
-    address public localNode;
-    address public ethicHubTeam;
-    //uint256 public borrowerReturnDate;
+
+    address payable public borrower;
+    address payable public localNode;
+    address payable public ethicHubTeam;
+
     uint256 public borrowerReturnEthPerFiatRate;
     uint256 public ethichubFee;
     uint256 public localNodeFee;
     uint256 public tier;
-    // interest rate is using base uint 100 and 100% 10000, this means 1% is 100
+
+    // Interest rate is using base uint 100 and 100% 10000, this means 1% is 100
     // this guarantee we can have a 2 decimal presicion in our calculation
     uint256 public constant interestBaseUint = 100;
     uint256 public constant interestBasePercent = 10000;
+
     bool public localNodeFeeReclaimed;
     bool public ethicHubTeamFeeReclaimed;
+
     uint256 public surplusEth;
     uint256 public returnedEth;
 
@@ -56,7 +66,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         bool surplusEthReclaimed;
     }
 
-    // events
+    // Events
     event onCapReached(uint endTime);
     event onContribution(uint totalContributed, address indexed investor, uint amount, uint investorsCount);
     event onCompensated(address indexed contributor, uint amount);
@@ -69,8 +79,8 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     event onBorrowerChanged(address indexed newBorrower);
     event onInvestorChanged(address indexed oldInvestor, address indexed newInvestor);
 
-    // modifiers
-    modifier checkProfileRegistered(string profile) {
+    // Modifiers
+    modifier checkProfileRegistered(string memory profile) {
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", profile, msg.sender)));
         require(isRegistered, "Sender not registered in EthicHub.com");
         _;
@@ -83,31 +93,23 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
 
     modifier onlyOwnerOrLocalNode() {
-        require(localNode == msg.sender || owner == msg.sender,"Sender not authorized");
+        require(localNode == msg.sender || owner() == msg.sender,"Sender not authorized");
         _;
     }
-
-    //modifier onlyInvestorOrPaymentGateway() {
-    //    bool isInvestor = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", msg.sender)));
-    //    bool isPaymentGateway = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", msg.sender)));
-    //    require(isPaymentGateway || isInvestor, "Sender not authorized");
-    //    _;
-    //}
 
     constructor(
         uint256 _fundingStartTime,
         uint256 _fundingEndTime,
-        address _borrower,
+        address payable _borrower,
         uint256 _annualInterest,
         uint256 _totalLendingAmount,
         uint256 _lendingDays,
-        address _storageAddress,
-        address _localNode,
-        address _ethicHubTeam,
+        EthicHubStorageInterface _ethicHubStorage,
+        address payable _localNode,
+        address payable _ethicHubTeam,
         uint256 _ethichubFee,
         uint256 _localNodeFee
-        )
-        EthicHubBase(_storageAddress)
+        ) EthicHubBase(_ethicHubStorage)
         public {
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");
@@ -118,10 +120,13 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(_totalLendingAmount > 0, "_totalLendingAmount must be > 0");
         require(_lendingDays > 0, "_lendingDays must be > 0");
         require(_annualInterest > 0 && _annualInterest < 100, "_annualInterest must be between 0 and 100");
+
         version = 7;
+
         reclaimedContributions = 0;
         reclaimedSurpluses = 0;
         borrowerReturnDays = 0;
+
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
         localNode = _localNode;
@@ -135,7 +140,12 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         state = LendingState.Uninitialized;
     }
 
-    function saveInitialParametersToStorage(uint256 _maxDelayDays, uint256 _tier, uint256 _communityMembers, address _community) external onlyOwnerOrLocalNode {
+    function saveInitialParametersToStorage(
+        uint256 _maxDelayDays,
+        uint256 _tier,
+        uint256 _communityMembers,
+        address _community
+        ) external onlyOwnerOrLocalNode {
         require(_maxDelayDays != 0, "_maxDelayDays must be > 0");
         require(state == LendingState.Uninitialized, "State must be Uninitialized");
         require(_tier > 0, "_tier must be > 0");
@@ -152,7 +162,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
 
     }
 
-    function setBorrower(address _borrower) external checkIfArbiter {
+    function setBorrower(address payable _borrower) external checkIfArbiter {
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
         borrower = _borrower;
@@ -162,10 +172,11 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     function changeInvestorAddress(address oldInvestor, address newInvestor) external checkIfArbiter {
         require(newInvestor != address(0));
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", newInvestor))));
-        //oldInvestor should have invested in this project
-        require(investors[oldInvestor].amount != 0);
-        //newInvestor should not have invested anything in this project to not complicate return calculation
-        require(investors[newInvestor].amount == 0);
+        require(investors[oldInvestor].amount != 0, "OldInvestor should have invested in this project");
+        require(
+            investors[newInvestor].amount == 0,
+            "newInvestor should not have invested anything"
+        );
         investors[newInvestor].amount = investors[oldInvestor].amount;
         investors[newInvestor].isCompensated = investors[oldInvestor].isCompensated;
         investors[newInvestor].surplusEthReclaimed = investors[oldInvestor].surplusEthReclaimed;
@@ -173,8 +184,13 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         emit onInvestorChanged(oldInvestor, newInvestor);
     }
 
-    function() public payable whenNotPaused {
-        require(state == LendingState.AwaitingReturn || state == LendingState.AcceptingContributions || state == LendingState.ExchangingToFiat, "Can't receive ETH in this state");
+    function() external payable whenNotPaused {
+        require(
+            state == LendingState.AwaitingReturn ||
+            state == LendingState.AcceptingContributions ||
+            state == LendingState.ExchangingToFiat,
+            "Can't receive ETH in this state"
+        );
         if(state == LendingState.AwaitingReturn) {
             returnBorrowedEth();
         } else if (state == LendingState.ExchangingToFiat) {
@@ -210,10 +226,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         require(state == LendingState.AwaitingReturn);
         uint maxDelayDays = getMaxDelayDays();
         require(getDelayDays(now) >= maxDelayDays);
-        EthicHubReputationInterface reputation = EthicHubReputationInterface(ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation"))));
-        require(reputation != address(0));
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.delayDays", this)), maxDelayDays);
-        reputation.burnReputation(maxDelayDays);
         state = LendingState.Default;
         emit StateChange(uint(state));
     }
@@ -248,7 +261,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContributionDefault(address beneficiary) external {
+    function reclaimContributionDefault(address payable beneficiary) external {
         require(state == LendingState.Default);
         require(!investors[beneficiary].isCompensated);
         // contribution = contribution * partial_funds / total_funds
@@ -264,7 +277,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContribution(address beneficiary) external {
+    function reclaimContribution(address payable beneficiary) external {
         require(state == LendingState.ProjectNotFunded, "State is not ProjectNotFunded");
         require(!investors[beneficiary].isCompensated, "Contribution already reclaimed");
         uint256 contribution = investors[beneficiary].amount;
@@ -274,7 +287,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         doReclaim(beneficiary, contribution);
     }
 
-    function reclaimSurplusEth(address beneficiary) external {
+    function reclaimSurplusEth(address payable beneficiary) external {
         require(surplusEth > 0, "No surplus ETH");
         // only can be reclaimed after cap reduced
         require(state != LendingState.ExchangingToFiat, "State is ExchangingToFiat");
@@ -287,7 +300,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         doReclaim(beneficiary, surplusContribution);
     }
 
-    function reclaimContributionWithInterest(address beneficiary) external {
+    function reclaimContributionWithInterest(address payable beneficiary) external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(!investors[beneficiary].isCompensated, "Lender already compensated");
         uint256 contribution = checkInvestorReturns(beneficiary);
@@ -326,7 +339,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
         doReclaim(ethicHubTeam, address(this).balance);
     }
 
-    function doReclaim(address target, uint256 amount) internal {
+    function doReclaim(address payable target, uint256 amount) internal {
         if ( address(this).balance < amount ) {
             target.transfer(address(this).balance);
         } else {
@@ -348,18 +361,15 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
             borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
             state = LendingState.ContributionReturned;
             emit StateChange(uint(state));
-            updateReputation();
         }
         if (excessRepayment > 0) {
             msg.sender.transfer(excessRepayment);
         }
     }
 
-
-
     // @notice make cotribution throught a paymentGateway
     // @param contributor Address
-    function contributeForAddress(address contributor) external checkProfileRegistered('paymentGateway') payable whenNotPaused {
+    function contributeForAddress(address payable contributor) external checkProfileRegistered('paymentGateway') payable whenNotPaused {
         contributeWithAddress(contributor);
     }
 
@@ -368,7 +378,7 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     //  If cap is reached, end time should be modified
     //  Funds should be transferred into multisig wallet
     // @param contributor Address
-    function contributeWithAddress(address contributor) internal whenNotPaused {
+    function contributeWithAddress(address payable contributor) internal whenNotPaused {
         require(state == LendingState.AcceptingContributions, "state is not AcceptingContributions");
         require(isContribPeriodRunning(), "can't contribute outside contribution period");
 
@@ -415,29 +425,14 @@ contract EthicHubLending is EthicHubBase, Ownable, Pausable {
     }
 
     function sendFundsToBorrower() external onlyOwnerOrLocalNode {
-      //Waiting for Exchange
-        require(state == LendingState.AcceptingContributions);
-        require(capReached);
+        //Waiting for Exchange
+        require(state == LendingState.AcceptingContributions, "State has to be AcceptingContributions");
+        require(capReached, "Cap is not reached");
         state = LendingState.ExchangingToFiat;
         emit StateChange(uint(state));
         borrower.transfer(totalContributed);
     }
 
-    function updateReputation() internal {
-        EthicHubReputationInterface reputation = EthicHubReputationInterface(
-            ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.name", "reputation")))
-            );
-        require(reputation != address(0));
-        uint delayDays = getDelayDays(now);
-        if (delayDays > 0) {
-            ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.delayDays", this)), delayDays);
-            reputation.burnReputation(delayDays);
-        } else {
-            uint completedProjectsByTier = ethicHubStorage.getUint(keccak256(abi.encodePacked("community.completedProjectsByTier", this, tier))).add(1);
-            ethicHubStorage.setUint(keccak256(abi.encodePacked("community.completedProjectsByTier", this, tier)), completedProjectsByTier);
-            reputation.incrementReputation(completedProjectsByTier);
-        }
-    }
     /**
     * Calculates days passed after defaulting
     * @param date timestamp to calculate days

@@ -8,23 +8,23 @@ trap cleanup EXIT
 
 cleanup() {
   # Kill the testrpc instance that we started (if we started one and if it's still running).
-  if [ -n "$testrpc_pid" ] && ps -p $testrpc_pid > /dev/null; then
-    kill -9 $testrpc_pid
+  if [ -n "$ganache_cli_pid" ] && ps -p $ganache_cli_pid > /dev/null; then
+    kill -9 $ganache_cli_pid
   fi
 }
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  testrpc_port=8555
+  ganache_cli_port=8555
 else
-  testrpc_port=8545
+  ganache_cli_port=8545
 fi
 
 testrpc_running() {
-  nc -z localhost "$testrpc_port"
+  nc -z localhost "$ganache_cli_port"
 }
 
-start_testrpc() {
-  # We define 10 accounts with balance 1M ether, needed for high-value tests.
+start_ganache-cli() {
+  # We define 10 accounts with balance 10M ether, needed for high-value tests.
   local accounts=(
     --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501200,1000000000000000000000000"
     --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501201,1000000000000000000000000"
@@ -39,27 +39,27 @@ start_testrpc() {
   )
 
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    node_modules/.bin/testrpc-sc --gasLimit 0xfffffffffff --port "$testrpc_port" "${accounts[@]}" > /dev/null &
+    npx ganache-cli-coverage --gasLimit 0xfffffffffff --port "$ganache_cli_port" "${accounts[@]}" > /dev/null &
   else
-    node_modules/.bin/testrpc --gasLimit 0xfffffffffff "${accounts[@]}" > /dev/null &
+    npx ganache-cli --gasLimit 0xfffffffffff "${accounts[@]}" > /dev/null &
   fi
 
-  testrpc_pid=$!
+  ganache_cli_pid=$!
 }
 
 if testrpc_running; then
-  echo "Using existing testrpc instance"
+  echo "Using existing ganache-cli instance"
 else
-  echo "Starting our own testrpc instance"
-  start_testrpc
+  echo "Starting our own ganache-cli instance"
+  start_ganache-cli
 fi
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  node_modules/.bin/solidity-coverage
+  npx solidity-coverage
 
   if [ "$CONTINUOUS_INTEGRATION" = true ]; then
-    cat coverage/lcov.info | node_modules/.bin/coveralls
+    cat coverage/lcov.info | npx coveralls
   fi
 else
-  node_modules/.bin/truffle test "$@"
+  npx truffle test "$@"
 fi

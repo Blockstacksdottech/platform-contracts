@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity 0.5.8;
 
 import "../../contracts/reputation/EthicHubReputationInterface.sol";
 
@@ -7,19 +7,19 @@ contract MockReputation is EthicHubReputationInterface {
     bool public burnCalled = false;
     bool public incrementCalled = false;
 
-    function burnReputation(uint delayDays) onlyLendingContract external {
+    function burnReputation(uint delayDays) external onlyLendingContract {
         burnCalled = true;
     }
 
-    function incrementReputation(uint completedProjectsByTier) onlyLendingContract external {
+    function incrementReputation(uint completedProjectsByTier) external onlyLendingContract {
         incrementCalled = true;
     }
 
-    function initLocalNodeReputation(address localNode) onlyUsersContract external {
+    function initLocalNodeReputation(address localNode) external onlyUsersContract {
         uint blah = 2;
     }
 
-    function initCommunityReputation(address community) onlyUsersContract external {
+    function initCommunityReputation(address community) external onlyUsersContract {
         uint blah = 2;
     }
 
