@@ -1983,17 +1983,16 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         it('Should allow to send partial return before the rate is set', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
+            
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
                 from: investor
             }).should.be.fulfilled;
+        
             await this.lending.sendFundsToBorrower({
                 from: owner
             }).should.be.fulfilled;
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: borrower
-            }).should.be.fulfilled;
+            
             await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
@@ -2055,7 +2054,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
             const investorInvestment = ether(1);
             const investor2Investment = ether(2);
-            const surplus = ether(1);
             await this.lending.sendTransaction({
                 value: investorInvestment,
                 from: investor
@@ -2068,11 +2066,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 from: owner
             }).should.be.fulfilled;
 
-            // send surplus 1 eth
-            await this.lending.sendTransaction({
-                value: surplus,
-                from: borrower
-            }).should.be.fulfilled
             await this.lending.finishInitialExchangingPeriod(this.initialEthPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
@@ -2080,22 +2073,17 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.setBorrowerReturnEthPerFiatRate(this.finalEthPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
+
             var investorInitialBalance = new BN(await web3.eth.getBalance(investor));
             var investor2InitialBalance = new BN(await web3.eth.getBalance(investor2));
-            await this.lending.reclaimSurplusEth(investor).should.be.fulfilled;
-            await this.lending.reclaimSurplusEth(investor2).should.be.fulfilled;
-
-            let reclaimStatus = await this.lending.getUserContributionReclaimStatus(investor);
-            reclaimStatus[1].should.be.equal(true);
-            reclaimStatus = await this.lending.getUserContributionReclaimStatus(investor2);
-            reclaimStatus[1].should.be.equal(true);
 
             var investorFinalBalance = new BN(await web3.eth.getBalance(investor));
-            var expectedInvestorBalance = investorInitialBalance.add(ether(1).div(new BN(3)));
+            console.log(investorFinalBalance.toString())
+            var expectedInvestorBalance = investorInitialBalance.add(ether(investorInvestment).div(this.lendingAmount);
             checkLostinTransactions(expectedInvestorBalance, investorFinalBalance);
 
             var investor2FinalBalance = new BN(await web3.eth.getBalance(investor2));
-            var expectedInvestor2Balance = investor2InitialBalance.add(ether(2).div(new BN(3)));
+            var expectedInvestor2Balance = investor2InitialBalance.add(ether(investor2Investment).div(this.lendingAmount);
             checkLostinTransactions(expectedInvestor2Balance, investor2FinalBalance);
 
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
@@ -2107,14 +2095,16 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
             var investorInitialBalance = await web3.eth.getBalance(investor);
             var investor2InitialBalance = await web3.eth.getBalance(investor2);
+            
             const investorInterest = await this.lending.investorInterest()
+            
             await this.lending.reclaimContributionWithInterest(investor).should.be.fulfilled;
             await this.lending.reclaimContributionWithInterest(investor2).should.be.fulfilled;
 
-            reclaimStatus = await this.lending.getUserContributionReclaimStatus(investor);
-            reclaimStatus[0].should.be.equal(true);
+            let reclaimStatus = await this.lending.getUserContributionReclaimStatus(investor);
+            reclaimStatus.should.be.equal(true);
             reclaimStatus = await this.lending.getUserContributionReclaimStatus(investor2);
-            reclaimStatus[0].should.be.equal(true);
+            reclaimStatus.should.be.equal(true);
 
             var investorFinalBalance = await web3.eth.getBalance(investor);
             var expectedInvestorBalance = getExpectedInvestorBalance(investorInitialBalance, investorInvestment.sub(ether(1).div(new BN(3))), investorInterest, this)
@@ -2231,7 +2221,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
     }
 
     function checkLostinTransactions(expected, actual) {
-        const lost = expected.sub(new BN(actual));
+        const expectedBN = new BN(expected);
+        const lost = expectedBN.sub(new BN(actual));
         // /* Should be below 0.02 eth */
         lost.should.be.bignumber.below('20000000000000000');
     }

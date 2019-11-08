@@ -24,7 +24,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
     uint256 public investorCount;
     uint256 public reclaimedContributions;
-    uint256 public reclaimedSurpluses;
     uint256 public fundingStartTime; // Start time of contribution period in UNIX time
     uint256 public fundingEndTime; // End time of contribution period in UNIX time
     uint256 public totalContributed;
@@ -56,21 +55,17 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     bool public localNodeFeeReclaimed;
     bool public ethicHubTeamFeeReclaimed;
 
-    uint256 public surplusEth;
     uint256 public returnedEth;
 
     struct Investor {
         uint256 amount;
         bool isCompensated;
-        bool surplusEthReclaimed;
     }
 
     // Events
     event onCapReached(uint endTime);
     event onContribution(uint totalContributed, address indexed investor, uint amount, uint investorsCount);
     event onCompensated(address indexed contributor, uint amount);
-    event onSurplusSent(uint256 amount);
-    event onSurplusReclaimed(address indexed contributor, uint amount);
     event StateChange(uint state);
     event onInitalRateSet(uint rate);
     event onReturnRateSet(uint rate);
@@ -123,7 +118,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         version = 7;
 
         reclaimedContributions = 0;
-        reclaimedSurpluses = 0;
         borrowerReturnDays = 0;
 
         fundingStartTime = _fundingStartTime;
@@ -173,35 +167,22 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         );
         investors[newInvestor].amount = investors[oldInvestor].amount;
         investors[newInvestor].isCompensated = investors[oldInvestor].isCompensated;
-        investors[newInvestor].surplusEthReclaimed = investors[oldInvestor].surplusEthReclaimed;
         delete investors[oldInvestor];
         emit onInvestorChanged(oldInvestor, newInvestor);
     }
 
     function() external payable whenNotPaused {
         require(
-            state == LendingState.AwaitingReturn ||
             state == LendingState.AcceptingContributions ||
-            state == LendingState.ExchangingToFiat,
+            state == LendingState.AwaitingReturn,
             "Can't receive ETH in this state"
         );
         if(state == LendingState.AwaitingReturn) {
             returnBorrowedEth();
-        } else if (state == LendingState.ExchangingToFiat) {
-            // borrower can send surplus eth back to contract to avoid paying interest
-            sendBackSurplusEth();
         } else {
             require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", msg.sender))), "Sender is not registered lender");
             contributeWithAddress(msg.sender);
         }
-    }
-
-    function sendBackSurplusEth() internal {
-        require(state == LendingState.ExchangingToFiat);
-        require(msg.sender == borrower);
-        surplusEth = surplusEth.add(msg.value);
-        require(surplusEth <= totalLendingAmount);
-        emit onSurplusSent(msg.value);
     }
 
     /**
@@ -233,7 +214,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
     /**
     * Marks the initial exchange period as over (the ETH collected amount has been exchanged for local Fiat currency)
-    * If there was surplus, the  amount returned is substracted over the total amount collected
     * Sets the local currency to return, on the basis of which the interest will be calculated
     * @param _initialEthPerFiatRate the rate with 2 decimals. i.e. 444.22 is 44422 , 1245.00 is 124500
     */
@@ -241,9 +221,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(capReached == true, "Cap not reached");
         require(state == LendingState.ExchangingToFiat, "State is not ExchangingToFiat");
         initialEthPerFiatRate = _initialEthPerFiatRate;
-        if (surplusEth > 0) {
-            totalLendingAmount = totalLendingAmount.sub(surplusEth);
-        }
         totalLendingFiatAmount = totalLendingAmount.mul(initialEthPerFiatRate);
         emit onInitalRateSet(initialEthPerFiatRate);
         state = LendingState.AwaitingReturn;
@@ -281,19 +258,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         doReclaim(beneficiary, contribution);
     }
 
-    function reclaimSurplusEth(address payable beneficiary) external {
-        require(surplusEth > 0, "No surplus ETH");
-        // only can be reclaimed after cap reduced
-        require(state != LendingState.ExchangingToFiat, "State is ExchangingToFiat");
-        require(!investors[beneficiary].surplusEthReclaimed, "Surplus already reclaimed");
-        uint256 surplusContribution = investors[beneficiary].amount.mul(surplusEth).div(surplusEth.add(totalLendingAmount));
-        require(surplusContribution > 0, "Surplus is 0");
-        investors[beneficiary].surplusEthReclaimed = true;
-        reclaimedSurpluses = reclaimedSurpluses.add(1);
-        emit onSurplusReclaimed(beneficiary, surplusContribution);
-        doReclaim(beneficiary, surplusContribution);
-    }
-
     function reclaimContributionWithInterest(address payable beneficiary) external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(!investors[beneficiary].isCompensated, "Lender already compensated");
@@ -327,9 +291,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(localNodeFeeReclaimed, "Local Node fee is not reclaimed");
         require(ethicHubTeamFeeReclaimed, "Team fee is not reclaimed");
         require(investorCount == reclaimedContributions, "Not all investors have reclaimed their share");
-        if(surplusEth > 0) {
-            require(investorCount == reclaimedSurpluses, "Not all investors have reclaimed their surplus");
-        }
         doReclaim(ethicHubTeam, address(this).balance);
     }
 
@@ -489,9 +450,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         uint256 investorAmount = 0;
         if (state == LendingState.ContributionReturned) {
             investorAmount = investors[investor].amount;
-            if (surplusEth > 0){
-                investorAmount = investors[investor].amount.mul(totalLendingAmount).div(totalContributed);
-            }
             return investorAmount.mul(initialEthPerFiatRate).mul(investorInterest()).div(borrowerReturnEthPerFiatRate).div(interestBasePercent);
         } else if (state == LendingState.Default){
             investorAmount = investors[investor].amount;
@@ -506,8 +464,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         return ethicHubStorage.getUint(keccak256(abi.encodePacked("lending.maxDelayDays", this)));
     }
 
-    function getUserContributionReclaimStatus(address userAddress) public view returns(bool isCompensated, bool surplusEthReclaimed){
-        isCompensated = investors[userAddress].isCompensated;
-        surplusEthReclaimed = investors[userAddress].surplusEthReclaimed;
+    function getUserContributionReclaimStatus(address userAddress) public view returns(bool isCompensated){
+        return investors[userAddress].isCompensated;
     }
 }
