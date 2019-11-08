@@ -222,7 +222,6 @@ contract('EthicHubLending (Lending owner != LocalNode)', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -393,7 +392,6 @@ contract('EthicHubLending (Lending owner == LocalNode)', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community, //community rep wallet
             {
@@ -565,7 +563,6 @@ contract('EthicHubLending (LocalNode not exists)', function() {
             //Lending saves parameters in storage, checks if owner is localNode
             await lendingInstance.saveInitialParametersToStorage(
                 2, //maxDefaultDays
-                1, //tier
                 20, //community members
                 community, //community rep wallet
                 {
@@ -619,7 +616,6 @@ contract('EthicHubLending not funded', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -758,7 +754,6 @@ contract('EthicHubLending not returned on time', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -925,7 +920,6 @@ contract('EthicHubLending declare default', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -1088,7 +1082,6 @@ contract('EthicHubLending with surplus', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -1271,7 +1264,6 @@ contract('Ethichub test olds contracts', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -1447,7 +1439,6 @@ contract('EthicHubLending do a payment with paymentGateway', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )
@@ -1774,7 +1765,6 @@ contract('EthicHubLending with surplus', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             2, //maxDefaultDays
-            1, //tier
             20, //community members
             community //community rep wallet
         )

@@ -277,7 +277,6 @@ describe('Test Single Case contract', function() {
         //Lending saves parameters in storage, checks if owner is localNode
         await lendingInstance.saveInitialParametersToStorage(
             MAX_DELAY_DAYS, //maxDefaultDays
-            TIER, //tier
             COMMUNITY_NUMBER, //community members
             community //community rep wallet
         );

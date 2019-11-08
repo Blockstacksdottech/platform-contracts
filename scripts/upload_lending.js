@@ -123,7 +123,6 @@ loader.load(web3, 'EthicHubCMC', cmcAddress).then(cmcInstance => {
         console.log("addNewLendingContract");
         await lendingInstance.methods.saveInitialParametersToStorage(
           '2',//maxDefaultDays
-          '1',//tier
           '20',//community members
           community //community rep wallet
         ).send({ from: accounts[0], gas: 4000000 });

@@ -81,7 +81,6 @@ module.exports = async (deployer, network, accounts) => {
             //Lending saves parameters in storage
             await lendingInstance.saveInitialParametersToStorage(
                 2, //maxDefaultDays
-                1, //tier
                 20, //community members
                 community //community rep wallet
             )
