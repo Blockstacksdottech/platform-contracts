@@ -47,7 +47,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     uint256 public borrowerReturnEthPerFiatRate;
     uint256 public ethichubFee;
     uint256 public localNodeFee;
-    uint256 public tier;
 
     // Interest rate is using base uint 100 and 100% 10000, this means 1% is 100
     // this guarantee we can have a 2 decimal presicion in our calculation
@@ -142,24 +141,19 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
     function saveInitialParametersToStorage(
         uint256 _maxDelayDays,
-        uint256 _tier,
         uint256 _communityMembers,
         address _community
         ) external onlyOwnerOrLocalNode {
         require(_maxDelayDays != 0, "_maxDelayDays must be > 0");
         require(state == LendingState.Uninitialized, "State must be Uninitialized");
-        require(_tier > 0, "_tier must be > 0");
         require(_communityMembers > 0, "_communityMembers must be > 0");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "community", _community))), "Community is not registered");
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.maxDelayDays", this)), _maxDelayDays);
         ethicHubStorage.setAddress(keccak256(abi.encodePacked("lending.community", this)), _community);
         ethicHubStorage.setAddress(keccak256(abi.encodePacked("lending.localNode", this)), localNode);
-        ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.tier", this)), _tier);
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.communityMembers", this)), _communityMembers);
-        tier = _tier;
         state = LendingState.AcceptingContributions;
         emit StateChange(uint(state));
-
     }
 
     function setBorrower(address payable _borrower) external checkIfArbiter {

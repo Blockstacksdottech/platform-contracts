@@ -33,8 +33,8 @@ chai.use(require('chai-as-promised'))
 const EthicHubLending = artifacts.require('EthicHubLending');
 const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol');
 
-contract('EthicHubLending', function([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
-    beforeEach(async function() {
+contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
+    beforeEach(async function () {
         await advanceBlock();
 
         const latestTimeValue = await latestTime()
@@ -44,7 +44,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         this.lendingInterestRatePercentage = new BN(15);
         this.totalLendingAmount = ether(3);
 
-        this.tier = new BN(1);
         this.ethichubFee = new BN(3);
         this.localNodeFee = new BN(4);
 
@@ -83,11 +82,11 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         await this.mockStorage.setBool(utils.soliditySha3("user", "community", community), true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", arbiter), true);
 
-        await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+        await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
     });
 
-    describe('initializing', function() {
-        it('should not allow to invest before initializing', async function() {
+    describe('initializing', function () {
+        it('should not allow to invest before initializing', async function () {
             var someLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
@@ -116,7 +115,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should not allow create projects with unregistered local nodes', async function() {
+        it('should not allow create projects with unregistered local nodes', async function () {
             await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
@@ -132,7 +131,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             ).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should not allow to invest with unregistered representatives', async function() {
+        it('should not allow to invest with unregistered representatives', async function () {
             await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
@@ -148,15 +147,15 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             ).should.be.rejectedWith(EVMRevert)
         });
 
-        it('should be in latest version', async function() {
+        it('should be in latest version', async function () {
             let version = await this.lending.version()
             let expectedVersion = new BN(LatestVersion)
             version.should.be.bignumber.equal(expectedVersion)
         });
     });
 
-    describe('contributing', function() {
-        it('should not allow to invest before contribution period', async function() {
+    describe('contributing', function () {
+        it('should not allow to invest before contribution period', async function () {
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(false);
@@ -166,7 +165,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should not allow to invest after contribution period', async function() {
+        it('should not allow to invest after contribution period', async function () {
             await increaseTimeTo(this.fundingEndTime + duration.days(1))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(false);
@@ -176,7 +175,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should allow to check investor contribution amount', async function() {
+        it('should allow to check investor contribution amount', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(1),
@@ -186,7 +185,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             contributionAmount.should.be.bignumber.equal(ether(1));
         });
 
-        it('should allow to invest in contribution period', async function() {
+        it('should allow to invest in contribution period', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(true);
@@ -196,7 +195,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.fulfilled;
         });
 
-        it('should not allow to invest with cap fulfilled', async function() {
+        it('should not allow to invest with cap fulfilled', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(1),
@@ -222,7 +221,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should return extra value over cap to last investor', async function() {
+        it('should return extra value over cap to last investor', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(2),
@@ -234,7 +233,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.fulfilled;
         });
 
-        it('should allow to invest throught paymentGateway', async function() {
+        it('should allow to invest throught paymentGateway', async function () {
             const paymentGateway = ethicHubTeam;
             await this.mockStorage.setBool(utils.soliditySha3("user", "paymentGateway", paymentGateway), true);
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
@@ -248,7 +247,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             contributionAmount.should.be.bignumber.equal(ether(1));
         });
 
-        it('should return extra value over cap to last investor throught paymentGateway', async function() {
+        it('should return extra value over cap to last investor throught paymentGateway', async function () {
             const paymentGateway = ethicHubTeam;
             await this.mockStorage.setBool(utils.soliditySha3("user", "paymentGateway", paymentGateway), true);
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
@@ -279,7 +278,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             checkLostinTransactions(initialAmount, afterAmount);
         });
 
-        it('should allow to invest amount < 0.1 eth', async function() {
+        it('should allow to invest amount < 0.1 eth', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(true);
@@ -293,8 +292,8 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
     });
 
 
-    describe('Days calculator', function() {
-        it('should calculate correct days', async function() {
+    describe('Days calculator', function () {
+        it('should calculate correct days', async function () {
             const expectedDaysPassed = 55;
             const daysPassed = await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime + duration.days(expectedDaysPassed));
             daysPassed.should.be.bignumber.equal(new BN(expectedDaysPassed))
@@ -304,13 +303,13 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             new BN(0).should.be.bignumber.equal(lessThanADay)
         })
 
-        it('should fail to operate for time travelers (sorry)', async function() {
+        it('should fail to operate for time travelers (sorry)', async function () {
             await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime - duration.days(2)).should.be.rejectedWith(EVMRevert)
         })
     })
 
-    describe('Partial returning of funds', function() {
-        it('full payment of the loan in several transfers should be allowed', async function() {
+    describe('Partial returning of funds', function () {
+        it('full payment of the loan in several transfers should be allowed', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -338,7 +337,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             state.toNumber().should.be.equal(ContributionReturned);
         })
 
-        it('partial payment of the loan should be still default', async function() {
+        it('partial payment of the loan should be still default', async function () {
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1));
 
             await this.lending.sendTransaction({
@@ -376,7 +375,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             state.toNumber().should.be.equal(Default);
         })
 
-        it('partial payment of the loan should allow to recover contributions', async function() {
+        it('partial payment of the loan should allow to recover contributions', async function () {
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1));
 
             var investorSendAmount = this.totalLendingAmount.mul(new BN(1)).div(new BN(3));
@@ -445,7 +444,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             contractBalance.should.be.bignumber.equal(new BN(0));
         })
 
-        it('partial payment of the loan should not allow to recover interest, local node and team fees', async function() {
+        it('partial payment of the loan should not allow to recover interest, local node and team fees', async function () {
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1));
 
             var investorSendAmount = this.totalLendingAmount.mul(new BN(1)).div(new BN(3));
@@ -501,8 +500,8 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
     });
 
 
-    describe('Retrieving contributions', function() {
-        it('should allow to retrieve contributions after declaring project not funded', async function() {
+    describe('Retrieving contributions', function () {
+        it('should allow to retrieve contributions after declaring project not funded', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(1),
@@ -528,7 +527,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.reclaimContribution(investor2).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should not allow to retrieve contributions if not contributor paid', async function() {
+        it('should not allow to retrieve contributions if not contributor paid', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(1),
@@ -547,7 +546,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         });
 
-        it('should not allow to retrieve contributions before declaring project not funded', async function() {
+        it('should not allow to retrieve contributions before declaring project not funded', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(1),
@@ -562,7 +561,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         });
 
-        it('should not allow to retrieve contributions without interest after project is paid', async function() {
+        it('should not allow to retrieve contributions without interest after project is paid', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             const investment2 = this.totalLendingAmount;
             await this.lending.sendTransaction({
@@ -589,9 +588,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
     })
 
 
-    describe('Exchange period', function() {
+    describe('Exchange period', function () {
 
-        it('should not go to exchange state after cap reached', async function() {
+        it('should not go to exchange state after cap reached', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -604,7 +603,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             state.toNumber().should.be.equal(AcceptingContributions);
         });
 
-        it('should go exchange state after sending to borrower', async function() {
+        it('should go exchange state after sending to borrower', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -620,7 +619,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         });
 
-        it('should transfer to borrower after cap reached and method called', async function() {
+        it('should transfer to borrower after cap reached and method called', async function () {
             var initialBorrowerBalance = new BN(await web3.eth.getBalance(borrower));
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
@@ -637,7 +636,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             balance.should.be.bignumber.equal(this.totalLendingAmount);
         });
 
-        it('should not transfer when cap not reached', async function() {
+        it('should not transfer when cap not reached', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount.subn(1),
@@ -648,7 +647,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should not transfer when state different than AcceptingContributions', async function() {
+        it('should not transfer when state different than AcceptingContributions', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -662,7 +661,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should not transfer when state different than AcceptingContributions', async function() {
+        it('should not transfer when state different than AcceptingContributions', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -673,7 +672,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should fail to change state to AwaitingReturn before exchanged', async function() {
+        it('should fail to change state to AwaitingReturn before exchanged', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: ether(1),
@@ -684,7 +683,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);;
         });
 
-        it('should calculate correct fiat amount after exchange', async function() {
+        it('should calculate correct fiat amount after exchange', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -713,7 +712,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             contractBorrowerReturnFiatAmount.should.be.bignumber.equal(borrowerReturnFiatAmount);
         });
 
-        it('should advance state after setting inital fiat amount', async function() {
+        it('should advance state after setting inital fiat amount', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -730,7 +729,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         });
 
-        it('should not allow setting to unauthorized investors', async function() {
+        it('should not allow setting to unauthorized investors', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -745,8 +744,8 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         });
     });
 
-    describe('Borrower return', function() {
-        it('should set correct parameters', async function() {
+    describe('Borrower return', function () {
+        it('should set correct parameters', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -774,7 +773,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             contractBorrowerReturnAmount.should.be.bignumber.equal(borrowerReturnAmount);
         });
 
-        it('returning in same date should amount to totalLendingAmount plus fees', async function() {
+        it('returning in same date should amount to totalLendingAmount plus fees', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -802,7 +801,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             state.toNumber().should.be.equal(ContributionReturned);
         })
 
-        it('returning in half total date without fees', async function() {
+        it('returning in half total date without fees', async function () {
             let lendingAmount = ether(1)
             let lendingDays = new BN(183) //half year
             let noFeesLending = await EthicHubLending.new(
@@ -819,7 +818,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 0,
             ).should.be.fulfilled;
 
-            await noFeesLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await noFeesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await noFeesLending.sendTransaction({
                 value: lendingAmount,
@@ -841,7 +840,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             lendingIncrement.toNumber().should.be.below(10755)
         })
 
-        it('returning in half total date with fees', async function() {
+        it('returning in half total date with fees', async function () {
             let lendingAmount = ether(1)
             let lendingDays = 183 //half year
             let feesLending = await EthicHubLending.new(
@@ -858,7 +857,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 new BN(3)
             ).should.be.fulfilled;
 
-            await feesLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await feesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await feesLending.sendTransaction({
                 value: lendingAmount,
@@ -880,7 +879,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
 
 
-        it('should calculate correct return fiat amount based on return time', async function() {
+        it('should calculate correct return fiat amount based on return time', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -926,7 +925,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         });
 
 
-        it('should not allow to stablish return in other state', async function() {
+        it('should not allow to stablish return in other state', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -940,7 +939,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('should allow the return of proper amount', async function() {
+        it('should allow the return of proper amount', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -963,8 +962,8 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         });
     });
 
-    describe('Default', async function() {
-        it('should calculate correct time difference', async function() {
+    describe('Default', async function () {
+        it('should calculate correct time difference', async function () {
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber());
             for (var delayDays = 0; delayDays <= 10; delayDays++) {
                 var resultDays = await this.lending.getDelayDays(defaultTime + duration.days(delayDays));
@@ -972,19 +971,19 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }
         });
 
-        it('should count half a day as full day', async function() {
+        it('should count half a day as full day', async function () {
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber());
             var resultDays = await this.lending.getDelayDays(defaultTime + duration.days(1.5));
             resultDays.toNumber().should.be.equal(1);
         });
 
-        it('should be 0 days if not yet ended', async function() {
+        it('should be 0 days if not yet ended', async function () {
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) - duration.seconds(1);
             var resultDays = await this.lending.getDelayDays(defaultTime);
             resultDays.toNumber().should.be.equal(0);
         });
 
-        it('should allow declare project as default if no money returned after maxDelayDays', async function() {
+        it('should allow declare project as default if no money returned after maxDelayDays', async function () {
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -1013,7 +1012,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             state.toNumber().should.be.equal(Default);
         });
 
-        it('should not allow to declare project as default before lending period ends', async function() {
+        it('should not allow to declare project as default before lending period ends', async function () {
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -1030,9 +1029,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         });
     });
 
-    describe('Retrieve contribution with interest', async function() {
+    describe('Retrieve contribution with interest', async function () {
 
-        it('Should return investors contributions with interests', async function() {
+        it('Should return investors contributions with interests', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1103,7 +1102,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         });
 
 
-        it('Should show same returns for investors different time after returned', async function() {
+        it('Should show same returns for investors different time after returned', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1146,7 +1145,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             firstCheck.should.be.bignumber.equal(secondCheck)
         });
 
-        it('Should return investors with excess contribution', async function() {
+        it('Should return investors with excess contribution', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1217,7 +1216,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         });
 
-        it('Should not allow to send funds back if not borrower', async function() {
+        it('Should not allow to send funds back if not borrower', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1252,7 +1251,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Should not allow reclaim twice the funds', async function() {
+        it('Should not allow reclaim twice the funds', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1288,7 +1287,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Should not allow returns when contract have balance in other state', async function() {
+        it('Should not allow returns when contract have balance in other state', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             const investment2 = ether(1);
             await this.lending.sendTransaction({
@@ -1298,7 +1297,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.reclaimContributionWithInterest(investor2).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Should return correct platform fees', async function() {
+        it('Should return correct platform fees', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1359,7 +1358,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             checkLostinTransactions(expectedEthicHubTeamBalance, teamFinalBalance);
         });
 
-        it('Should return remainding platform fees if inexact', async function() {
+        it('Should return remainding platform fees if inexact', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1374,7 +1373,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.ethichubFee,
                 this.localNodeFee
             )
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             const investment = "1000000000000000000"
@@ -1451,7 +1450,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             checkLostinTransactions(expectedEthicHubTeamBalance, teamFinalBalance);
         });
 
-        it('should be interest 0% if the project is repaid on the same day', async function() {
+        it('should be interest 0% if the project is repaid on the same day', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
@@ -1526,8 +1525,8 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         });
 
     })
-    describe('Reclaim leftover eth', async function() {
-        it('should send leftover eth to team if its correct state, all parties have reclaimed theirs', async function() {
+    describe('Reclaim leftover eth', async function () {
+        it('should send leftover eth to team if its correct state, all parties have reclaimed theirs', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1543,7 +1542,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.localNodeFee
             )
 
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1612,7 +1611,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         })
 
-        it('should fail to send leftover eth to team if its correct state, without all contributors reclaimed', async function() {
+        it('should fail to send leftover eth to team if its correct state, without all contributors reclaimed', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1628,7 +1627,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.localNodeFee,
             );
 
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1691,7 +1690,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
 
         })
-        it('should fail to send leftover eth to team if its correct state, without local node reclaimed', async function() {
+        it('should fail to send leftover eth to team if its correct state, without local node reclaimed', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1707,7 +1706,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.localNodeFee
             );
 
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1771,7 +1770,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
 
         })
-        it('should fail to send leftover eth to team if its correct state, without team reclaimed', async function() {
+        it('should fail to send leftover eth to team if its correct state, without team reclaimed', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1787,7 +1786,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.localNodeFee
             );
 
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1851,7 +1850,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
 
         })
-        it('should fail to send leftover eth to team if its correct state if not arbiter', async function() {
+        it('should fail to send leftover eth to team if its correct state if not arbiter', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1867,7 +1866,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.localNodeFee
             );
 
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1933,7 +1932,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         })
 
-        it('should fail to send leftover eth to team if not correct state', async function() {
+        it('should fail to send leftover eth to team if not correct state', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1949,7 +1948,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 this.localNodeFee
             );
 
-            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.tier, this.members, community);
+            await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1980,9 +1979,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
     })
 
-    describe('Send partial return', async function() {
+    describe('Send partial return', async function () {
 
-        it('Should allow to send partial return before the rate is set', async function() {
+        it('Should allow to send partial return before the rate is set', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -2000,7 +1999,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.fulfilled;
         })
 
-        it('Should not allow to send more than collected return', async function() {
+        it('Should not allow to send more than collected return', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -2015,7 +2014,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         })
 
-        it('Should not allow to send partial return after the rate is set', async function() {
+        it('Should not allow to send partial return after the rate is set', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -2033,7 +2032,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         })
 
-        it('Should only allow borrower to send partial return', async function() {
+        it('Should only allow borrower to send partial return', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.lending.sendTransaction({
                 value: this.totalLendingAmount,
@@ -2051,7 +2050,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.fulfilled;
         })
 
-        it('Should allow to reclaim partial return from contributor', async function() {
+        it('Should allow to reclaim partial return from contributor', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investorInvestment = ether(1);
@@ -2127,9 +2126,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
     })
 
-    describe('Change borrower', async function() {
+    describe('Change borrower', async function () {
 
-        it('Should allow to change borrower with registered arbiter', async function() {
+        it('Should allow to change borrower with registered arbiter', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "representative", investor3), true);
             await this.lending.setBorrower(investor3, {
@@ -2139,7 +2138,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             b.should.be.equal(investor3);
         })
 
-        it('Should not allow to change borrower with unregistered arbiter', async function() {
+        it('Should not allow to change borrower with unregistered arbiter', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.lending.setBorrower(investor3, {
                 from: owner
@@ -2148,9 +2147,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
     })
 
-    describe('Change investor', async function() {
+    describe('Change investor', async function () {
 
-        it('Should allow to change investor with registered arbiter', async function() {
+        it('Should allow to change investor with registered arbiter', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
@@ -2169,7 +2168,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
         })
 
-        it('Should not allow to change investor to unregistered investor', async function() {
+        it('Should not allow to change investor to unregistered investor', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), false);
@@ -2182,7 +2181,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             }).should.be.rejectedWith(EVMRevert);
         })
 
-        it('Should not allow to change new investor who have already invested', async function() {
+        it('Should not allow to change new investor who have already invested', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
@@ -2200,7 +2199,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
 
 
-        it('Should not allow to change borrower with unregistered arbiter', async function() {
+        it('Should not allow to change borrower with unregistered arbiter', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
