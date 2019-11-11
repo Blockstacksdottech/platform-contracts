@@ -36,14 +36,14 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     uint256 public totalLendingAmount;
     uint256 public lendingDays;
     uint256 public borrowerReturnDays;
-    uint256 public initialEthPerFiatRate;
+    uint256 public initialDaiPerFiatRate;
     uint256 public totalLendingFiatAmount;
 
     address payable public borrower;
     address payable public localNode;
     address payable public ethicHubTeam;
 
-    uint256 public borrowerReturnEthPerFiatRate;
+    uint256 public borrowerReturnDaiPerFiatRate;
     uint256 public ethichubFee;
     uint256 public localNodeFee;
 
@@ -55,7 +55,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     bool public localNodeFeeReclaimed;
     bool public ethicHubTeamFeeReclaimed;
 
-    uint256 public returnedEth;
+    uint256 public returnedDai;
 
     struct Investor {
         uint256 amount;
@@ -206,23 +206,23 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         emit StateChange(uint(state));
     }
 
-    function setBorrowerReturnEthPerFiatRate(uint256 _borrowerReturnEthPerFiatRate) external onlyOwnerOrLocalNode {
+    function setBorrowerReturnDaiPerFiatRate(uint256 _borrowerReturnDaiPerFiatRate) external onlyOwnerOrLocalNode {
         require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
-        borrowerReturnEthPerFiatRate = _borrowerReturnEthPerFiatRate;
-        emit onReturnRateSet(borrowerReturnEthPerFiatRate);
+        borrowerReturnDaiPerFiatRate = _borrowerReturnDaiPerFiatRate;
+        emit onReturnRateSet(borrowerReturnDaiPerFiatRate);
     }
 
     /**
     * Marks the initial exchange period as over (the ETH collected amount has been exchanged for local Fiat currency)
     * Sets the local currency to return, on the basis of which the interest will be calculated
-    * @param _initialEthPerFiatRate the rate with 2 decimals. i.e. 444.22 is 44422 , 1245.00 is 124500
+    * @param _initialDaiPerFiatRate the rate with 2 decimals. i.e. 444.22 is 44422 , 1245.00 is 124500
     */
-    function finishInitialExchangingPeriod(uint256 _initialEthPerFiatRate) external onlyOwnerOrLocalNode {
+    function finishInitialExchangingPeriod(uint256 _initialDaiPerFiatRate) external onlyOwnerOrLocalNode {
         require(capReached == true, "Cap not reached");
         require(state == LendingState.ExchangingToFiat, "State is not ExchangingToFiat");
-        initialEthPerFiatRate = _initialEthPerFiatRate;
-        totalLendingFiatAmount = totalLendingAmount.mul(initialEthPerFiatRate);
-        emit onInitalRateSet(initialEthPerFiatRate);
+        initialDaiPerFiatRate = _initialDaiPerFiatRate;
+        totalLendingFiatAmount = totalLendingAmount.mul(initialDaiPerFiatRate);
+        emit onInitalRateSet(initialDaiPerFiatRate);
         state = LendingState.AwaitingReturn;
         emit StateChange(uint(state));
     }
@@ -271,7 +271,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     function reclaimLocalNodeFee() external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(localNodeFeeReclaimed == false, "Local Node's fee already reclaimed");
-        uint256 fee = totalLendingFiatAmount.mul(localNodeFee).mul(interestBaseUint).div(interestBasePercent).div(borrowerReturnEthPerFiatRate);
+        uint256 fee = totalLendingFiatAmount.mul(localNodeFee).mul(interestBaseUint).div(interestBasePercent).div(borrowerReturnDaiPerFiatRate);
         require(fee > 0, "Local Node's team fee is 0");
         localNodeFeeReclaimed = true;
         doReclaim(localNode, fee);
@@ -280,13 +280,13 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     function reclaimEthicHubTeamFee() external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(ethicHubTeamFeeReclaimed == false, "EthicHub team's fee already reclaimed");
-        uint256 fee = totalLendingFiatAmount.mul(ethichubFee).mul(interestBaseUint).div(interestBasePercent).div(borrowerReturnEthPerFiatRate);
+        uint256 fee = totalLendingFiatAmount.mul(ethichubFee).mul(interestBaseUint).div(interestBasePercent).div(borrowerReturnDaiPerFiatRate);
         require(fee > 0, "EthicHub's team fee is 0");
         ethicHubTeamFeeReclaimed = true;
         doReclaim(ethicHubTeam, fee);
     }
 
-    function reclaimLeftoverEth() external checkIfArbiter {
+    function reclaimLeftoverDai() external checkIfArbiter {
         require(state == LendingState.ContributionReturned || state == LendingState.Default, "State is not ContributionReturned or Default");
         require(localNodeFeeReclaimed, "Local Node fee is not reclaimed");
         require(ethicHubTeamFeeReclaimed, "Team fee is not reclaimed");
@@ -305,13 +305,13 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     function returnBorrowedEth() internal {
         require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
         require(msg.sender == borrower, "Only the borrower can repay");
-        require(borrowerReturnEthPerFiatRate > 0, "Second exchange rate not set");
+        require(borrowerReturnDaiPerFiatRate > 0, "Second exchange rate not set");
         bool projectRepayed = false;
         uint excessRepayment = 0;
-        uint newReturnedEth = 0;
+        uint newreturnedDai = 0;
         emit onReturnAmount(msg.sender, msg.value);
-        (newReturnedEth, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedEth, msg.value);
-        returnedEth = newReturnedEth;
+        (newreturnedDai, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedDai, msg.value);
+        returnedDai = newreturnedDai;
         if (projectRepayed == true) {
             borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
             state = LendingState.ContributionReturned;
@@ -435,7 +435,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     }
 
     function borrowerReturnAmount() public view returns(uint256) {
-        return borrowerReturnFiatAmount().div(borrowerReturnEthPerFiatRate);
+        return borrowerReturnFiatAmount().div(borrowerReturnDaiPerFiatRate);
     }
 
     function isContribPeriodRunning() public view returns(bool) {
@@ -450,11 +450,11 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         uint256 investorAmount = 0;
         if (state == LendingState.ContributionReturned) {
             investorAmount = investors[investor].amount;
-            return investorAmount.mul(initialEthPerFiatRate).mul(investorInterest()).div(borrowerReturnEthPerFiatRate).div(interestBasePercent);
+            return investorAmount.mul(initialDaiPerFiatRate).mul(investorInterest()).div(borrowerReturnDaiPerFiatRate).div(interestBasePercent);
         } else if (state == LendingState.Default){
             investorAmount = investors[investor].amount;
             // contribution = contribution * partial_funds / total_funds
-            return investorAmount.mul(returnedEth).div(totalLendingAmount);
+            return investorAmount.mul(returnedDai).div(totalLendingAmount);
         } else {
             return 0;
         }
