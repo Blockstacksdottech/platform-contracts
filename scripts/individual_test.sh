@@ -14,16 +14,17 @@ mainmenu () {
 
   read  -n 1 -p "Input Selection:" mainmenuinput
   echo ""
+
   if [ "$mainmenuinput" = "1" ]; then
-            bash $SCRIPT_PATH test/EthicHubLending.js ./test/helper_contracts/MockStorage.sol ./test/helper_contracts/MockReputation.sol
+            bash $SCRIPT_PATH test/EthicHubLending.js 
         elif [ "$mainmenuinput" = "2" ]; then
-            bash $SCRIPT_PATH test/EthicHubReputation.js  ./test/helper_contracts/MockStorage.sol
+            bash $SCRIPT_PATH test/EthicHubReputation.js
         elif [ "$mainmenuinput" = "3" ]; then
-            bash $SCRIPT_PATH test test/EthicHubBase.js ./test/helper_contracts/MockStorage.sol ./test/helper_contracts/MockEthicHubContract.sol
+            bash $SCRIPT_PATH test test/EthicHubBase.js
         elif [ "$mainmenuinput" = "4" ]; then
             bash $SCRIPT_PATH  test test/EthicHubUser.js
         elif [ "$mainmenuinput" = "5" ]; then
-              bash $SCRIPT_PATH test test/EthicHubArbitrage.js ./test/helper_contracts/MockStorage.sol
+              bash $SCRIPT_PATH test test/EthicHubArbitrage.js
         elif [ "$mainmenuinput" = "6" ]; then
             bash $SCRIPT_PATH test test/EthicHubIntegration.js
 

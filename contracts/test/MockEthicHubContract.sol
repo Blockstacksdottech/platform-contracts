@@ -1,7 +1,7 @@
 pragma solidity 0.5.8;
 
-import "../../contracts/EthicHubBase.sol";
-import "../../contracts/storage/EthicHubStorageInterface.sol";
+import "../EthicHubBase.sol";
+import "../storage/EthicHubStorageInterface.sol";
 
 contract MockEthicHubContract is EthicHubBase {
 

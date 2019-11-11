@@ -21,7 +21,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         Default
     }
 
-    ERC20 public dai;
+    IERC20 public dai;
 
     mapping(address => Investor) public investors;
 
@@ -105,7 +105,8 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         address payable _borrower,
         address payable _localNode,
         address payable _ethicHubTeam,
-        EthicHubStorageInterface _ethicHubStorage
+        EthicHubStorageInterface _ethicHubStorage,
+        IERC20 _dai
         ) EthicHubBase(_ethicHubStorage)
         public {
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
@@ -125,14 +126,18 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
         fundingStartTime = _fundingStartTime;
         fundingEndTime = _fundingEndTime;
-        localNode = _localNode;
-        ethicHubTeam = _ethicHubTeam;
-        borrower = _borrower;
         annualInterest = _annualInterest;
         totalLendingAmount = _totalLendingAmount;
         lendingDays = _lendingDays;
         ethichubFee = _ethichubFee;
         localNodeFee = _localNodeFee;
+
+        borrower = _borrower;
+        localNode = _localNode;
+        ethicHubTeam = _ethicHubTeam;
+
+        dai = _dai;
+
         state = LendingState.Uninitialized;
     }
 

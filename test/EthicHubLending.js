@@ -31,7 +31,8 @@ chai.use(require('chai-as-promised'))
     .should()
 
 const EthicHubLending = artifacts.require('EthicHubLending');
-const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol');
+const MockStorage = artifacts.require('MockStorage');
+const MockDAI = artifacts.require('MockDAI');
 
 contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
     beforeEach(async function () {
@@ -55,6 +56,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         this.members = new BN(20);
 
         this.mockStorage = await MockStorage.new();
+        this.dai = await MockDAI.new();
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", localNode), true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", borrower), true);
@@ -70,7 +72,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             borrower,
             localNode,
             ethicHubTeam,
-            this.mockStorage.address
+            this.mockStorage.address,
+            this.dai.address
         );
 
         await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), arbiter);
@@ -98,7 +101,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             );
 
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
@@ -127,7 +131,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 borrower,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             ).should.be.rejectedWith(EVMRevert);
         });
 
@@ -143,7 +148,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 localNode,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             ).should.be.rejectedWith(EVMRevert)
         });
 
@@ -584,9 +590,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             }).should.be.fulfilled;
             await this.lending.reclaimContribution(investor2).should.be.rejectedWith(EVMRevert);
         });
-
     })
-
 
     describe('Exchange period', function () {
 
@@ -815,7 +819,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             ).should.be.fulfilled;
 
             await noFeesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -854,7 +859,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             ).should.be.fulfilled;
 
             await feesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1098,7 +1104,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             const investor4FinalBalance = await web3.eth.getBalance(investor4);
             const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, investment4, investorInterest, this);
             checkLostinTransactions(expectedInvestor4Balance, investor4FinalBalance);
-
         });
 
 
@@ -1146,7 +1151,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         });
 
         it('Should return investors with excess contribution', async function () {
-            await increaseTimeTo(this.fundingStartTime + duration.days(2));
+            await increaseTimeTo(this.fundingStartTime + duration.days(1));
 
             const investment2 = ether(1);
             const investment3 = ether(0.5);
@@ -1213,7 +1218,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             const investor4FinalBalance = await web3.eth.getBalance(investor4);
             const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, investor4Contribution, investorInterest, this);
             checkLostinTransactions(expectedInvestor4Balance, investor4FinalBalance);
-
         });
 
         it('Should not allow to send funds back if not borrower', async function () {
@@ -1371,7 +1375,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             )
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
 
@@ -1539,7 +1544,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1624,7 +1630,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1703,6 +1710,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 localNode,
                 ethicHubTeam,
                 this.mockStorage.address,
+                this.dai.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1782,7 +1790,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1862,7 +1871,8 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.dai.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1945,6 +1955,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 localNode,
                 ethicHubTeam,
                 this.mockStorage.address,
+                this.dai.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);

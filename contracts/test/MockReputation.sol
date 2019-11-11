@@ -1,6 +1,6 @@
 pragma solidity 0.5.8;
 
-import "../../contracts/reputation/EthicHubReputationInterface.sol";
+import "../reputation/EthicHubReputationInterface.sol";
 
 
 contract MockReputation is EthicHubReputationInterface {

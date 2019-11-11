@@ -16,8 +16,9 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol');
 const EthicHubReputation = artifacts.require('EthicHubReputation');
+
+const MockStorage = artifacts.require('MockStorage');
 
 contract('EthicHubReputation', function([owner, community, localNode, lendingContract]) {
     beforeEach(async function() {

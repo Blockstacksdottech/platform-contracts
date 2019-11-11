@@ -38,8 +38,9 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol');
 const Arbitrage = artifacts.require('EthicHubArbitrage');
+
+const MockStorage = artifacts.require('MockStorage');
 
 contract('Arbitrage', function([owner, arbiter, _, lending_contract, not_lending_contract]) {
 

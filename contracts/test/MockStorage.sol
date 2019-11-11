@@ -1,6 +1,6 @@
 pragma solidity 0.5.8;
 
-import '../../contracts/storage/EthicHubStorageInterface.sol';
+import '../storage/EthicHubStorageInterface.sol';
 
 contract MockStorage is EthicHubStorageInterface {
 
@@ -18,7 +18,6 @@ contract MockStorage is EthicHubStorageInterface {
         // Set the main owner upon deployment
         boolStorage[keccak256(abi.encodePacked("access.role", "owner", msg.sender))] = true;
     }
-
 
     /**** Get Methods ***********/
 
@@ -118,7 +117,4 @@ contract MockStorage is EthicHubStorageInterface {
     function deleteInt(bytes32 _key) external {
         delete intStorage[_key];
     }
-
-
-
 }

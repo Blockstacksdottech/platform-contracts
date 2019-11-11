@@ -14,8 +14,8 @@ chain.use(require('chai-as-promised'))
     .should()
 
 
-const MockStorage = artifacts.require('./helper_contracts/MockStorage.sol')
-const MockEthicHubContract = artifacts.require('./helper_contracts/MockEthicHubContract.sol')
+const MockStorage = artifacts.require('MockStorage')
+const MockEthicHubContract = artifacts.require('MockEthicHubContract')
 
 contract('EthicHubBase', function(accounts) {
     beforeEach(async function() {
