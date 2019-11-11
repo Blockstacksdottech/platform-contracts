@@ -62,15 +62,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         this.lending = await EthicHubLending.new(
             this.fundingStartTime,
             this.fundingEndTime,
-            borrower,
             this.lendingInterestRatePercentage,
             this.totalLendingAmount,
             this.lendingDays,
-            this.mockStorage.address,
-            localNode,
-            ethicHubTeam,
             this.ethichubFee,
             this.localNodeFee,
+            borrower,
+            localNode,
+            ethicHubTeam,
+            this.mockStorage.address
         );
 
         await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), arbiter);
@@ -90,15 +90,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             var someLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 this.totalLendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
-                localNode,
-                ethicHubTeam,
                 this.ethichubFee,
                 this.localNodeFee,
+                borrower,
+                localNode,
+                ethicHubTeam,
+                this.mockStorage.address
             );
 
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
@@ -119,15 +119,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 this.totalLendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
-                borrower,
-                ethicHubTeam,
                 this.ethichubFee,
                 this.localNodeFee,
+                borrower,
+                borrower,
+                ethicHubTeam,
+                this.mockStorage.address
             ).should.be.rejectedWith(EVMRevert);
         });
 
@@ -135,15 +135,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                localNode,
                 this.lendingInterestRatePercentage,
                 this.totalLendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
-                localNode,
-                ethicHubTeam,
                 this.ethichubFee,
                 this.localNodeFee,
+                localNode,
+                localNode,
+                ethicHubTeam,
+                this.mockStorage.address
             ).should.be.rejectedWith(EVMRevert)
         });
 
@@ -807,15 +807,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let noFeesLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 lendingDays,
-                this.mockStorage.address,
+                0,
+                0,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                0,
-                0,
+                this.mockStorage.address
             ).should.be.fulfilled;
 
             await noFeesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -846,15 +846,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let feesLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 lendingDays,
-                this.mockStorage.address,
+                new BN(4),
+                new BN(3),
+                borrower,
                 localNode,
                 ethicHubTeam,
-                new BN(4),
-                new BN(3)
+                this.mockStorage.address
             ).should.be.fulfilled;
 
             await feesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1363,15 +1363,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
+                this.ethichubFee,
+                this.localNodeFee,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                this.ethichubFee,
-                this.localNodeFee
+                this.mockStorage.address
             )
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
 
@@ -1531,15 +1531,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
+                this.ethichubFee,
+                this.localNodeFee,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                this.ethichubFee,
-                this.localNodeFee
+                this.mockStorage.address
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1616,15 +1616,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
-                localNode,
-                ethicHubTeam,
                 this.ethichubFee,
                 this.localNodeFee,
+                borrower,
+                localNode,
+                ethicHubTeam,
+                this.mockStorage.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1694,15 +1694,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
+                this.ethichubFee,
+                this.localNodeFee,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                this.ethichubFee,
-                this.localNodeFee
+                this.mockStorage.address,
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1774,15 +1774,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
+                this.ethichubFee,
+                this.localNodeFee,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                this.ethichubFee,
-                this.localNodeFee
+                this.mockStorage.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1854,15 +1854,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
+                this.ethichubFee,
+                this.localNodeFee,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                this.ethichubFee,
-                this.localNodeFee
+                this.mockStorage.address
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
@@ -1936,15 +1936,15 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                borrower,
                 this.lendingInterestRatePercentage,
                 lendingAmount,
                 this.lendingDays,
-                this.mockStorage.address,
+                this.ethichubFee,
+                this.localNodeFee,
+                borrower,
                 localNode,
                 ethicHubTeam,
-                this.ethichubFee,
-                this.localNodeFee
+                this.mockStorage.address,
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);

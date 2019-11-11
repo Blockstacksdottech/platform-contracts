@@ -1,5 +1,6 @@
 pragma solidity 0.5.8;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts/lifecycle/Pausable.sol";
@@ -19,6 +20,8 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         ContributionReturned,
         Default
     }
+
+    ERC20 public dai;
 
     mapping(address => Investor) public investors;
 
@@ -94,15 +97,15 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     constructor(
         uint256 _fundingStartTime,
         uint256 _fundingEndTime,
-        address payable _borrower,
         uint256 _annualInterest,
         uint256 _totalLendingAmount,
         uint256 _lendingDays,
-        EthicHubStorageInterface _ethicHubStorage,
+        uint256 _ethichubFee,
+        uint256 _localNodeFee,
+        address payable _borrower,
         address payable _localNode,
         address payable _ethicHubTeam,
-        uint256 _ethichubFee,
-        uint256 _localNodeFee
+        EthicHubStorageInterface _ethicHubStorage
         ) EthicHubBase(_ethicHubStorage)
         public {
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
@@ -306,17 +309,23 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
         require(msg.sender == borrower, "Only the borrower can repay");
         require(borrowerReturnDaiPerFiatRate > 0, "Second exchange rate not set");
+
         bool projectRepayed = false;
+
         uint excessRepayment = 0;
         uint newreturnedDai = 0;
+
         emit onReturnAmount(msg.sender, msg.value);
+
         (newreturnedDai, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedDai, msg.value);
         returnedDai = newreturnedDai;
+
         if (projectRepayed == true) {
             borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
             state = LendingState.ContributionReturned;
             emit StateChange(uint(state));
         }
+
         if (excessRepayment > 0) {
             msg.sender.transfer(excessRepayment);
         }
