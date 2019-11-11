@@ -16,7 +16,7 @@ mainmenu () {
   echo ""
 
   if [ "$mainmenuinput" = "1" ]; then
-            bash $SCRIPT_PATH test/EthicHubLending.js 
+            bash $SCRIPT_PATH test/EthicHubLending.js
         elif [ "$mainmenuinput" = "2" ]; then
             bash $SCRIPT_PATH test/EthicHubReputation.js
         elif [ "$mainmenuinput" = "3" ]; then
