@@ -1,6 +1,6 @@
 pragma solidity 0.5.8;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts/lifecycle/Pausable.sol";
@@ -201,6 +201,11 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         }
     }
 
+    function deposit(address _contributor, uint256 _amount) external {
+        require(msg.sender == ethicHubStorage.getAddress(keccak256(abi.encodePacked("depositManager.address", msg.sender))),
+                "Caller is not a deposit manager");
+    }
+
     /**
      * After the contribution period ends unsuccesfully, this method enables the contributor
      *  to retrieve their contribution
@@ -330,12 +335,13 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(ethicHubTeamFeeReclaimed, "Team fee is not reclaimed");
         require(investorCount == reclaimedContributions, "Not all investors have reclaimed their share");
 
-        doReclaim(ethicHubTeam, address(this).balance);
+        doReclaim(ethicHubTeam, dai.balanceOf(address(this)));
     }
 
     function doReclaim(address payable target, uint256 amount) internal {
-        if ( address(this).balance < amount ) {
-            target.transfer(address(this).balance);
+        uint256 contractDaiBalance = dai.balanceOf(address(this));
+        if ( contractDaiBalance < amount ) {
+            target.transfer(contractDaiBalance);
         } else {
             target.transfer(amount);
         }
@@ -363,7 +369,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         }
 
         if (excessRepayment > 0) {
-            msg.sender.transfer(excessRepayment);
+            dai.transfer(msg.sender, excessRepayment);
         }
     }
 

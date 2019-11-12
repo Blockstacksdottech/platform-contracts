@@ -129,6 +129,5 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         ethicHubStorage.deleteAddress(keccak256("contract.address", oldAddress));
         emit ContractUpgraded(oldAddress, _newContractAddress, now);
     }
-    
 }
 
