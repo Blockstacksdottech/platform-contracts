@@ -223,36 +223,41 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(true);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1)
+            ).should.be.fulfilled
         });
 
         it('should not allow to invest with cap fulfilled', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1)
+            ).should.be.fulfilled
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(true);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor2
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor2,
+                ether(1)
+            ).should.be.fulfilled
             isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(true);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor3
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor3,
+                ether(1)
+            ).should.be.fulfilled
             isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(false);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor4
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor4,
+                ether(1)
+            ).should.be.rejectedWith(EVMRevert)
         });
 
         it('should return extra value over cap to last investor', async function () {
