@@ -18,15 +18,19 @@ contract DepositManager is EthicHubBase {
         ethicHubStorage.setAddress(keccak256(abi.encodePacked("depositManager.address", address(this))), address(this));
     }
 
-    function contribute(IContributionTarget _target, address _contributor, uint256 _amount) public {
-        require(_contributor != address(0), "Contributor address is not valid");
-        require(address(_target) == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", _target))),
-                "Not a valid lending contract address");
-        require(dai.balanceOf(msg.sender) >= _amount &&
-                dai.allowance(msg.sender, address(this)) >= _amount,
-                "No DAI allowed to transfer or insufficient amount");
+    function contribute(IContributionTarget target, address contributor, uint256 amount) public {
+        require(contributor != address(0), "Contributor address is not valid");
+        require(
+            address(target) == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", target))),
+            "Not a valid lending contract address"
+        );
+        require(
+            dai.balanceOf(msg.sender) >= amount &&
+            dai.allowance(msg.sender, address(this)) >= amount,
+            "No DAI allowed to transfer or insufficient amount"
+        );
 
-        dai.transferFrom(msg.sender, address(this), _amount);
-        _target.deposit(_contributor, _amount);
+        dai.transferFrom(msg.sender, address(target), amount);
+        target.deposit(contributor, amount);
     }
 }

@@ -193,17 +193,22 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
             state == LendingState.AwaitingReturn,
             "Can't receive ETH in this state"
         );
+
         if(state == LendingState.AwaitingReturn) {
             returnBorrowedDai();
-        } else {
-            require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", msg.sender))), "Sender is not registered lender");
-            contributeWithAddress(msg.sender);
         }
     }
 
-    function deposit(address _contributor, uint256 _amount) external {
-        require(msg.sender == ethicHubStorage.getAddress(keccak256(abi.encodePacked("depositManager.address", msg.sender))),
-                "Caller is not a deposit manager");
+    function deposit(address contributor, uint256 amount) external {
+        require(
+            msg.sender == ethicHubStorage.getAddress(keccak256(abi.encodePacked("depositManager.address", msg.sender))),
+            "Caller is not a deposit manager"
+        );
+        require(
+            state == LendingState.AcceptingContributions,
+            "Can't contribute in this state"
+        );
+        contributeWithAddress(contributor, amount);
     }
 
     /**
@@ -338,12 +343,12 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         doReclaim(ethicHubTeam, dai.balanceOf(address(this)));
     }
 
-    function doReclaim(address payable target, uint256 amount) internal {
+    function doReclaim(address target, uint256 amount) internal {
         uint256 contractDaiBalance = dai.balanceOf(address(this));
         if ( contractDaiBalance < amount ) {
-            target.transfer(contractDaiBalance);
+            dai.transfer(target, contractDaiBalance);
         } else {
-            target.transfer(amount);
+            dai.transfer(target, amount);
         }
     }
 
@@ -373,26 +378,20 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         }
     }
 
-    // @notice make cotribution throught a paymentGateway
-    // @param contributor Address
-    function contributeForAddress(address payable contributor) external checkProfileRegistered('paymentGateway') payable whenNotPaused {
-        contributeWithAddress(contributor);
-    }
-
     // @notice Function to participate in contribution period
     //  Amounts from the same address should be added up
     //  If cap is reached, end time should be modified
     //  Funds should be transferred into multisig wallet
     // @param contributor Address
-    function contributeWithAddress(address payable contributor) internal whenNotPaused {
+    function contributeWithAddress(address contributor, uint256 amount) internal whenNotPaused {
         require(state == LendingState.AcceptingContributions, "state is not AcceptingContributions");
         require(isContribPeriodRunning(), "can't contribute outside contribution period");
 
         uint oldTotalContributed = totalContributed;
         uint newTotalContributed = 0;
-        uint excessContribValue = 0;
+        uint excessContribAmount = 0;
 
-        (newTotalContributed, capReached, excessContribValue) = calculatePaymentGoal(totalLendingAmount, oldTotalContributed, msg.value);
+        (newTotalContributed, capReached, excessContribAmount) = calculatePaymentGoal(totalLendingAmount, oldTotalContributed, amount);
 
         totalContributed = newTotalContributed;
 
@@ -405,13 +404,13 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
             investorCount = investorCount.add(1);
         }
 
-        if (excessContribValue > 0) {
-            contributor.transfer(excessContribValue);
-            investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribValue);
-            emit onContribution(newTotalContributed, contributor, msg.value.sub(excessContribValue), investorCount);
+        if (excessContribAmount > 0) {
+            dai.transfer(contributor, excessContribAmount);
+            investors[contributor].amount = investors[contributor].amount.add(amount).sub(excessContribAmount);
+            emit onContribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
         } else {
-            investors[contributor].amount = investors[contributor].amount.add(msg.value);
-            emit onContribution(newTotalContributed, contributor, msg.value, investorCount);
+            investors[contributor].amount = investors[contributor].amount.add(amount);
+            emit onContribution(newTotalContributed, contributor, amount, investorCount);
         }
     }
 
