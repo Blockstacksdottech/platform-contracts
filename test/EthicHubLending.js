@@ -31,6 +31,7 @@ chai.use(require('chai-as-promised'))
     .should()
 
 const EthicHubLending = artifacts.require('EthicHubLending');
+const DepositManager = artifacts.require('DepositManager');
 const MockStorage = artifacts.require('MockStorage');
 const MockDAI = artifacts.require('MockDAI');
 
@@ -61,6 +62,29 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", localNode), true);
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", borrower), true);
 
+        this.depositManager = await DepositManager.new(this.mockStorage.address, this.dai.address);
+        await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address);
+
+        await this.dai.transfer(owner, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(borrower, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(investor, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(investor2, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(investor3, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(investor4, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(ethicHubTeam, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(community, ether(100000)).should.be.fulfilled;
+        await this.dai.transfer(arbiter, ether(100000)).should.be.fulfilled;
+
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: borrower }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: investor }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: investor2 }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: investor3 }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: investor4 }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: ethicHubTeam }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: community }).should.be.fulfilled;
+        await this.dai.approve(this.depositManager.address, ether(1000000000), { from: arbiter });
+
         this.lending = await EthicHubLending.new(
             this.fundingStartTime,
             this.fundingEndTime,
@@ -76,6 +100,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             this.dai.address
         );
 
+        await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.lending.address), this.lending.address);
         await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), arbiter);
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
@@ -165,28 +190,31 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(false);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1)
+            ).should.be.rejectedWith(EVMRevert)
         });
 
         it('should not allow to invest after contribution period', async function () {
             await increaseTimeTo(this.fundingEndTime + duration.days(1))
             var isRunning = await this.lending.isContribPeriodRunning();
             isRunning.should.be.equal(false);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1)
+            ).should.be.rejectedWith(EVMRevert)
         });
 
         it('should allow to check investor contribution amount', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1)
+            ).should.be.fulfilled
             const contributionAmount = await this.lending.checkInvestorContribution(investor);
             contributionAmount.should.be.bignumber.equal(ether(1));
         });

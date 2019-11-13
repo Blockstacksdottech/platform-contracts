@@ -14,8 +14,6 @@ contract DepositManager is EthicHubBase {
     ) EthicHubBase(_ethicHubStorage)
     public {
         dai = _dai;
-
-        ethicHubStorage.setAddress(keccak256(abi.encodePacked("depositManager.address", address(this))), address(this));
     }
 
     function contribute(IContributionTarget target, address contributor, uint256 amount) public {

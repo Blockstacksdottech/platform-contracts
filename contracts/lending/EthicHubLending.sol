@@ -75,6 +75,8 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     event onReturnAmount(address indexed borrower, uint amount);
     event onBorrowerChanged(address indexed newBorrower);
     event onInvestorChanged(address indexed oldInvestor, address indexed newInvestor);
+    // FIXME remove this
+    event Log(uint thing);
 
     // Modifiers
     modifier checkProfileRegistered(string memory profile) {
@@ -386,6 +388,8 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     function contributeWithAddress(address contributor, uint256 amount) internal whenNotPaused {
         require(state == LendingState.AcceptingContributions, "state is not AcceptingContributions");
         require(isContribPeriodRunning(), "can't contribute outside contribution period");
+        
+        emit Log(1);
 
         uint oldTotalContributed = totalContributed;
         uint newTotalContributed = 0;

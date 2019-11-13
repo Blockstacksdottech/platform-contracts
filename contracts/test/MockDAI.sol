@@ -7,7 +7,7 @@ contract MockDAI is ERC20Detailed, ERC20 {
   constructor()
     ERC20()
     ERC20Detailed('DAI', 'DAI', 18) public {
-    _mint(address(this), 10**24); // 1.000.000 DAI
-    _mint(msg.sender, 10**21); // 1.000 DAI
+    _mint(address(this), 10**28); // 10.000.000.000 DAI
+    _mint(msg.sender, 10**26); // 1.000.000.000.000 DAI
   }
 }
