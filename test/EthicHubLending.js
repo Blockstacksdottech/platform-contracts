@@ -138,10 +138,11 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             // project not funded
             state.toNumber().should.be.equal(Uninitialized);
             isRunning.should.be.equal(false);
-            await someLending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                someLending.address,
+                investor,
+                ether(1)
+            ).should.be.rejectedWith(EVMRevert);
         });
 
         it('should not allow create projects with unregistered local nodes', async function () {
@@ -1057,7 +1058,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 { from: borrower }
             ).should.be.fulfilled;
         });
-    });
+    })
 
     describe('Default', async function () {
         it('should calculate correct time difference', async function () {
@@ -1130,7 +1131,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await increaseTimeTo(this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber()) - duration.days(1));
             await this.lending.declareProjectDefault().should.be.rejectedWith(EVMRevert);
         });
-    });
+    })
 
     describe('Retrieve contribution with interest', async function () {
         it('Should return investors contributions with interests', async function () {
@@ -1160,24 +1161,31 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 this.lending.address,
                 investor4,
                 investment4,
-                { from: investment4 }
+                { from: investor4 }
             ).should.be.fulfilled;
 
+            var state = await this.lending.state();
+            state.toNumber().should.be.equal(AcceptingContributions);
+            
             await this.lending.sendFundsToBorrower({
                 from: owner
             }).should.be.fulfilled;
+            
             await this.lending.finishInitialExchangingPeriod(this.initialDaiPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
+            
             await this.lending.setBorrowerReturnDaiPerFiatRate(this.finalDaiPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
 
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
-            await this.lending.sendTransaction({
-                value: borrowerReturnAmount,
-                from: borrower
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                borrowerReturnAmount,
+                { from: borrower }
+            ).should.be.fulfilled;
             const investorInterest = await this.lending.investorInterest()
             await this.lending.reclaimContributionWithInterest(investor2, {
                 from: investor2
@@ -1256,6 +1264,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
             let firstCheck = await this.lending.checkInvestorReturns(investor2).should.be.fulfilled;
             increaseTimePastEndingTime(this.lending, this.lendingDays.toNumber() + 20)
+            
             let secondCheck = await this.lending.checkInvestorReturns(investor2).should.be.fulfilled;
             firstCheck.should.be.bignumber.equal(secondCheck)
         });
@@ -1267,9 +1276,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             const investment3 = ether(0.5);
             const investment4 = ether(2);
 
-            const investor2InitialBalance = await web3.eth.getBalance(investor2);
-            const investor3InitialBalance = await web3.eth.getBalance(investor3);
-            const investor4InitialBalance = await web3.eth.getBalance(investor4);
+            const investor2InitialBalance = await this.dai.balanceOf(investor2);
+            const investor3InitialBalance = await this.dai.balanceOf(investor3);
+            const investor4InitialBalance = await this.dai.balanceOf(investor4);
 
             await this.depositManager.contribute(
                 this.lending.address,
@@ -1427,10 +1436,12 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         it('Should not allow returns when contract have balance in other state', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             const investment2 = ether(1);
-            await this.lending.sendTransaction({
-                value: investment2,
-                from: investor2
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor2,
+                investment2,
+                { from: investor2 }
+            ).should.be.fulfilled;
             await this.lending.reclaimContributionWithInterest(investor2).should.be.rejectedWith(EVMRevert);
         });
 
@@ -1469,10 +1480,13 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             }).should.be.fulfilled;
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
 
-            await this.lending.sendTransaction({
-                value: borrowerReturnAmount,
-                from: borrower
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                borrowerReturnAmount,
+                {from: borrower}
+            ).should.be.fulfilled;
+
             await this.lending.reclaimContributionWithInterest(investor2, {
                 from: investor2
             });
@@ -1516,7 +1530,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
-            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.realAmountLending.address), this.realAmountLending.address);
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", realAmountLending.address), realAmountLending.address);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             const investment = "1000000000000000000"
@@ -1689,6 +1703,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         });
 
     })
+    
     describe('Reclaim leftover eth', async function () {
         it('should send leftover eth to team if its correct state, all parties have reclaimed theirs', async function () {
             let lendingAmount = new BN("3539238226800208500")
@@ -1708,7 +1723,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
-            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.realAmountLending.address), this.realAmountLending.address);
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", realAmountLending.address), realAmountLending.address);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1813,7 +1828,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
-            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.realAmountLending.address), this.realAmountLending.address);
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", realAmountLending.address), realAmountLending.address);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1857,18 +1872,24 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await realAmountLending.setBorrowerReturnDaiPerFiatRate("242925", {
                 from: owner
             }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: "8657779357692697862",
-                from: borrower
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: "220056000000000",
-                from: borrower
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: "188440380000000000",
-                from: borrower
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                borrower,
+                "8657779357692697862",
+                { from: borrower }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                borrower,
+                "220056000000000",
+                { from: borrower }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                borrower,
+                "188440380000000000",
+                { from: borrower }
+            ).should.be.fulfilled;
             await realAmountLending.reclaimContributionWithInterest(investor3, {
                 from: investor3
             }).should.be.fulfilled;
@@ -1902,7 +1923,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
-            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.realAmountLending.address), this.realAmountLending.address);
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", realAmountLending.address), realAmountLending.address);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -1910,22 +1931,32 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             const investment2 = "0261720000000000000";
             const investment3 = "2068378226800210000";
             const investment4 = "0340000000000000000";
-            await realAmountLending.sendTransaction({
-                value: investment,
-                from: investor
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: investment2,
-                from: investor2
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: investment3,
-                from: investor3
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: investment4,
-                from: investor4
-            }).should.be.fulfilled;
+
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                investor,
+                investment,
+                { from: investor }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                investor2,
+                investment2,
+                { from: investor2 }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                investor3,
+                investment3,
+                { from: investor3 }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                investor4,
+                investment4,
+                { from: investor4 }
+            ).should.be.fulfilled;
+
             await realAmountLending.sendFundsToBorrower({
                 from: owner
             }).should.be.fulfilled;
@@ -1936,18 +1967,26 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await realAmountLending.setBorrowerReturnDaiPerFiatRate("242925", {
                 from: owner
             }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: "8657779357692697862",
-                from: borrower
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: "220056000000000",
-                from: borrower
-            }).should.be.fulfilled;
-            await realAmountLending.sendTransaction({
-                value: "188440380000000000",
-                from: borrower
-            }).should.be.fulfilled;
+
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                borrower,
+                "8657779357692697862",
+                { from: borrower }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                borrower,
+                "220056000000000",
+                { from: borrower }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                realAmountLending.address,
+                borrower,
+                "188440380000000000",
+                { from: borrower }
+            ).should.be.fulfilled;
+
             await realAmountLending.reclaimContributionWithInterest(investor3, {
                 from: investor3
             }).should.be.fulfilled;
@@ -1984,7 +2023,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
-            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.realAmountLending.address), this.realAmountLending.address);
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", realAmountLending.address), realAmountLending.address);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
@@ -2183,11 +2222,11 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             );
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community);
-            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.realAmountLending.address), this.realAmountLending.address);
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", realAmountLending.address), realAmountLending.address);
             await this.mockStorage.setAddress(utils.soliditySha3("arbiter", realAmountLending.address), arbiter);
 
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
-            const investment = "1000000000000000000"
+            const investment = "1000000000000000000";
             const investment2 = "0261720000000000000";
             const investment3 = "2068378226800210000";
             const investment4 = "0340000000000000000";
@@ -2255,10 +2294,12 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.sendFundsToBorrower({
                 from: owner
             }).should.be.fulfilled;
-            await this.lending.sendTransaction({
-                value: this.totalLendingAmount.add(ether(1)),
-                from: borrower
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                this.totalLendingAmount.add(ether(1)),
+                { from: borrower }
+            ).should.be.rejectedWith(EVMRevert);
         })
 
         it('Should not allow to send partial return after the rate is set', async function () {
@@ -2275,10 +2316,12 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.finishInitialExchangingPeriod(this.initialDaiPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: borrower
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                this.totalLendingAmount.add(ether(1)),
+                { from: borrower }
+            ).should.be.rejectedWith(EVMRevert);
         })
 
         it('Should only allow borrower to send partial return', async function () {
@@ -2292,10 +2335,12 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await this.lending.sendFundsToBorrower({
                 from: owner
             }).should.be.fulfilled;
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor2
-            }).should.be.rejectedWith(EVMRevert);
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor2,
+                ether(1),
+                { from: investor2 }
+            ).should.be.rejectedWith(EVMRevert);
             await this.lending.finishInitialExchangingPeriod(this.initialDaiPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
@@ -2313,7 +2358,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 { from: investor }
             ).should.be.fulfilled;
             await this.depositManager.contribute(
-                realAmountLending.address,
+                this.lending.address,
                 investor2,
                 investor2Investment,
                 { from: investor2 }
@@ -2335,7 +2380,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount();
 
             await this.depositManager.contribute(
-                realAmountLending.address,
+                this.lending.address,
                 borrower,
                 borrowerReturnAmount,
                 { from: borrower }
@@ -2411,10 +2456,12 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), false);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1),
+                { from: investor }
+            ).should.be.fulfilled;
             await this.lending.changeInvestorAddress(investor, investor2, {
                 from: arbiter
             }).should.be.rejectedWith(EVMRevert);
@@ -2424,14 +2471,18 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             await increaseTimeTo(this.fundingStartTime + duration.days(1));
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true);
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true);
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor
-            }).should.be.fulfilled;
-            await this.lending.sendTransaction({
-                value: ether(1),
-                from: investor2
-            }).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                ether(1),
+                { from: investor }
+            ).should.be.fulfilled;
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor2,
+                ether(1),
+                { from: investor2 }
+            ).should.be.fulfilled;
             await this.lending.changeInvestorAddress(investor, investor2, {
                 from: arbiter
             }).should.be.rejectedWith(EVMRevert);

@@ -414,9 +414,12 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     }
 
     function sendFundsToBorrower() external onlyOwnerOrLocalNode {
-        //Waiting for Exchange
+        // Waiting for Exchange
+        emit onCapReached(1);
         require(state == LendingState.AcceptingContributions, "State has to be AcceptingContributions");
+        emit onCapReached(1);
         require(capReached, "Cap is not reached");
+        emit onCapReached(1);
 
         changeState(LendingState.ExchangingToFiat);
 

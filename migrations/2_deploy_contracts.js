@@ -1,5 +1,3 @@
-const web3_1_0 = require('web3');
-const BigNumber = web3.BigNumber
 const utils = require("web3-utils");
 
 //const Lending = artifacts.require('Lending');
