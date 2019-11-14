@@ -76,13 +76,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
     event onBorrowerChanged(address indexed newBorrower);
     event onInvestorChanged(address indexed oldInvestor, address indexed newInvestor);
 
-    // Modifiers
-    modifier checkProfileRegistered(string memory profile) {
-        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", profile, msg.sender)));
-        require(isRegistered, "Sender not registered in EthicHub.com");
-        _;
-    }
-
     modifier checkIfArbiter() {
         address arbiter = ethicHubStorage.getAddress(keccak256(abi.encodePacked("arbiter", this)));
         require(arbiter == msg.sender, "Sender not authorized");
@@ -156,9 +149,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         ethicHubStorage.setAddress(keccak256(abi.encodePacked("lending.localNode", this)), localNode);
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.communityMembers", this)), _communityMembers);
 
-        state = LendingState.AcceptingContributions;
-
-        emit StateChange(uint(state));
+        changeState(LendingState.AcceptingContributions);
     }
 
     function setBorrower(address payable _borrower) external checkIfArbiter {
@@ -187,28 +178,23 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         emit onInvestorChanged(oldInvestor, newInvestor);
     }
 
-    function() external payable whenNotPaused {
-        require(
-            state == LendingState.AcceptingContributions ||
-            state == LendingState.AwaitingReturn,
-            "Can't receive ETH in this state"
-        );
-
-        if(state == LendingState.AwaitingReturn) {
-            returnBorrowedDai();
-        }
-    }
-
     function deposit(address contributor, uint256 amount) external {
         require(
             msg.sender == ethicHubStorage.getAddress(keccak256(abi.encodePacked("depositManager.address", msg.sender))),
             "Caller is not a deposit manager"
         );
         require(
-            state == LendingState.AcceptingContributions,
+            state == LendingState.AcceptingContributions ||
+            state == LendingState.AwaitingReturn,
             "Can't contribute in this state"
         );
-        contributeWithAddress(contributor, amount);
+
+        if(state == LendingState.AwaitingReturn) {
+            require(contributor == borrower, "In state AwaitingReturn only borrower can contribute");
+            returnBorrowedDai(amount);
+        } else {
+            contributeWithAddress(contributor, amount);
+        }
     }
 
     /**
@@ -220,9 +206,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(state == LendingState.AcceptingContributions);
         require(now > fundingEndTime);
 
-        state = LendingState.ProjectNotFunded;
-
-        emit StateChange(uint(state));
+        changeState(LendingState.ProjectNotFunded);
     }
 
     function declareProjectDefault() external onlyOwnerOrLocalNode {
@@ -231,9 +215,8 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(getDelayDays(now) >= maxDelayDays);
 
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.delayDays", this)), maxDelayDays);
-        state = LendingState.Default;
 
-        emit StateChange(uint(state));
+        changeState(LendingState.Default);
     }
 
     function setBorrowerReturnDaiPerFiatRate(uint256 _borrowerReturnDaiPerFiatRate) external onlyOwnerOrLocalNode {
@@ -258,9 +241,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
         emit onInitalRateSet(initialDaiPerFiatRate);
 
-        state = LendingState.AwaitingReturn;
-
-        emit StateChange(uint(state));
+        changeState(LendingState.AwaitingReturn);
     }
 
     /**
@@ -352,29 +333,27 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         }
     }
 
-    function returnBorrowedDai() internal {
+    function returnBorrowedDai(uint256 amount) internal {
         require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
-        require(msg.sender == borrower, "Only the borrower can repay");
         require(borrowerReturnDaiPerFiatRate > 0, "Second exchange rate not set");
 
         bool projectRepayed = false;
-
         uint excessRepayment = 0;
-        uint newreturnedDai = 0;
+        uint newReturnedDai = 0;
 
-        emit onReturnAmount(msg.sender, msg.value);
+        emit onReturnAmount(borrower, amount);
 
-        (newreturnedDai, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedDai, msg.value);
-        returnedDai = newreturnedDai;
+        (newReturnedDai, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedDai, amount);
+
+        returnedDai = newReturnedDai;
 
         if (projectRepayed == true) {
             borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
-            state = LendingState.ContributionReturned;
-            emit StateChange(uint(state));
+            changeState(LendingState.ContributionReturned);
         }
 
         if (excessRepayment > 0) {
-            dai.transfer(msg.sender, excessRepayment);
+            dai.transfer(borrower, excessRepayment);
         }
     }
 
@@ -438,9 +417,10 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         //Waiting for Exchange
         require(state == LendingState.AcceptingContributions, "State has to be AcceptingContributions");
         require(capReached, "Cap is not reached");
-        state = LendingState.ExchangingToFiat;
-        emit StateChange(uint(state));
-        borrower.transfer(totalContributed);
+
+        changeState(LendingState.ExchangingToFiat);
+
+        dai.transfer(borrower, totalContributed);
     }
 
     /**
@@ -522,5 +502,10 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
     function getUserContributionReclaimStatus(address userAddress) public view returns(bool isCompensated){
         return investors[userAddress].isCompensated;
+    }
+
+    function changeState(LendingState newState) internal {
+        state = newState;
+        emit StateChange(uint(newState));
     }
 }
