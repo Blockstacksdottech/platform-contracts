@@ -25,7 +25,9 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
         address indexed _lendingContract // Address of the lending contract
     );
 
-    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
+    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+        EthicHubBase.initialize(_ethicHubStorage);
+
         version = 1;
     }
 

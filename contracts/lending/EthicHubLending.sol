@@ -100,8 +100,10 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         address payable _ethicHubTeam,
         EthicHubStorageInterface _ethicHubStorage,
         IERC20 _stableCoin
-        ) EthicHubBase(_ethicHubStorage)
-        public {
+        ) public {
+
+        EthicHubBase.initialize(_ethicHubStorage);
+
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");

@@ -62,7 +62,9 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", localNode), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", borrower), true)
 
-        this.depositManager = await DepositManager.new(this.mockStorage.address, this.stableCoin.address)
+        this.depositManager = await DepositManager.new()
+        this.depositManager.initialize(this.mockStorage.address, this.stableCoin.address)
+
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
 
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
@@ -559,8 +561,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             // can reclaim contribution from everyone
             balance = await this.stableCoin.balanceOf(investor)
             await this.lending.reclaimContribution(investor).should.be.fulfilled;
-            // 0.1 eth less due to used gas
-            (await this.stableCoin.balanceOf(investor)).should.be.bignumber.above(balance.add(ether(0.9)))
             // fail to reclaim from no investor
             await this.lending.reclaimContribution(investor2).should.be.rejectedWith(EVMRevert)
         })
@@ -1711,7 +1711,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
     })
 
     describe('Reclaim leftover eth', async function () {
-        it('should send leftover eth to team if its correct state, all parties have reclaimed theirs', async function () {
+        it('should send leftover dai to team if its correct state, all parties have reclaimed theirs', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1816,7 +1816,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             newBalance.should.be.bignumber.above(teamBalance)
         })
 
-        it('should fail to send leftover eth to team if its correct state, without all contributors reclaimed', async function () {
+        it('should fail to send leftover dai to team if its correct state, without all contributors reclaimed', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -1913,7 +1913,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
                 from: arbiter
             }).should.be.rejectedWith(EVMRevert)
         })
-        it('should fail to send leftover eth to team if its correct state, without local node reclaimed', async function () {
+        it('should fail to send leftover dai to team if its correct state, without local node reclaimed', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -2013,7 +2013,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             }).should.be.rejectedWith(EVMRevert)
 
         })
-        it('should fail to send leftover eth to team if its correct state, without team reclaimed', async function () {
+        it('should fail to send leftover dai to team if its correct state, without team reclaimed', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -2113,7 +2113,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
             }).should.be.rejectedWith(EVMRevert)
         })
 
-        it('should fail to send leftover eth to team if its correct state if not arbiter', async function () {
+        it('should fail to send leftover dai to team if its correct state if not arbiter', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,
@@ -2216,7 +2216,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         })
 
-        it('should fail to send leftover eth to team if not correct state', async function () {
+        it('should fail to send leftover dai to team if not correct state', async function () {
             let lendingAmount = new BN("3539238226800208500")
             let realAmountLending = await EthicHubLending.new(
                 this.fundingStartTime,

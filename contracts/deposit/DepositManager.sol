@@ -1,18 +1,19 @@
 pragma solidity 0.5.8;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 import "../EthicHubBase.sol";
 import "../interfaces/IContributionTarget.sol";
 
-contract DepositManager is EthicHubBase {
+contract DepositManager is Initializable, EthicHubBase {
 
     IERC20 public stableCoin;
 
-    constructor(
+    function initialize(
         EthicHubStorageInterface _ethicHubStorage, IERC20 _stableCoin
-    ) EthicHubBase(_ethicHubStorage)
-    public {
+    ) public initializer {
+        EthicHubBase.initialize(_ethicHubStorage);
         stableCoin = _stableCoin;
     }
 

@@ -42,7 +42,9 @@ contract EthicHubReputation is EthicHubReputationInterface, EthicHubBase {
     }
 
     /// @dev constructor
-    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
+    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+        EthicHubBase.initialize(_ethicHubStorage);
+
         version = 2;
     }
 

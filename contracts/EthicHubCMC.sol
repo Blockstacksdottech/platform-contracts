@@ -36,7 +36,9 @@ contract EthicHubCMC is EthicHubBase, Ownable {
         _;
     }
 
-    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
+    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+        EthicHubBase.initialize(_ethicHubStorage);
+
         version = 4;
     }
 

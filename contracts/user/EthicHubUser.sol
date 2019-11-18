@@ -31,7 +31,9 @@ contract EthicHubUser is EthicHubBase, Ownable {
 
     event UserStatusChanged(address target, string profile, bool isRegistered);
 
-    constructor(EthicHubStorageInterface _ethicHubStorage) EthicHubBase(_ethicHubStorage) public {
+    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+        EthicHubBase.initialize(_ethicHubStorage);
+
         version = 4;
     }
 
