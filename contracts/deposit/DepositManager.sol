@@ -7,13 +7,13 @@ import "../interfaces/IContributionTarget.sol";
 
 contract DepositManager is EthicHubBase {
 
-    IERC20 public dai;
+    IERC20 public stableCoin;
 
     constructor(
-        EthicHubStorageInterface _ethicHubStorage,IERC20 _dai
+        EthicHubStorageInterface _ethicHubStorage, IERC20 _stableCoin
     ) EthicHubBase(_ethicHubStorage)
     public {
-        dai = _dai;
+        stableCoin = _stableCoin;
     }
 
     function contribute(IContributionTarget target, address contributor, uint256 amount) public {
@@ -23,12 +23,12 @@ contract DepositManager is EthicHubBase {
             "Not a valid lending contract address"
         );
         require(
-            dai.balanceOf(msg.sender) >= amount &&
-            dai.allowance(msg.sender, address(this)) >= amount,
-            "No DAI allowed to transfer or insufficient amount"
+            stableCoin.balanceOf(msg.sender) >= amount &&
+            stableCoin.allowance(msg.sender, address(this)) >= amount,
+            "No balance allowed to transfer or insufficient amount"
         );
 
-        dai.transferFrom(msg.sender, address(target), amount);
+        stableCoin.transferFrom(msg.sender, address(target), amount);
         target.deposit(contributor, amount);
     }
 }

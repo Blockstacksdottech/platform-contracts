@@ -21,7 +21,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         Default
     }
 
-    IERC20 public dai;
+    IERC20 public stableCoin;
 
     mapping(address => Investor) public investors;
 
@@ -99,7 +99,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         address payable _localNode,
         address payable _ethicHubTeam,
         EthicHubStorageInterface _ethicHubStorage,
-        IERC20 _dai
+        IERC20 _stableCoin
         ) EthicHubBase(_ethicHubStorage)
         public {
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
@@ -129,7 +129,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         localNode = _localNode;
         ethicHubTeam = _ethicHubTeam;
 
-        dai = _dai;
+        stableCoin = _stableCoin;
 
         state = LendingState.Uninitialized;
     }
@@ -189,11 +189,11 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
             "Can't contribute in this state"
         );
 
-        if(state == LendingState.AwaitingReturn) {
+        if(state == LendingState.AcceptingContributions) {
+            contributeWithAddress(contributor, amount);
+        } else {
             require(contributor == borrower, "In state AwaitingReturn only borrower can contribute");
             returnBorrowedDai(amount);
-        } else {
-            contributeWithAddress(contributor, amount);
         }
     }
 
@@ -321,15 +321,15 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(ethicHubTeamFeeReclaimed, "Team fee is not reclaimed");
         require(investorCount == reclaimedContributions, "Not all investors have reclaimed their share");
 
-        doReclaim(ethicHubTeam, dai.balanceOf(address(this)));
+        doReclaim(ethicHubTeam, stableCoin.balanceOf(address(this)));
     }
 
     function doReclaim(address target, uint256 amount) internal {
-        uint256 contractDaiBalance = dai.balanceOf(address(this));
+        uint256 contractDaiBalance = stableCoin.balanceOf(address(this));
         if ( contractDaiBalance < amount ) {
-            dai.transfer(target, contractDaiBalance);
+            stableCoin.transfer(target, contractDaiBalance);
         } else {
-            dai.transfer(target, amount);
+            stableCoin.transfer(target, amount);
         }
     }
 
@@ -353,7 +353,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         }
 
         if (excessRepayment > 0) {
-            dai.transfer(borrower, excessRepayment);
+            stableCoin.transfer(borrower, excessRepayment);
         }
     }
 
@@ -384,7 +384,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         }
 
         if (excessContribAmount > 0) {
-            dai.transfer(contributor, excessContribAmount);
+            stableCoin.transfer(contributor, excessContribAmount);
             investors[contributor].amount = investors[contributor].amount.add(amount).sub(excessContribAmount);
             emit onContribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
         } else {
@@ -423,7 +423,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
 
         changeState(LendingState.ExchangingToFiat);
 
-        dai.transfer(borrower, totalContributed);
+        stableCoin.transfer(borrower, totalContributed);
     }
 
     /**
