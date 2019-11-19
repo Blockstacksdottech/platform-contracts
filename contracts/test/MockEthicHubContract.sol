@@ -7,9 +7,7 @@ contract MockEthicHubContract is EthicHubBase {
 
     /// @dev constructor
     constructor(EthicHubStorageInterface _ethicHubStorage, uint8 _version) public {
-        EthicHubBase.initialize(_ethicHubStorage);
-
-        version = _version;
+        EthicHubBase.initialize(_ethicHubStorage, _version);
     }
 
     function getStorageAddress() public view returns (address) {

@@ -26,9 +26,7 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
     );
 
     constructor(EthicHubStorageInterface _ethicHubStorage) public {
-        EthicHubBase.initialize(_ethicHubStorage);
-
-        version = 1;
+        EthicHubBase.initialize(_ethicHubStorage, 1);
     }
 
     function assignArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {

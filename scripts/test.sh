@@ -7,7 +7,7 @@ set -o errexit
 trap cleanup EXIT
 
 cleanup() {
-  # Kill the testrpc instance that we started (if we started one and if it's still running).
+  # Kill the ganache-cli instance that we started (if we started one and if it's still running).
   if [ -n "$ganache_cli_pid" ] && ps -p $ganache_cli_pid > /dev/null; then
     kill -9 $ganache_cli_pid
   fi

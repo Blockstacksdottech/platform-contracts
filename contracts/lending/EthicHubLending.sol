@@ -102,7 +102,7 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         IERC20 _stableCoin
         ) public {
 
-        EthicHubBase.initialize(_ethicHubStorage);
+        EthicHubBase.initialize(_ethicHubStorage, 7);
 
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");
@@ -113,8 +113,6 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         require(_totalLendingAmount > 0, "_totalLendingAmount must be > 0");
         require(_lendingDays > 0, "_lendingDays must be > 0");
         require(_annualInterest > 0 && _annualInterest < 100, "_annualInterest must be between 0 and 100");
-
-        version = 7;
 
         reclaimedContributions = 0;
         borrowerReturnDays = 0;

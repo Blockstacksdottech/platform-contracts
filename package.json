@@ -37,6 +37,8 @@
     "@openzeppelin/contracts-ethereum-package": "^2.3.0",
     "@openzeppelin/test-helpers": "^0.5.3",
     "@openzeppelin/upgrades": "^2.5.0",
+    "@openzeppelin/gsn-helpers": "^0.2.1",
+    "@openzeppelin/gsn-provider": "^0.1.9",
     "@truffle/hdwallet-provider": "^1.0.23",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",

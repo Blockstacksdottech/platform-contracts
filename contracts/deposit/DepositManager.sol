@@ -1,20 +1,38 @@
 pragma solidity 0.5.8;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/GSN/GSNRecipient.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 
 import "../EthicHubBase.sol";
 import "../interfaces/IContributionTarget.sol";
 
-contract DepositManager is Initializable, EthicHubBase {
+contract DepositManager is Initializable, Ownable, GSNRecipient, EthicHubBase {
 
     IERC20 public stableCoin;
 
     function initialize(
         EthicHubStorageInterface _ethicHubStorage, IERC20 _stableCoin
     ) public initializer {
-        EthicHubBase.initialize(_ethicHubStorage);
+        Ownable.initialize(_msgSender());
+        GSNRecipient.initialize();
+        EthicHubBase.initialize(_ethicHubStorage, 1);
         stableCoin = _stableCoin;
+    }
+
+    function acceptRelayedCall(
+        address relay,
+        address from,
+        bytes calldata encodedFunction,
+        uint256 transactionFee,
+        uint256 gasPrice,
+        uint256 gasLimit,
+        uint256 nonce,
+        bytes calldata approvalData,
+        uint256 maxPossibleCharge
+    ) external view returns (uint256, bytes memory) {
+      return _approveRelayedCall();
     }
 
     function contribute(IContributionTarget target, address contributor, uint256 amount) public {
@@ -24,12 +42,16 @@ contract DepositManager is Initializable, EthicHubBase {
             "Not a valid lending contract address"
         );
         require(
-            stableCoin.balanceOf(msg.sender) >= amount &&
-            stableCoin.allowance(msg.sender, address(this)) >= amount,
+            stableCoin.balanceOf(_msgSender()) >= amount &&
+            stableCoin.allowance(_msgSender(), address(this)) >= amount,
             "No balance allowed to transfer or insufficient amount"
         );
 
-        stableCoin.transferFrom(msg.sender, address(target), amount);
+        stableCoin.transferFrom(_msgSender(), address(target), amount);
         target.deposit(contributor, amount);
+    }
+
+    function setRelayHubAddress(address relayAddress) public {
+        _upgradeRelayHub(relayAddress);
     }
 }

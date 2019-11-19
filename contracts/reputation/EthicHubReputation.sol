@@ -43,9 +43,7 @@ contract EthicHubReputation is EthicHubReputationInterface, EthicHubBase {
 
     /// @dev constructor
     constructor(EthicHubStorageInterface _ethicHubStorage) public {
-        EthicHubBase.initialize(_ethicHubStorage);
-
-        version = 2;
+        EthicHubBase.initialize(_ethicHubStorage, 2);
     }
 
     function burnReputation(uint delayDays) external onlyLendingContract {

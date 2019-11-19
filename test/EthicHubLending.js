@@ -63,7 +63,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", borrower), true)
 
         this.depositManager = await DepositManager.new()
-        this.depositManager.initialize(this.mockStorage.address, this.stableCoin.address)
+        await this.depositManager.initialize(this.mockStorage.address, this.stableCoin.address)
 
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
 
@@ -85,7 +85,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: investor4 }).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: ethicHubTeam }).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: community }).should.be.fulfilled;
-        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: arbiter })
+        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: arbiter }).should.be.fulfilled
 
         this.lending = await EthicHubLending.new(
             this.fundingStartTime,
