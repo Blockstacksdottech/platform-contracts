@@ -5,24 +5,18 @@ import {
     advanceBlock
 } from './helpers/advanceToBlock'
 import {
-    increaseTimeTo,
     duration
 } from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
-import EVMRevert from './helpers/EVMRevert'
+import {
+    assertSentViaGSN
+} from './helpers/assertSentViaGSN'
 
 const {
     BN
 } = require('@openzeppelin/test-helpers')
-const { 
-    GSNProvider 
-} = require("@openzeppelin/gsn-provider");
 const {
-    registerRelay,
-    deployRelayHub,
     fundRecipient,
-    balance,
-    withdraw
 } = require('@openzeppelin/gsn-helpers')
 const utils = require("web3-utils")
 
@@ -36,9 +30,9 @@ const DepositManager = artifacts.require('DepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
 
-let relayHubAddress = null
+const relayerHubAddress = "0xd216153c06e857cd7f72665e0af1d7d82172f494"
 
-contract('DepositManager', (accounts) => {
+contract('DepositManager', function (accounts) {
     beforeEach(async function () {
         await advanceBlock()
 
@@ -66,14 +60,14 @@ contract('DepositManager', (accounts) => {
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", accounts[0]), true)
 
         this.depositManager = await DepositManager.new({ from: accounts[0] })
-
         await this.depositManager.initialize(
-            this.mockStorage.address, 
-            this.stableCoin.address, 
+            this.mockStorage.address,
+            this.stableCoin.address,
             { from: accounts[0] }
         )
-
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
+
+        await this.depositManager.setRelayHubAddress(relayerHubAddress)
 
         await this.stableCoin.transfer(accounts[0], ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: accounts[0] }).should.be.fulfilled;
@@ -105,23 +99,28 @@ contract('DepositManager', (accounts) => {
 
         await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.members, accounts[0])
 
-        // GSN Initialization
-        if (relayHubAddress == null) {
-            relayHubAddress = await deployRelayHub(web3, {
-                from: accounts[0]
-            })
-            
-            await this.depositManager.setRelayHubAddress(relayHubAddress, { from: accounts[0] })
-
-            // Register the recipient in the hub
-            await fundRecipient(web3, { recipient: this.lending.address })
-            const gsnProvider = new GSNProvider(web3.currentProvider.host)
-            EthicHubLending.setProvider(gsnProvider);
-        }
+        await fundRecipient(web3, { recipient: this.depositManager.address })
     })
 
-    describe('initializing', function () {
-        it('should not allow to invest before initializing', async function () {
+    describe('general', function () {
+        it('contribution should not consume gas', async function () {
+            const beforeBalance = new BN(await web3.eth.getBalance(accounts[0]))
+            const tx = await this.depositManager.contribute(
+                this.lending.address,
+                accounts[0],
+                ether(1),
+                {
+                    from: accounts[0],
+                    useGSN: true
+                }
+            )
+            console.log(tx)
+            console.log("tx")
+            await assertSentViaGSN(web3, tx.transactionHash);
+
+            const afterBalance = new BN(web3.eth.getBalance(accounts[0]))
+
+            beforeBalance.should.be.bignumber.equal(afterBalance)
         })
     })
 })
