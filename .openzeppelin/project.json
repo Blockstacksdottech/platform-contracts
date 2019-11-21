@@ -1,6 +1,8 @@
 {
   "manifestVersion": "2.2",
-  "contracts": {},
+  "contracts": {
+    "DepositManager": "DepositManager"
+  },
   "dependencies": {
     "@openzeppelin/contracts-ethereum-package": "^2.3.0"
   },

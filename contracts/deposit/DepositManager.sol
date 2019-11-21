@@ -10,7 +10,7 @@ import "../interfaces/IContributionTarget.sol";
 
 contract DepositManager is Initializable, Ownable, GSNRecipient, EthicHubBase {
     IERC20 public stableCoin;
-
+    event LogAddress(address logAddress);
     function initialize(
         EthicHubStorageInterface _ethicHubStorage, IERC20 _stableCoin
     ) public initializer {
@@ -41,18 +41,18 @@ contract DepositManager is Initializable, Ownable, GSNRecipient, EthicHubBase {
     }
 
     function contribute(IContributionTarget target, address contributor, uint256 amount) public {
-        require(contributor != address(0), "Contributor address is not valid");
+        require(contributor != address(0), "Contributor address is zero address");
         require(
             address(target) == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", target))),
             "Not a valid lending contract address"
         );
         require(
-            stableCoin.balanceOf(_msgSender()) >= amount &&
-            stableCoin.allowance(_msgSender(), address(this)) >= amount,
+            stableCoin.balanceOf(contributor) >= amount &&
+            stableCoin.allowance(contributor, address(this)) >= amount,
             "No balance allowed to transfer or insufficient amount"
         );
 
-        stableCoin.transferFrom(_msgSender(), address(target), amount);
+        stableCoin.transferFrom(contributor, address(target), amount);
         target.deposit(contributor, amount);
     }
 

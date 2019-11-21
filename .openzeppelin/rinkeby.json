@@ -1,0 +1,23 @@
+{
+  "contracts": {
+    "DepositManager": {
+      "address": "0x480d7aFBb813fdA6f7cb67fd1830b3989d4Dd4Da",
+      "constructorCode": "608060405261144b806100136000396000f3fe",
+      "bodyBytecodeHash": "b0c923629a668512d531436749a9fa38a274f28c5e9c435331b36d03b633f8fe",
+      "localBytecodeHash": "6b4e00226e217d77db3ab7b48ff3dcf4ac43c001090de7df91d08528ec06fb5a",
+      "deployedBytecodeHash": "6b4e00226e217d77db3ab7b48ff3dcf4ac43c001090de7df91d08528ec06fb5a",
+      "types": null,
+      "storage": null
+    }
+  },
+  "solidityLibs": {},
+  "proxies": {},
+  "manifestVersion": "2.2",
+  "version": "0.1.7",
+  "dependencies": {
+    "@openzeppelin/contracts-ethereum-package": {
+      "package": "0xa44bb80b290dE8a465d17B14269dF53CF0B9Bf4f",
+      "version": "2.4.0"
+    }
+  }
+}

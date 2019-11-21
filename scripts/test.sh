@@ -24,6 +24,9 @@ else
   ganache_port=8545
 fi
 
+relayer_port=8099
+relayer_url="http://localhost:${relayer_port}"
+
 ganache_running() {
   nc -z localhost "$ganache_port"
 }
@@ -43,7 +46,7 @@ start_ganache() {
     --account="0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c09,1000000000000000000000000"
     --account="0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c10,1000000000000000000000000"
     --account="0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c11,1000000000000000000000000"
-      # 3 accounts to be used for GSN matters.
+    # 3 accounts to be used for GSN matters.
     --account="0x956b91cb2344d7863ea89e6945b753ca32f6d74bb97a59e59e04903ded14ad00,1000000000000000000000000"
     --account="0x956b91cb2344d7863ea89e6945b753ca32f6d74bb97a59e59e04903ded14ad01,1000000000000000000000000"
     --account="0x956b91cb2344d7863ea89e6945b753ca32f6d74bb97a59e59e04903ded14ad02,1000000000000000000000000"
@@ -60,10 +63,7 @@ start_ganache() {
 
 setup_gsn_relay() {
   echo "Launching GSN relay server"
-
-  ganache_url="http://localhost:$ganache_port"
-  relayer_port=8099
-  gsn_relay_server_pid=$(npx oz-gsn run-relayer --ethereumNodeURL $ganache_url --port $relayer_port --from "0xbb49ad04422f9fa6a217f3ed82261b942f6981f7" --detach --quiet)
+  gsn_relay_server_pid=$(npx oz-gsn run-relayer --ethereumNodeURL http://localhost:$ganache_port --port $relayer_port --detach --quiet)
   
   echo "GSN relay server launched!"
 }
