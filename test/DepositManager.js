@@ -32,26 +32,11 @@ const MockStableCoin = artifacts.require('MockStableCoin')
 
 const relayerHubAddress = "0xd216153c06e857cd7f72665e0af1d7d82172f494"
 
-contract('DepositManager', function (owner) {
+contract('DepositManager', function ([owner]) {
     beforeEach(async function () {
         await advanceBlock()
 
         const latestTimeValue = await latestTime()
-        this.fundingStartTime = latestTimeValue + duration.days(1)
-        this.fundingEndTime = this.fundingStartTime + duration.days(40)
-
-        this.lendingInterestRatePercentage = new BN(15)
-        this.totalLendingAmount = ether(3)
-
-        this.ethichubFee = new BN(3)
-        this.localNodeFee = new BN(4)
-
-        // 400 pesos per eth
-        this.initialStableCoinPerFiatRate = new BN(538520) // 400
-        this.finalStableCoinPerFiatRate = new BN(269260) // 480
-        this.lendingDays = new BN(90)
-        this.delayMaxDays = new BN(90)
-        this.members = new BN(20)
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new()
@@ -73,13 +58,13 @@ contract('DepositManager', function (owner) {
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
 
         this.lending = await EthicHubLending.new(
-            this.fundingStartTime,
-            this.fundingEndTime,
-            this.lendingInterestRatePercentage,
-            this.totalLendingAmount,
-            this.lendingDays,
-            this.ethichubFee,
-            this.localNodeFee,
+            latestTimeValue + duration.days(1),
+            latestTimeValue + duration.days(41),
+            15,
+            ether(3),
+            90,
+            3,
+            4,
             owner,
             owner,
             owner,
@@ -97,7 +82,7 @@ contract('DepositManager', function (owner) {
         await this.mockStorage.setBool(utils.soliditySha3("user", "community", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", owner), true)
 
-        await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.members, owner)
+        await this.lending.saveInitialParametersToStorage(90, 20, owner)
 
         await fundRecipient(web3, { recipient: this.depositManager.address })
     })
@@ -114,12 +99,9 @@ contract('DepositManager', function (owner) {
                     useGSN: true
                 }
             )
-            console.log(tx)
-            console.log("tx")
             await assertSentViaGSN(web3, tx.transactionHash);
 
             const afterBalance = new BN(web3.eth.getBalance(owner))
-
             beforeBalance.should.be.bignumber.equal(afterBalance)
         })
     })

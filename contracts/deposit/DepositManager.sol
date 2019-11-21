@@ -9,7 +9,6 @@ import "../EthicHubBase.sol";
 import "../interfaces/IContributionTarget.sol";
 
 contract DepositManager is Initializable, Ownable, GSNRecipient, EthicHubBase {
-
     IERC20 public stableCoin;
 
     function initialize(
