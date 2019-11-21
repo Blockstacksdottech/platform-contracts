@@ -32,7 +32,7 @@ const MockStableCoin = artifacts.require('MockStableCoin')
 
 const relayerHubAddress = "0xd216153c06e857cd7f72665e0af1d7d82172f494"
 
-contract('DepositManager', function (accounts) {
+contract('DepositManager', function (owner) {
     beforeEach(async function () {
         await advanceBlock()
 
@@ -56,21 +56,21 @@ contract('DepositManager', function (accounts) {
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new()
 
-        await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", accounts[0]), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "representative", accounts[0]), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
 
-        this.depositManager = await DepositManager.new({ from: accounts[0] })
+        this.depositManager = await DepositManager.new({ from: owner })
         await this.depositManager.initialize(
             this.mockStorage.address,
             this.stableCoin.address,
-            { from: accounts[0] }
+            { from: owner }
         )
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
 
         await this.depositManager.setRelayHubAddress(relayerHubAddress)
 
-        await this.stableCoin.transfer(accounts[0], ether(100000)).should.be.fulfilled;
-        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: accounts[0] }).should.be.fulfilled;
+        await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
+        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
 
         this.lending = await EthicHubLending.new(
             this.fundingStartTime,
@@ -80,37 +80,37 @@ contract('DepositManager', function (accounts) {
             this.lendingDays,
             this.ethichubFee,
             this.localNodeFee,
-            accounts[0],
-            accounts[0],
-            accounts[0],
+            owner,
+            owner,
+            owner,
             this.mockStorage.address,
             this.stableCoin.address
         )
 
         await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.lending.address), this.lending.address)
-        await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), accounts[0])
+        await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), owner)
 
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", accounts[0]), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", accounts[0]), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", accounts[0]), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", accounts[0]), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "community", accounts[0]), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", accounts[0]), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "community", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", owner), true)
 
-        await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.members, accounts[0])
+        await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.members, owner)
 
         await fundRecipient(web3, { recipient: this.depositManager.address })
     })
 
     describe('general', function () {
         it('contribution should not consume gas', async function () {
-            const beforeBalance = new BN(await web3.eth.getBalance(accounts[0]))
+            const beforeBalance = new BN(await web3.eth.getBalance(owner))
             const tx = await this.depositManager.contribute(
                 this.lending.address,
-                accounts[0],
+                owner,
                 ether(1),
                 {
-                    from: accounts[0],
+                    from: owner,
                     useGSN: true
                 }
             )
@@ -118,7 +118,7 @@ contract('DepositManager', function (accounts) {
             console.log("tx")
             await assertSentViaGSN(web3, tx.transactionHash);
 
-            const afterBalance = new BN(web3.eth.getBalance(accounts[0]))
+            const afterBalance = new BN(web3.eth.getBalance(owner))
 
             beforeBalance.should.be.bignumber.equal(afterBalance)
         })

@@ -8,25 +8,25 @@ trap cleanup EXIT
 
 cleanup() {
   # Kill the ganache-cli instance that we started (if we started one and if it's still running).
-  if [ -n "$ganache_cli_pid" ] && ps -p $ganache_cli_pid > /dev/null; then
-    kill -9 $ganache_cli_pid
+  if [ -n "$ganache_pid" ] && ps -p $ganache_pid > /dev/null; then
+    kill -9 $ganache_pid
   fi
   kill $gsn_relay_server_pid
 }
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
-  ganache_cli_port=8555
+  ganache_port=8555
 else
-  ganache_cli_port=8545
+  ganache_port=8545
 fi
 
 relayer_port=8099
 
-ganache-cli_running() {
-  nc -z localhost "$ganache_cli_port"
+ganache_running() {
+  nc -z localhost "$ganache_port"
 }
 
-start_ganache-cli() {
+start_ganache() {
   # We define 10 accounts with balance 10M ether, needed for high-value tests.
   local accounts=(
     --account="0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c00,1000000000000000000000000"
@@ -44,28 +44,28 @@ start_ganache-cli() {
   )
 
   if [ "$SOLIDITY_COVERAGE" = true ]; then
-    npx ganache-cli-coverage --gasLimit 0xfffffffffff --port "$ganache_cli_port" "${accounts[@]}" > /dev/null &
+    npx ganache-cli-coverage --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
   else
-    npx ganache-cli --gasLimit 0xfffffffffff --port "$ganache_cli_port" "${accounts[@]}" > /dev/null &
+    npx ganache-cli --gasLimit 0xfffffffffff --port "$ganache_port" "${accounts[@]}" > /dev/null &
   fi
 
-  ganache_cli_pid=$!
+  ganache_pid=$!
 }
 
 setup_gsn_relay() {
   echo "Launching GSN relay server"
 
-  ganache_url="http://localhost:$ganache_cli_port "
+  ganache_url="http://localhost:$ganache_port "
   gsn_relay_server_pid=$(npx oz-gsn run-relayer --ethereumNodeURL $ganache_url --port $relayer_port --detach --quiet)
   
   echo "GSN relay server launched!"
 }
 
-if ganache-cli_running; then
-  echo "Using existing ganache-cli instance"
+if ganache_running; then
+  echo "Using existing ganache instance"
 else
-  echo "Starting our own ganache-cli instance"
-  start_ganache-cli
+  echo "Starting our own ganache instance"
+  start_ganache
 fi
 
 setup_gsn_relay

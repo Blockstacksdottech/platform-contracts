@@ -35,6 +35,12 @@ contract DepositManager is Initializable, Ownable, GSNRecipient, EthicHubBase {
       return _approveRelayedCall();
     }
 
+    function _preRelayedCall(bytes memory context) internal returns (bytes32) {
+    }
+
+    function _postRelayedCall(bytes memory context, bool, uint256 actualCharge, bytes32) internal {
+    }
+
     function contribute(IContributionTarget target, address contributor, uint256 amount) public {
         require(contributor != address(0), "Contributor address is not valid");
         require(
