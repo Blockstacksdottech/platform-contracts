@@ -16,7 +16,7 @@ module.exports = {
     },
     compilers: {
         solc: {
-            version: "0.5.8"
+            version: "0.5.13"
         }
     },
     networks: {

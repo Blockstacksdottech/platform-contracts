@@ -1,4 +1,4 @@
-pragma solidity 0.5.8;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 
@@ -15,6 +15,9 @@ import "../storage/EthicHubStorageInterface.sol";
 
 contract EthicHubArbitrage is EthicHubBase, Ownable {
 
+    uint8 public version;
+    EthicHubStorageInterface public ethicHubStorage;
+
     event ArbiterAssigned (
         address indexed _arbiter, // Address of the arbiter
         address indexed _lendingContract // Address of the lending contract
@@ -26,7 +29,10 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
     );
 
     constructor(EthicHubStorageInterface _ethicHubStorage) public {
-        EthicHubBase.initialize(_ethicHubStorage, 1);
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
+
+        ethicHubStorage = _ethicHubStorage;
+        version = 1;
     }
 
     function assignArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {

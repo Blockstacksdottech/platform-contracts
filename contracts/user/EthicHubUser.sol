@@ -17,22 +17,27 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-pragma solidity 0.5.8;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 
-import "../EthicHubBase.sol";
 import "../storage/EthicHubStorageInterface.sol";
 
 /* @title User
 @dev This is an extension to add user
 */
-contract EthicHubUser is EthicHubBase, Ownable {
+contract EthicHubUser is Ownable {
+
+    uint8 public version;
+    EthicHubStorageInterface public ethicHubStorage;
 
     event UserStatusChanged(address target, string profile, bool isRegistered);
 
     constructor(EthicHubStorageInterface _ethicHubStorage) public {
-        EthicHubBase.initialize(_ethicHubStorage, 4);
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
+
+        ethicHubStorage = _ethicHubStorage;
+        version = 1;
     }
 
     /**

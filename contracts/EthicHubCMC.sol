@@ -1,4 +1,4 @@
-pragma solidity 0.5.8;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
@@ -11,7 +11,10 @@ import "./storage/EthicHubStorageInterface.sol";
  * @dev This contract manage ethichub contracts creation and update.
  */
 
-contract EthicHubCMC is EthicHubBase, Ownable {
+contract EthicHubCMC is Ownable {
+
+    uint8 public version;
+    EthicHubStorageInterface public ethicHubStorage;
 
     event ContractUpgraded (
         address indexed _oldContractAddress, // Address of the contract being upgraded
@@ -37,7 +40,10 @@ contract EthicHubCMC is EthicHubBase, Ownable {
     }
 
     constructor(EthicHubStorageInterface _ethicHubStorage) public {
-        EthicHubBase.initialize(_ethicHubStorage, 4);
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
+
+        ethicHubStorage = _ethicHubStorage;
+        version = 1;
     }
 
     function addNewLendingContract(address _lendingAddress) public onlyOwnerOrLocalNode {

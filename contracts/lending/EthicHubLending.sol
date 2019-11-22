@@ -1,4 +1,4 @@
-pragma solidity 0.5.8;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/lifecycle/Pausable.sol";
 import "../EthicHubBase.sol";
 import "../storage/EthicHubStorageInterface.sol";
 
-contract EthicHubLending is EthicHubBase, Pausable, Ownable {
+contract EthicHubLending is Pausable, Ownable {
     using SafeMath for uint256;
 
     enum LendingState {
@@ -20,6 +20,9 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         ContributionReturned,
         Default
     }
+
+    uint8 public version;
+    EthicHubStorageInterface public ethicHubStorage;
 
     IERC20 public stableCoin;
 
@@ -101,8 +104,10 @@ contract EthicHubLending is EthicHubBase, Pausable, Ownable {
         EthicHubStorageInterface _ethicHubStorage,
         IERC20 _stableCoin
         ) public {
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
-        EthicHubBase.initialize(_ethicHubStorage, 7);
+        ethicHubStorage = _ethicHubStorage;
+        version = 1;
 
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");

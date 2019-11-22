@@ -1,4 +1,4 @@
-pragma solidity 0.5.8;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
@@ -11,7 +11,7 @@ contract EthicHubBase is Initializable {
     EthicHubStorageInterface public ethicHubStorage;
 
     function initialize(EthicHubStorageInterface _ethicHubStorage, uint8 _version) public initializer {
-        require(address(_ethicHubStorage) != address(0), "Storage address cannot be undefined");
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
         ethicHubStorage = _ethicHubStorage;
         version = _version;
     }

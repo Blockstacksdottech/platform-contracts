@@ -5,12 +5,11 @@ import {
     advanceBlock
 } from './helpers/advanceToBlock'
 import {
+    increaseTimeTo,
     duration
 } from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
-import {
-    assertSentViaGSN
-} from './helpers/assertSentViaGSN'
+import assertSentViaGSN from './helpers/assertSentViaGSN'
 
 const {
     BN
@@ -30,13 +29,13 @@ const DepositManager = artifacts.require('DepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
 
-const relayerHubAddress = "0xD216153c06E857cD7f72665E0aF1d7D82172F494"
-
-contract('DepositManager', function ([owner]) {
+contract('DepositManager', function ([owner, investor]) {
     beforeEach(async function () {
         await advanceBlock()
 
         const latestTimeValue = await latestTime()
+        this.fundingStartTime = latestTimeValue + duration.days(1)
+        this.fundingEndTime = this.fundingStartTime + duration.days(40)
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new()
@@ -44,7 +43,6 @@ contract('DepositManager', function ([owner]) {
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
 
-        
         this.depositManager = await DepositManager.new({ from: owner })
         await this.depositManager.initialize(
             this.mockStorage.address,
@@ -52,14 +50,16 @@ contract('DepositManager', function ([owner]) {
             { from: owner }
         ).should.be.fulfilled
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
-        await this.depositManager.setRelayHubAddress(relayerHubAddress)
-        
+
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
+        
+        await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
+        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: investor }).should.be.fulfilled;
 
         this.lending = await EthicHubLending.new(
-            latestTimeValue + duration.days(1),
-            latestTimeValue + duration.days(41),
+            this.fundingStartTime,
+            this.fundingEndTime,
             15,
             ether(3),
             90,
@@ -75,10 +75,7 @@ contract('DepositManager', function ([owner]) {
         await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.lending.address), this.lending.address)
         await this.mockStorage.setAddress(utils.soliditySha3("arbiter", this.lending.address), owner)
 
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
-        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", owner), true)
+        await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "community", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", owner), true)
 
@@ -87,22 +84,20 @@ contract('DepositManager', function ([owner]) {
         await fundRecipient(web3, { recipient: this.depositManager.address })
     })
 
-    describe('general', function () {
-        it('contribution should not consume gas', async function () {
-            const beforeBalance = new BN(await web3.eth.getBalance(owner))
-            const tx = await this.depositManager.contribute(
-                this.lending.address,
-                owner,
-                ether(1),
-                {
-                    from: owner,
-                    useGSN: true
-                }
-            )
-            await assertSentViaGSN(web3, tx.transactionHash);
-
-            const afterBalance = new BN(web3.eth.getBalance(owner))
-            beforeBalance.should.be.bignumber.equal(afterBalance)
-        })
+    it('check can contribute using GSN', async function () {
+        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        const investment = ether(1)
+        const result = await this.depositManager.contribute(
+            this.lending.address,
+            investor,
+            investment,
+            {
+                from: investor,
+                useGSN: true
+            }
+        )
+        await assertSentViaGSN(web3, result.tx);
+        const investorContribution = await this.lending.checkInvestorContribution(investor)
+        investorContribution.should.be.bignumber.equal(investment)
     })
 })
