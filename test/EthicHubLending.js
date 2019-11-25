@@ -21,7 +21,7 @@ const AwaitingReturn = 3;
 const ProjectNotFunded = 4;
 const ContributionReturned = 5;
 const Default = 6;
-const LatestVersion = 7;
+const LatestVersion = 8;
 
 const utils = require("web3-utils")
 

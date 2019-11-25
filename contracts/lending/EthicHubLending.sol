@@ -69,15 +69,16 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     // Events
-    event onCapReached(uint endTime);
-    event onContribution(uint totalContributed, address indexed investor, uint amount, uint investorsCount);
-    event onCompensated(address indexed contributor, uint amount);
+    event CapReached(uint endTime);
+    event Contribution(uint totalContributed, address indexed investor, uint amount, uint investorsCount);
+    event Compensated(address indexed contributor, uint amount);
     event StateChange(uint state);
-    event onInitalRateSet(uint rate);
-    event onReturnRateSet(uint rate);
-    event onReturnAmount(address indexed borrower, uint amount);
-    event onBorrowerChanged(address indexed newBorrower);
-    event onInvestorChanged(address indexed oldInvestor, address indexed newInvestor);
+    event InitalRateSet(uint rate);
+    event ReturnRateSet(uint rate);
+    event ReturnAmount(address indexed borrower, uint amount);
+    event BorrowerChanged(address indexed newBorrower);
+    event InvestorChanged(address indexed oldInvestor, address indexed newInvestor);
+    event Reclaim(address indexed target, uint256 amount);
 
     modifier checkIfArbiter() {
         address arbiter = ethicHubStorage.getAddress(keccak256(abi.encodePacked("arbiter", this)));
@@ -107,7 +108,7 @@ contract EthicHubLending is Pausable, Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = _ethicHubStorage;
-        version = 1;
+        version = 8;
 
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");
@@ -163,7 +164,7 @@ contract EthicHubLending is Pausable, Ownable {
 
         borrower = _borrower;
 
-        emit onBorrowerChanged(borrower);
+        emit BorrowerChanged(borrower);
     }
 
     function changeInvestorAddress(address oldInvestor, address newInvestor) external checkIfArbiter {
@@ -180,7 +181,7 @@ contract EthicHubLending is Pausable, Ownable {
 
         delete investors[oldInvestor];
 
-        emit onInvestorChanged(oldInvestor, newInvestor);
+        emit InvestorChanged(oldInvestor, newInvestor);
     }
 
     function deposit(address contributor, uint256 amount) external {
@@ -229,7 +230,7 @@ contract EthicHubLending is Pausable, Ownable {
 
         borrowerReturnStableCoinPerFiatRate = _borrowerReturnStableCoinPerFiatRate;
 
-        emit onReturnRateSet(borrowerReturnStableCoinPerFiatRate);
+        emit ReturnRateSet(borrowerReturnStableCoinPerFiatRate);
     }
 
     /**
@@ -244,7 +245,7 @@ contract EthicHubLending is Pausable, Ownable {
         initialStableCoinPerFiatRate = _initialStableCoinPerFiatRate;
         totalLendingFiatAmount = totalLendingAmount.mul(initialStableCoinPerFiatRate);
 
-        emit onInitalRateSet(initialStableCoinPerFiatRate);
+        emit InitalRateSet(initialStableCoinPerFiatRate);
 
         changeState(LendingState.AwaitingReturn);
     }
@@ -331,11 +332,11 @@ contract EthicHubLending is Pausable, Ownable {
 
     function doReclaim(address target, uint256 amount) internal {
         uint256 contractBalance = stableCoin.balanceOf(address(this));
-        if ( contractBalance < amount ) {
-            stableCoin.transfer(target, contractBalance);
-        } else {
-            stableCoin.transfer(target, amount);
-        }
+        uint256 reclaimAmount = (contractBalance < amount) ? contractBalance : amount;
+
+        stableCoin.transfer(target, reclaimAmount);
+
+        emit Reclaim(target, reclaimAmount);
     }
 
     function returnBorrowed(uint256 amount) internal {
@@ -346,7 +347,7 @@ contract EthicHubLending is Pausable, Ownable {
         uint excessRepayment = 0;
         uint newReturnedAmount = 0;
 
-        emit onReturnAmount(borrower, amount);
+        emit ReturnAmount(borrower, amount);
 
         (newReturnedAmount, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedAmount, amount);
 
@@ -381,7 +382,7 @@ contract EthicHubLending is Pausable, Ownable {
 
         if (capReached) {
             fundingEndTime = now;
-            emit onCapReached(fundingEndTime);
+            emit CapReached(fundingEndTime);
         }
 
         if (investors[contributor].amount == 0) {
@@ -391,10 +392,10 @@ contract EthicHubLending is Pausable, Ownable {
         if (excessContribAmount > 0) {
             stableCoin.transfer(contributor, excessContribAmount);
             investors[contributor].amount = investors[contributor].amount.add(amount).sub(excessContribAmount);
-            emit onContribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
+            emit Contribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
         } else {
             investors[contributor].amount = investors[contributor].amount.add(amount);
-            emit onContribution(newTotalContributed, contributor, amount, investorCount);
+            emit Contribution(newTotalContributed, contributor, amount, investorCount);
         }
     }
 
@@ -420,11 +421,11 @@ contract EthicHubLending is Pausable, Ownable {
 
     function sendFundsToBorrower() external onlyOwnerOrLocalNode {
         // Waiting for Exchange
-        emit onCapReached(1);
+        emit CapReached(1);
         require(state == LendingState.AcceptingContributions, "State has to be AcceptingContributions");
-        emit onCapReached(1);
+        emit CapReached(1);
         require(capReached, "Cap is not reached");
-        emit onCapReached(1);
+        emit CapReached(1);
 
         changeState(LendingState.ExchangingToFiat);
 
