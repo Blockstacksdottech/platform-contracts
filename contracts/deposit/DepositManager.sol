@@ -18,7 +18,7 @@ contract DepositManager is Initializable, Ownable, GSNRecipient {
     function initialize(
         EthicHubStorageInterface _ethicHubStorage, IERC20 _stableCoin
     ) public initializer {
-        require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
+        require(address(_ethicHubStorage) != address(0), "Storage address cannot is zero address");
 
         Ownable.initialize(_msgSender());
         GSNRecipient.initialize();
@@ -54,6 +54,10 @@ contract DepositManager is Initializable, Ownable, GSNRecipient {
         require(
             address(target) == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", target))),
             "Not a valid lending contract address"
+        );
+        require(
+            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _msgSender()))),
+            "Sender is not registered lender"
         );
         require(
             stableCoin.balanceOf(_msgSender()) >= amount &&
