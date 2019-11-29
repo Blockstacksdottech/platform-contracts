@@ -56,7 +56,7 @@ contract DepositManager is Initializable, Ownable, GSNRecipient {
             "Not a valid lending contract address"
         );
         require(
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _msgSender()))),
+            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", contributor))),
             "Sender is not registered lender"
         );
         require(
@@ -66,7 +66,7 @@ contract DepositManager is Initializable, Ownable, GSNRecipient {
         );
 
         stableCoin.transferFrom(_msgSender(), address(target), amount);
-        IContributionTarget(target).deposit(_msgSender(), amount);
+        IContributionTarget(target).deposit(contributor, amount);
     }
 
     function setRelayHubAddress(address relayAddress) public {
