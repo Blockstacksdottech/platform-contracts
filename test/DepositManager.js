@@ -34,17 +34,16 @@ const MockLendingFailingDeposit = artifacts.require('MockLendingFailingDeposit')
 contract('DepositManager', function ([owner, investor]) {
     beforeEach(async function () {
         await advanceBlock()
-
         const latestTimeValue = await latestTime()
         this.fundingStartTime = latestTimeValue + duration.days(1)
         this.fundingEndTime = this.fundingStartTime + duration.days(40)
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new()
-
+        
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
-
+        
         this.depositManager = await DepositManager.new({ from: owner })
         await this.depositManager.initialize(
             this.mockStorage.address,
@@ -52,7 +51,7 @@ contract('DepositManager', function ([owner, investor]) {
             { from: owner }
         ).should.be.fulfilled
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
-
+            
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
         
@@ -85,9 +84,10 @@ contract('DepositManager', function ([owner, investor]) {
 
         await fundRecipient(web3, { recipient: this.depositManager.address })
     })
-    it('check can contribute', async function () {
+    it.only('check can contribute', async function () {
         await increaseTimeTo(this.fundingStartTime + duration.days(1))
         const investment = ether(1)
+        let initialInvestorBalance = await this.stableCoin.balanceOf(investor)
         const result = await this.depositManager.contribute(
             this.lending.address,
             investor,
@@ -98,13 +98,17 @@ contract('DepositManager', function ([owner, investor]) {
         )
         const investorContribution = await this.lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
+        let lendingBalance = await this.stableCoin.balanceOf(this.lending.address)
+        lendingBalance.should.be.bignumber.equal(investment)
+        let finalInvestorBalance = await this.stableCoin.balanceOf(investor)
+        finalInvestorBalance.should.be.bignumber.equal(initialInvestorBalance.sub(investment))
     })
 
-    it('recovers investment if deposit fails', async function () {
+    it.only('should recover investment if deposit fails', async function () {
         await increaseTimeTo(this.fundingStartTime + duration.days(1))
         let initialInvestorBalance = await this.stableCoin.balanceOf(investor)
         const investment = ether(1)
-        const failingLending = new MockLendingFailingDeposit()
+        const failingLending = await MockLendingFailingDeposit.new()
         await this.mockStorage.setAddress(utils.soliditySha3("contract.address", failingLending.address), failingLending.address)
         const result = await this.depositManager.contribute(
             failingLending.address,
@@ -114,14 +118,13 @@ contract('DepositManager', function ([owner, investor]) {
                 useGSN: false
             }
         ).should.be.rejectedWith(EVMRevert)
-
-        let lendingBalance = await this.stableCoin.balanceOf(failingLending)
-        lendingBalance.should.be.bignumber.equal(0)
+        let lendingBalance = await this.stableCoin.balanceOf(failingLending.address)
+        lendingBalance.should.be.bignumber.equal(new BN(0))
         let finalInvestorBalance = await this.stableCoin.balanceOf(investor)
         finalInvestorBalance.should.be.bignumber.equal(initialInvestorBalance)
     })
 
-    it('check can contribute using GSN', async function () {
+    it.only('check can contribute using GSN', async function () {
         await increaseTimeTo(this.fundingStartTime + duration.days(1))
         const investment = ether(1)
         const result = await this.depositManager.contribute(
