@@ -10,6 +10,7 @@ import {
 } from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
+import EVMRevert from './helpers/EVMRevert'
 
 const {
     BN
@@ -28,6 +29,7 @@ const EthicHubLending = artifacts.require('EthicHubLending')
 const DepositManager = artifacts.require('DepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
+const MockLendingFailingDeposit = artifacts.require('MockLendingFailingDeposit')
 
 contract('DepositManager', function ([owner, investor]) {
     beforeEach(async function () {
@@ -82,6 +84,41 @@ contract('DepositManager', function ([owner, investor]) {
         await this.lending.saveInitialParametersToStorage(90, 20, owner)
 
         await fundRecipient(web3, { recipient: this.depositManager.address })
+    })
+    it('check can contribute', async function () {
+        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        const investment = ether(1)
+        const result = await this.depositManager.contribute(
+            this.lending.address,
+            investor,
+            investment, {
+                from: investor,
+                useGSN: false
+            }
+        )
+        const investorContribution = await this.lending.checkInvestorContribution(investor)
+        investorContribution.should.be.bignumber.equal(investment)
+    })
+
+    it('recovers investment if deposit fails', async function () {
+        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        let initialInvestorBalance = await this.stableCoin.balanceOf(investor)
+        const investment = ether(1)
+        const failingLending = new MockLendingFailingDeposit()
+        await this.mockStorage.setAddress(utils.soliditySha3("contract.address", failingLending.address), failingLending.address)
+        const result = await this.depositManager.contribute(
+            failingLending.address,
+            investor,
+            investment, {
+                from: investor,
+                useGSN: false
+            }
+        ).should.be.rejectedWith(EVMRevert)
+
+        let lendingBalance = await this.stableCoin.balanceOf(failingLending)
+        lendingBalance.should.be.bignumber.equal(0)
+        let finalInvestorBalance = await this.stableCoin.balanceOf(investor)
+        finalInvestorBalance.should.be.bignumber.equal(initialInvestorBalance)
     })
 
     it('check can contribute using GSN', async function () {
