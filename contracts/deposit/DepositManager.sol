@@ -56,8 +56,9 @@ contract DepositManager is Initializable, Ownable, GSNRecipient {
             "Not a valid lending contract address"
         );
         require(
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", contributor))),
-            "Sender is not registered lender"
+            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", contributor))) ||
+            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", contributor))),
+            "Contributor is not registered lender or borrower"
         );
         require(
             stableCoin.balanceOf(_msgSender()) >= amount &&
