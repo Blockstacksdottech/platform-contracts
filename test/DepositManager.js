@@ -29,6 +29,8 @@ const DepositManager = artifacts.require('DepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
 
+const CHAIN_ID = "666"
+
 contract('DepositManager', function ([owner, investor]) {
     beforeEach(async function () {
         await advanceBlock()
@@ -38,7 +40,7 @@ contract('DepositManager', function ([owner, investor]) {
         this.fundingEndTime = this.fundingStartTime + duration.days(40)
 
         this.mockStorage = await MockStorage.new()
-        this.stableCoin = await MockStableCoin.new()
+        this.stableCoin = await MockStableCoin.new(CHAIN_ID)
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
