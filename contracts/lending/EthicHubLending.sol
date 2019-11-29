@@ -21,7 +21,7 @@ contract EthicHubLending is Pausable, Ownable {
         Default
     }
 
-    uint8 public Xversion;
+    uint8 public version;
     EthicHubStorageInterface public ethicHubStorage;
 
     IERC20 public stableCoin;
