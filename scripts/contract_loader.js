@@ -17,9 +17,9 @@ module.exports = {
             deployedAddress = contract_data.networks[netId].address;
 
         }
-        if (deployedAddress === undefined) {
-            throw Error(`${contractName} does not have a deployed address in network ${netId}`);
-        }
+        // if (deployedAddress === undefined) {
+        //     throw Error(`${contractName} does not have a deployed address in network ${netId}`);
+        // }
         return new web3.eth.Contract(contract_data.abi, deployedAddress, {
             data: contract_data.bytecode
         });
@@ -38,10 +38,16 @@ module.exports = {
         });
     },
 
-    getDeployable: function (web3, contractName) {
+    getDeployable: function (web3, contractName, verbose = false) {
 
         const jsonPath = path.join(__dirname, `../build/contracts/${contractName}.json`);
+        if (verbose) {
+            console.log(jsonPath)
+        }
         const contract_data = require(jsonPath);
+        if (verbose) {
+            console.log(contract_data)
+        }
         if (contract_data === undefined) {
             throw Error(`No contract named ${contractName} in ${jsonPath}`);
         }

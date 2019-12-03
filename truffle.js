@@ -5,8 +5,6 @@ require('dotenv').config();
 var HDWalletProvider = require("@truffle/hdwallet-provider");
 const { GSNDevProvider } = require('@openzeppelin/gsn-provider');
 
-let mnemonic = process.env.MNEMONIC;
-
 module.exports = {
     solc: {
         optimizer: {
@@ -51,17 +49,9 @@ module.exports = {
             port: 9545,
             network_id: "*" // Match any network id
         },
-        rinkeby: {
-            provider: function () {
-                return new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY);
-            },
-            network_id: '*',
-            gasLimit: 6000000,
-            gas: 4700000
-        },
         kovan: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, "https://kovan.infura.io/v3/" + process.env.INFURA_KEY);
+                return new HDWalletProvider(process.env.KOVAN_MNEMONIC, process.env.KOVAN_URL);
             },
             network_id: '*',
             gasLimit: 6000000,
