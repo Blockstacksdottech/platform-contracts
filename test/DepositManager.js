@@ -102,4 +102,19 @@ contract('DepositManager', function ([owner, investor]) {
         const investorContribution = await this.lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
     })
+
+     it('check can contribute without using GSN', async function () {
+         await increaseTimeTo(this.fundingStartTime + duration.days(1))
+         const investment = ether(1)
+         const result = await this.depositManager.contribute(
+             this.lending.address,
+             investor,
+             investment, {
+                 from: investor,
+                 useGSN: false
+             }
+         ).should.be.fulfilled()
+         const investorContribution = await this.lending.checkInvestorContribution(investor)
+         investorContribution.should.be.bignumber.equal(investment)
+     })
 })

@@ -20,7 +20,7 @@ const EthicHubReputation = artifacts.require('EthicHubReputation');
 
 const MockStorage = artifacts.require('MockStorage');
 
-contract('EthicHubReputation', function([owner, community, localNode, lendingContract]) {
+contract('EthicHubReputation --> Deprecated', function([owner, community, localNode, lendingContract]) {
     beforeEach(async function() {
         this.maxDelayDays = new BN(100);
 
@@ -42,7 +42,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
     });
 
     describe('Community decrement', function() {
-        it('should burn 1% per day passed after 100 days max', async function() {
+        it.skip('should burn 1% per day passed after 100 days max', async function() {
             const initialReputation = this.maxReputation.mul(BN0_05);
             for (var delayDays = 1; delayDays <= 100; delayDays++) {
                 const bnDelayDays = new BN(delayDays)
@@ -53,7 +53,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }
 
         });
-        it('should burn 10% per day passed after 100 days max', async function() {
+        it.skip('should burn 10% per day passed after 100 days max', async function() {
             const delayDays = new BN(10);
             const initialReputation = this.maxReputation.mul(BN0_05);
             const newRep = await this.reputation.burnCommunityReputation(delayDays, this.maxDelayDays, initialReputation).should.be.fulfilled;
@@ -61,7 +61,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             expectedRep = new BN((Math.floor(expectedRep)));
             newRep.should.be.bignumber.equal(expectedRep);
         });
-        it('should burn 100% per day passed after 100 days max', async function() {
+        it.skip('should burn 100% per day passed after 100 days max', async function() {
             const delayDays = this.maxReputation;
             const newRep = await this.reputation.burnCommunityReputation(delayDays, this.maxDelayDays, 100).should.be.fulfilled;
             newRep.should.be.bignumber.equal(new BN(0));
@@ -69,7 +69,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
     });
 
     describe('Community increment', function() {
-        it('should add 1/CompletedSameTierProjects', async function() {
+        it.skip('should add 1/CompletedSameTierProjects', async function() {
             var rep = this.initialReputation;
             for (var succesfulSameTierProjects = 1; succesfulSameTierProjects < 100; succesfulSameTierProjects++) {
                 const bnsuccesfulSameTierProjects = new BN(succesfulSameTierProjects);
@@ -81,19 +81,19 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }
         });
 
-        it('should not assign more than max reputation', async function() {
+        it.skip('should not assign more than max reputation', async function() {
             var prevRep = this.maxReputation.sub(new BN(1));
             var newRep = await this.reputation.incrementCommunityReputation(prevRep, 1).should.be.fulfilled;
             newRep.should.be.bignumber.equal(this.maxReputation);
         });
 
-        it('should fail to set reputation with no succesful projects in a tier', async function() {
+        it.skip('should fail to set reputation with no succesful projects in a tier', async function() {
             await this.reputation.incrementCommunityReputation(500, 0).should.be.rejectedWith(EVMRevert);
         });
     });
 
     describe('Local node increment', function() {
-        it('should increment correct number', async function() {
+        it.skip('should increment correct number', async function() {
             var prevRep = this.initialReputation;
             var community = this.minimumPeopleCommunity;
             for (var tier = 1; tier <= 5; tier++) {
@@ -105,7 +105,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }
         });
 
-        it('should increment correct number with more members in the community', async function() {
+        it.skip('should increment correct number with more members in the community', async function() {
             var prevRep = this.initialReputation;
             var community = new BN(100);
             var tier = 3;
@@ -116,7 +116,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
 
         });
 
-        it('should not increment over max rep', async function() {
+        it.skip('should not increment over max rep', async function() {
             var prevRep = this.maxReputation.sub(BN1);
             var newRep = await this.reputation.incrementLocalNodeReputation(prevRep, 1, 40).should.be.fulfilled;
             newRep.should.be.bignumber.equal(this.maxReputation);
@@ -124,7 +124,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
     });
 
     describe('Local node decrement', function() {
-        it('should burn same as commnity, max 1 step (100) ', async function() {
+        it.skip('should burn same as commnity, max 1 step (100) ', async function() {
             const initialReputation = this.maxReputation.mul(BN0_05);
             var delayDays = new BN(1);
             var newRep = await this.reputation.burnLocalNodeReputation(delayDays, this.maxDelayDays, initialReputation).should.be.fulfilled;
@@ -155,7 +155,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             newRep.should.be.bignumber.equal(expectedRep);
         });
 
-        it('should not burn less than 0', async function() {
+        it.skip('should not burn less than 0', async function() {
             const initialReputation = new BN(0);
             var delayDays = 1;
             var newRep = await this.reputation.burnLocalNodeReputation(delayDays, this.maxDelayDays, initialReputation).should.be.fulfilled;
@@ -165,14 +165,14 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
     });
 
     describe('From storage -> burn', function() {
-        it('should not decrement another that is not lending contract', async function() {
+        it.skip('should not decrement another that is not lending contract', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             const delayDays = new BN(0);
             await this.reputation.burnReputation(delayDays, {
                 from: owner
             }).should.be.rejectedWith(EVMRevert);
         });
-        it('Should burn reputation', async function() {
+        it.skip('Should burn reputation', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             await this.mockStorage.setUint(utils.soliditySha3("lending.maxDelayDays", lendingContract), this.maxDelayDays);
             const delayDays = new BN(1);
@@ -202,7 +202,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             newRep.should.be.bignumber.equal(expectedRep);
         });
 
-        it('Lending contract should have a community', async function() {
+        it.skip('Lending contract should have a community', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             await this.mockStorage.setUint(utils.soliditySha3("lending.maxDelayDays", lendingContract), this.maxDelayDays);
             const delayDays = new BN(1);
@@ -218,7 +218,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Lending contract should have a localNode', async function() {
+        it.skip('Lending contract should have a localNode', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             await this.mockStorage.setUint(utils.soliditySha3("lending.maxDelayDays", lendingContract), this.maxDelayDays);
             const delayDays = new BN(1);
@@ -234,7 +234,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Lending should have a maxDelayDays localNode', async function() {
+        it.skip('Lending should have a maxDelayDays localNode', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             const delayDays = new BN(1);
             await this.mockStorage.setUint(utils.soliditySha3("lending.delayDays", lendingContract), delayDays);
@@ -250,7 +250,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Lending contract should be in default', async function() {
+        it.skip('Lending contract should be in default', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             await this.mockStorage.setUint(utils.soliditySha3("lending.maxDelayDays", lendingContract), this.maxDelayDays);
             const delayDays = new BN(0);
@@ -269,14 +269,14 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
     });
 
     describe('From storage -> increase', function() {
-        it('should not increment another that is not lending contract', async function() {
+        it.skip('should not increment another that is not lending contract', async function() {
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
             const completedProjectsByTier = new BN(0);
             this.reputation.incrementReputation(completedProjectsByTier, {
                 from: owner
             }).should.be.rejectedWith(EVMRevert);
         });
-        it('Should increase reputation', async function() {
+        it.skip('Should increase reputation', async function() {
             const projectTier = new BN(1);
             const previouslyCompletedProjects = new BN(3);
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
@@ -306,7 +306,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             expectedRep = initialLocalNodeReputation.add(increment);
             newLocalRep.should.be.bignumber.equal(expectedRep);
         });
-        it('Should fail without a community', async function() {
+        it.skip('Should fail without a community', async function() {
             const projectTier = new BN(1);
             const previouslyCompletedProjects = new BN(3);
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
@@ -326,7 +326,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Should fail without a localNode', async function() {
+        it.skip('Should fail without a localNode', async function() {
             const projectTier = new BN(1);
             const previouslyCompletedProjects = new BN(3);
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
@@ -346,7 +346,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Should fail without an assigned tier in lending', async function() {
+        it.skip('Should fail without an assigned tier in lending', async function() {
             const projectTier = new BN(1);
             const previouslyCompletedProjects = new BN(3);
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
@@ -366,7 +366,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             }).should.be.rejectedWith(EVMRevert);
         });
 
-        it('Should fail without a succesful project', async function() {
+        it.skip('Should fail without a succesful project', async function() {
             const projectTier = new BN(1);
             const previouslyCompletedProjects = new BN(0);
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", lendingContract), lendingContract);
@@ -388,7 +388,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
     });
 
     describe('reputation default values', function() {
-        it('Should initialize localNode reputation', async function() {
+        it.skip('Should initialize localNode reputation', async function() {
             // set fake user contract using owner
             await this.mockStorage.setAddress(utils.soliditySha3("contract.name", "users"), owner);
             await this.reputation.initLocalNodeReputation(localNode).should.be.fulfilled;
@@ -397,7 +397,7 @@ contract('EthicHubReputation', function([owner, community, localNode, lendingCon
             default_rep.should.be.bignumber.equal(rep);
         });
 
-        it('Should initialize community reputation', async function() {
+        it.skip('Should initialize community reputation', async function() {
             // set fake user contract using owner
             await this.mockStorage.setAddress(utils.soliditySha3("contract.name", "users"), owner);
             await this.reputation.initCommunityReputation(community).should.be.fulfilled;
