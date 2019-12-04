@@ -34,6 +34,7 @@ const EthicHubLending = artifacts.require('EthicHubLending')
 const EthicHubDepositManager = artifacts.require('EthicHubDepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
+const CHAIN_ID = "666"
 
 contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
     beforeEach(async function () {
@@ -57,7 +58,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         this.members = new BN(20)
 
         this.mockStorage = await MockStorage.new()
-        this.stableCoin = await MockStableCoin.new()
+        this.stableCoin = await MockStableCoin.new(CHAIN_ID)
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", localNode), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", borrower), true)

@@ -1,7 +1,8 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "DepositManager": "DepositManager"
+    "DepositManager": "DepositManager",
+    "MockStableCoin": "MockStableCoin"
   },
   "dependencies": {
     "@openzeppelin/contracts-ethereum-package": "^2.3.0"
@@ -11,7 +12,11 @@
   "compiler": {
     "manager": "truffle",
     "compilerSettings": {
-      "optimizer": {}
+      "optimizer": {
+        "enabled": false,
+        "runs": "200"
+      }
     }
-  }
+  },
+  "telemetryOptIn": true
 }

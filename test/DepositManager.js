@@ -29,6 +29,8 @@ const EthicHubDepositManager = artifacts.require('EthicHubDepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
 
+const CHAIN_ID = "666"
+
 contract('EthicHubDepositManager', function ([owner, investor]) {
     beforeEach(async function () {
         await advanceBlock()
@@ -38,7 +40,7 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         this.fundingEndTime = this.fundingStartTime + duration.days(40)
 
         this.mockStorage = await MockStorage.new()
-        this.stableCoin = await MockStableCoin.new()
+        this.stableCoin = await MockStableCoin.new(CHAIN_ID)
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
@@ -100,4 +102,19 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         const investorContribution = await this.lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
     })
+
+     it('check can contribute without using GSN', async function () {
+         await increaseTimeTo(this.fundingStartTime + duration.days(1))
+         const investment = ether(1)
+         const result = await this.depositManager.contribute(
+             this.lending.address,
+             investor,
+             investment, {
+                 from: investor,
+                 useGSN: false
+             }
+         ).should.be.fulfilled()
+         const investorContribution = await this.lending.checkInvestorContribution(investor)
+         investorContribution.should.be.bignumber.equal(investment)
+     })
 })
