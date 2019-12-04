@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 import "../interfaces/IContributionTarget.sol";
 import "../storage/EthicHubStorageInterface.sol";
 
-contract DepositManager is Initializable, Ownable, GSNRecipient {
+contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
     uint8 public version;
     EthicHubStorageInterface public ethicHubStorage;

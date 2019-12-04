@@ -31,7 +31,7 @@ chai.use(require('chai-as-promised'))
     .should()
 
 const EthicHubLending = artifacts.require('EthicHubLending')
-const DepositManager = artifacts.require('DepositManager')
+const EthicHubDepositManager = artifacts.require('EthicHubDepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
 
@@ -62,7 +62,7 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", localNode), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", borrower), true)
 
-        this.depositManager = await DepositManager.new()
+        this.depositManager = await EthicHubDepositManager.new()
         await this.depositManager.initialize(this.mockStorage.address, this.stableCoin.address)
 
         await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)

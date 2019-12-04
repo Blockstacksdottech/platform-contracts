@@ -133,7 +133,7 @@ Thus, User and Contract Managers will have their own state, and will be able to 
 
 An similar off chain algorithm based in on chain payment history will be used instead.
 
-## [DepositManager](./contracts/deposit/DepositManager.sol)
+## [DepositManager](./contracts/deposit/EthicHubDepositManager.sol)
 
 Since **we are migrating the Lending contracts to [use a stable ERC20 token (DAI)](https://makerdao.com/) instead of ETH**, having the users paying accept transactions on every loan would seriously impact the UX.
 
