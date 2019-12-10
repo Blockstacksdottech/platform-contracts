@@ -10,6 +10,7 @@ import {
 } from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
+import EVMRevert from './helpers/EVMRevert'
 
 const {
     BN
@@ -55,7 +56,7 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
 
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
-        
+
         await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: investor }).should.be.fulfilled;
 
@@ -86,6 +87,10 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         await fundRecipient(web3, { recipient: this.depositManager.address })
     })
 
+    it('only owner can change relayer', async function () {
+        await this.depositManager.setRelayHubAddress(investor, { from: investor }).should.be.rejectedWith(EVMRevert)
+    })
+
     it('check can contribute using GSN', async function () {
         await increaseTimeTo(this.fundingStartTime + duration.days(1))
         const investment = ether(1)
@@ -103,18 +108,19 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         investorContribution.should.be.bignumber.equal(investment)
     })
 
-     it('check can contribute without using GSN', async function () {
-         await increaseTimeTo(this.fundingStartTime + duration.days(1))
-         const investment = ether(1)
-         const result = await this.depositManager.contribute(
-             this.lending.address,
-             investor,
-             investment, {
-                 from: investor,
-                 useGSN: false
-             }
-         ).should.be.fulfilled()
-         const investorContribution = await this.lending.checkInvestorContribution(investor)
-         investorContribution.should.be.bignumber.equal(investment)
-     })
+    it('check can contribute without using GSN', async function () {
+        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        const investment = ether(1)
+        await this.depositManager.contribute(
+            this.lending.address,
+            investor,
+            investment,
+            {
+                from: investor,
+                useGSN: false
+            }
+        ).should.be.fulfilled
+        const investorContribution = await this.lending.checkInvestorContribution(investor)
+        investorContribution.should.be.bignumber.equal(investment)
+    })
 })

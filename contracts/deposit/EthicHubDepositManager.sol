@@ -70,7 +70,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         IContributionTarget(target).deposit(contributor, amount);
     }
 
-    function setRelayHubAddress(address relayAddress) public {
+    function setRelayHubAddress(address relayAddress) public onlyOwner {
         _upgradeRelayHub(relayAddress);
     }
 }
