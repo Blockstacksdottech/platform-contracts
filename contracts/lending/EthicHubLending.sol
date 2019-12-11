@@ -49,6 +49,8 @@ contract EthicHubLending is Pausable, Ownable {
     address payable public localNode;
     address payable public ethicHubTeam;
 
+    address public depositManager;
+
     uint256 public borrowerReturnStableCoinPerFiatRate;
     uint256 public ethichubFee;
     uint256 public localNodeFee;
@@ -102,6 +104,7 @@ contract EthicHubLending is Pausable, Ownable {
         address payable _borrower,
         address payable _localNode,
         address payable _ethicHubTeam,
+        address _depositManager,
         EthicHubStorageInterface _ethicHubStorage,
         IERC20 _stableCoin
         ) public {
@@ -134,6 +137,8 @@ contract EthicHubLending is Pausable, Ownable {
         borrower = _borrower;
         localNode = _localNode;
         ethicHubTeam = _ethicHubTeam;
+
+        depositManager = _depositManager;
 
         stableCoin = _stableCoin;
 
@@ -186,7 +191,7 @@ contract EthicHubLending is Pausable, Ownable {
 
     function deposit(address contributor, uint256 amount) external {
         require(
-            msg.sender == ethicHubStorage.getAddress(keccak256(abi.encodePacked("depositManager.address", msg.sender))),
+            msg.sender == depositManager,
             "Caller is not a deposit manager"
         );
         require(

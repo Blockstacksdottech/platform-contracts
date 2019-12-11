@@ -71,6 +71,7 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
             owner,
             owner,
             owner,
+            this.depositManager.address,
             this.mockStorage.address,
             this.stableCoin.address
         )
