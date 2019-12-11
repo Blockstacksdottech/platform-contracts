@@ -45,9 +45,9 @@ contract EthicHubLending is Pausable, Ownable {
     uint256 public initialStableCoinPerFiatRate;
     uint256 public totalLendingFiatAmount;
 
-    address payable public borrower;
-    address payable public localNode;
-    address payable public ethicHubTeam;
+    address public borrower;
+    address public localNode;
+    address public ethicHubTeam;
 
     address public depositManager;
 
@@ -101,9 +101,9 @@ contract EthicHubLending is Pausable, Ownable {
         uint256 _lendingDays,
         uint256 _ethichubFee,
         uint256 _localNodeFee,
-        address payable _borrower,
-        address payable _localNode,
-        address payable _ethicHubTeam,
+        address _borrower,
+        address _localNode,
+        address _ethicHubTeam,
         address _depositManager,
         EthicHubStorageInterface _ethicHubStorage,
         IERC20 _stableCoin
@@ -163,7 +163,7 @@ contract EthicHubLending is Pausable, Ownable {
         changeState(LendingState.AcceptingContributions);
     }
 
-    function setBorrower(address payable _borrower) external checkIfArbiter {
+    function setBorrower(address _borrower) external checkIfArbiter {
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
 
@@ -260,7 +260,7 @@ contract EthicHubLending is Pausable, Ownable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContributionDefault(address payable beneficiary) external {
+    function reclaimContributionDefault(address beneficiary) external {
         require(state == LendingState.Default);
         require(!investors[beneficiary].isCompensated);
 
@@ -280,7 +280,7 @@ contract EthicHubLending is Pausable, Ownable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContribution(address payable beneficiary) external {
+    function reclaimContribution(address beneficiary) external {
         require(state == LendingState.ProjectNotFunded, "State is not ProjectNotFunded");
         require(!investors[beneficiary].isCompensated, "Contribution already reclaimed");
         uint256 contribution = investors[beneficiary].amount;
@@ -292,7 +292,7 @@ contract EthicHubLending is Pausable, Ownable {
         doReclaim(beneficiary, contribution);
     }
 
-    function reclaimContributionWithInterest(address payable beneficiary) external {
+    function reclaimContributionWithInterest(address beneficiary) external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(!investors[beneficiary].isCompensated, "Lender already compensated");
         uint256 contribution = checkInvestorReturns(beneficiary);
