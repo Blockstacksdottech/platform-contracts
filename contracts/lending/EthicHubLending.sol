@@ -334,7 +334,7 @@ contract EthicHubLending is Pausable, Ownable {
         uint256 contractBalance = stableCoin.balanceOf(address(this));
         uint256 reclaimAmount = (contractBalance < amount) ? contractBalance : amount;
 
-        stableCoin.transfer(target, reclaimAmount);
+        require(stableCoin.transfer(target, reclaimAmount), "transfer method failed");
 
         emit Reclaim(target, reclaimAmount);
     }
@@ -359,7 +359,7 @@ contract EthicHubLending is Pausable, Ownable {
         }
 
         if (excessRepayment > 0) {
-            stableCoin.transfer(borrower, excessRepayment);
+            require(stableCoin.transfer(borrower, excessRepayment), "transfer method failed");
         }
     }
 
@@ -390,7 +390,7 @@ contract EthicHubLending is Pausable, Ownable {
         }
 
         if (excessContribAmount > 0) {
-            stableCoin.transfer(contributor, excessContribAmount);
+            require(stableCoin.transfer(contributor, excessContribAmount), "transfer method failed");
             investors[contributor].amount = investors[contributor].amount.add(amount).sub(excessContribAmount);
             emit Contribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
         } else {
