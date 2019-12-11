@@ -16,7 +16,6 @@ const {
 
 const Uninitialized = 0;
 const AcceptingContributions = 1;
-const ExchangingToFiat = 2;
 const AwaitingReturn = 3;
 const ProjectNotFunded = 4;
 const ContributionReturned = 5;
@@ -65,8 +64,6 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
 
         this.depositManager = await EthicHubDepositManager.new()
         await this.depositManager.initialize(this.mockStorage.address, this.stableCoin.address)
-
-        await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
 
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
         await this.stableCoin.transfer(borrower, ether(100000)).should.be.fulfilled;
