@@ -424,6 +424,19 @@ contract EthicHubLending is Pausable, Ownable {
         return (newTotal, goalReached, excess);
     }
 
+    function sendFundsToBorrower() external onlyOwnerOrLocalNode {
+        // Waiting for Exchange
+        emit CapReached(1);
+        require(state == LendingState.AcceptingContributions, "State has to be AcceptingContributions");
+        emit CapReached(1);
+        require(capReached, "Cap is not reached");
+        emit CapReached(1);
+
+        changeState(LendingState.ExchangingToFiat);
+
+        stableCoin.transfer(borrower, totalContributed);
+    }
+
     /**
     * Calculates days passed after defaulting
     * @param date timestamp to calculate days

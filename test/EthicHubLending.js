@@ -324,6 +324,223 @@ contract('EthicHubLending', function ([owner, borrower, investor, investor2, inv
         })
     })
 
+    describe('Partial returning of funds', function () {
+        it('full payment of the loan in several transfers should be allowed', async function () {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1))
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                this.totalLendingAmount,
+                { from: investor }
+            ).should.be.fulfilled;
+            await this.lending.sendFundsToBorrower({
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+            const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                borrowerReturnAmount.div(new BN(2)),
+                { from: borrower }
+            ).should.be.fulfilled
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                borrowerReturnAmount.div(new BN(2)),
+                { from: borrower }
+            ).should.be.fulfilled
+            const state = await this.lending.state()
+            state.toNumber().should.be.equal(ContributionReturned)
+        })
+
+        it('partial payment of the loan should be still default', async function () {
+            await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
+
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                this.totalLendingAmount,
+                { from: investor }
+            ).should.be.fulfilled
+            await this.lending.sendFundsToBorrower({
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+
+            //This should be the edge case : end of funding time + awaiting for return period.
+            var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
+            await increaseTimeTo(defaultTime)
+            const trueBorrowerReturnAmount = await this.lending.borrowerReturnAmount() // actual returnAmount
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                trueBorrowerReturnAmount.div(new BN(2)),
+                { from: borrower }
+            ).should.be.fulfilled
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                trueBorrowerReturnAmount.div(new BN(5)),
+                { from: borrower }
+            ).should.be.fulfilled
+            var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber() + 1)
+            await increaseTimeTo(defaultTime)
+            await this.lending.declareProjectDefault({
+                from: owner
+            }).should.be.fulfilled;
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Default)
+        })
+
+        it('partial payment of the loan should allow to recover contributions', async function () {
+            await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
+
+            var investorSendAmount = this.totalLendingAmount.mul(new BN(1)).div(new BN(3))
+            var investor1GasGost = new BN(0)
+            var tx = await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                investorSendAmount,
+                { from: investor }
+            ).should.be.fulfilled;
+            investor1GasGost = accumulateTxCost(tx, investor1GasGost)
+
+            const investorAfterSendBalance = await this.stableCoin.balanceOf(investor)
+
+            var investor2SendAmount = this.totalLendingAmount.mul(new BN(2)).div(new BN(3))
+            var investor2GasGost = new BN(0)
+            tx = await this.depositManager.contribute(
+                this.lending.address,
+                investor2,
+                investor2SendAmount,
+                { from: investor2 }
+            ).should.be.fulfilled;
+            const investor2AfterSendBalance = await this.stableCoin.balanceOf(investor2)
+            investor2GasGost = accumulateTxCost(tx, investor2GasGost)
+
+            await this.lending.sendFundsToBorrower({
+                from: owner
+            }).should.be.fulfilled;
+
+            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.initialStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+            //This should be the edge case : end of funding time + awaiting for return period.
+            var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
+            await increaseTimeTo(defaultTime)
+            const trueBorrowerReturnAmount = await this.lending.borrowerReturnAmount()
+            const notFullAmount = trueBorrowerReturnAmount.div(new BN(4)).mul(new BN(3)) //0.75
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                notFullAmount,
+                { from: borrower }
+            ).should.be.fulfilled;
+
+            var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber() + 1)
+            await increaseTimeTo(defaultTime)
+
+            await this.lending.declareProjectDefault({
+                from: owner
+            }).should.be.fulfilled;
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Default)
+
+            tx = await this.lending.reclaimContributionDefault(investor, {
+                from: investor
+            }).should.be.fulfilled;
+            investor1GasGost = accumulateTxCost(tx, investor1GasGost)
+            const investorFinalBalance = await this.stableCoin.balanceOf(investor)
+            var expected = investorAfterSendBalance.add(investorSendAmount.div(new BN(4)).mul(new BN(3))).sub(investor1GasGost)
+            checkLostinTransactions(expected, investorFinalBalance)
+
+            tx = await this.lending.reclaimContributionDefault(investor2, {
+                from: investor2
+            }).should.be.fulfilled;
+            investor2GasGost = accumulateTxCost(tx, investor2GasGost)
+            const investor2FinalBalance = await this.stableCoin.balanceOf(investor2)
+            var expected2 = investor2AfterSendBalance.add(investor2SendAmount.div(new BN(4)).mul(new BN(3))).sub(investor2GasGost)
+            checkLostinTransactions(expected2, investor2FinalBalance)
+
+            var contractBalance = await this.stableCoin.balanceOf(this.lending.address)
+            contractBalance.should.be.bignumber.equal(new BN(0))
+        })
+
+        it('partial payment of the loan should not allow to recover interest, local node and team fees', async function () {
+            await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
+
+            var investorSendAmount = this.totalLendingAmount.mul(new BN(1)).div(new BN(3))
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor,
+                investorSendAmount,
+                { from: investor }
+            ).should.be.fulfilled
+
+            var investor2SendAmount = this.totalLendingAmount.mul(new BN(2)).div(new BN(3))
+            await this.depositManager.contribute(
+                this.lending.address,
+                investor2,
+                investor2SendAmount,
+                { from: investor2 }
+            ).should.be.fulfilled
+
+            await this.lending.sendFundsToBorrower({
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.initialStableCoinPerFiatRate, {
+                from: owner
+            }).should.be.fulfilled;
+
+            //This should be the edge case : end of funding time + awaiting for return period.
+            var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
+            await increaseTimeTo(defaultTime)
+
+            const trueBorrowerReturnAmount = await this.lending.borrowerReturnAmount()
+            const notFullAmount = trueBorrowerReturnAmount.div(new BN(4)).mul(new BN(3)) //0.75
+            await this.depositManager.contribute(
+                this.lending.address,
+                borrower,
+                notFullAmount,
+                { from: borrower }
+            ).should.be.fulfilled
+            var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber() + 1)
+            await increaseTimeTo(defaultTime)
+            this.lending.declareProjectDefault({
+                from: owner
+            }).should.be.fulfilled;
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Default)
+            // Reclaims amounts
+            await this.lending.reclaimContributionWithInterest(investor, {
+                from: investor
+            }).should.be.rejectedWith(EVMRevert)
+
+            await this.lending.reclaimContributionWithInterest(investor2, {
+                from: investor2
+            }).should.be.rejectedWith(EVMRevert)
+            await this.lending.reclaimLocalNodeFee().should.be.rejectedWith(EVMRevert)
+            await this.lending.reclaimEthicHubTeamFee().should.be.rejectedWith(EVMRevert)
+        })
+    })
+
     describe('Retrieving contributions', function () {
         it('should allow to retrieve contributions after declaring project not funded', async function () {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
