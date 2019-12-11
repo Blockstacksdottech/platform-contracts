@@ -124,4 +124,16 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         const investorContribution = await this.lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
     })
+
+    it('check cannot contribute 0', async function () {
+        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        await this.depositManager.contribute(
+            this.lending.address,
+            investor,
+            0,
+            {
+                from: investor,
+            }
+        ).should.be.rejectedWith(EVMRevert)
+    })
 })
