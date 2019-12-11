@@ -66,7 +66,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             "No balance allowed to transfer or insufficient amount"
         );
 
-        require(stableCoin.transferFrom(_msgSender(), address(target), amount), "transferFrom failed");
+        require(stableCoin.transferFrom(_msgSender(), address(target), amount), "transferFrom dai failed");
         IContributionTarget(target).deposit(contributor, amount);
     }
 
