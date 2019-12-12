@@ -3,7 +3,9 @@ require('@babel/polyfill');
 require('dotenv').config();
 
 var HDWalletProvider = require("@truffle/hdwallet-provider");
-const { GSNDevProvider } = require('@openzeppelin/gsn-provider');
+const {
+    GSNDevProvider
+} = require('@openzeppelin/gsn-provider');
 
 let mnemonic = process.env.MNEMONIC;
 
@@ -27,7 +29,7 @@ module.exports = {
                     useGSN: false,
                     // The last two accounts defined in test.sh
                     ownerAddress: '0x26be9c03ca7f61ad3d716253ee1edcae22734698',
-                    relayerAddress: '0xdc5fd04802ea70f6e27aec12d56716624c98e749',
+                    relayerAddress: '0xbB49ad04422F9FA6a217f3Ed82261B942f6981f7',
                 })
             },
             network_id: "*" // Match any network id
@@ -39,7 +41,7 @@ module.exports = {
                     useGSN: false,
                     // The last two accounts defined in test.sh
                     ownerAddress: '0x26be9c03ca7f61ad3d716253ee1edcae22734698',
-                    relayerAddress: '0xdc5fd04802ea70f6e27aec12d56716624c98e749',
+                    relayerAddress: '0xbB49ad04422F9FA6a217f3Ed82261B942f6981f7',
                 })
             },
             network_id: '*', // eslint-disable-line camelcase
@@ -53,7 +55,7 @@ module.exports = {
         },
         rinkeby: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY);
+                return new HDWalletProvider(process.env.RINKEBY_MNEMONIC, "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY);
             },
             network_id: '*',
             gasLimit: 6000000,
@@ -61,7 +63,7 @@ module.exports = {
         },
         kovan: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, "https://kovan.infura.io/v3/" + process.env.INFURA_KEY);
+                return new HDWalletProvider(process.env.KOVAN_MNEMONIC, "https://kovan.infura.io/v3/" + process.env.INFURA_KEY);
             },
             network_id: '*',
             gasLimit: 6000000,
