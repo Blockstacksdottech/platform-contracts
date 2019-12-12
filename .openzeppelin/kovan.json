@@ -1,11 +1,11 @@
 {
   "contracts": {
-    "DepositManager": {
-      "address": "0x29ED60F583e60D7fA0f8D1821d367020a7dFb155",
-      "constructorCode": "60806040526113f1806100136000396000f3fe",
-      "bodyBytecodeHash": "782d9ae083c91de440eacecda81d0c29004668b37f02bbeeac3e45f5b50c7c95",
-      "localBytecodeHash": "9e26819bf5e65f98862cbb0ddea56048688cae8f3c646af445eaf6f8aaeaac4e",
-      "deployedBytecodeHash": "9e26819bf5e65f98862cbb0ddea56048688cae8f3c646af445eaf6f8aaeaac4e",
+    "EthicHubDepositManager": {
+      "address": "0xD2e9036f4367416958E621bdF96be41C8ef38178",
+      "constructorCode": "60806040526116df806100136000396000f3fe",
+      "bodyBytecodeHash": "d1fca208461a31df0ad1c1508fc820a60c010334f571a8391017eea94aca6f46",
+      "localBytecodeHash": "5051b1f479e5f5255d1a0ca992f0a8fe9878876929dfcadad7b71507ca4a39a2",
+      "deployedBytecodeHash": "5051b1f479e5f5255d1a0ca992f0a8fe9878876929dfcadad7b71507ca4a39a2",
       "types": null,
       "storage": null
     }

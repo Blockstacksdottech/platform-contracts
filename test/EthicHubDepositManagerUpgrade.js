@@ -38,7 +38,7 @@ const MockStableCoin = artifacts.require('MockStableCoin')
 
 const CHAIN_ID = "666"
 
-contract('DepositManager', function (accounts, lol, what) {
+contract('EthicHubDepositManager', function (accounts, lol, what) {
 
     beforeEach(async function () {
         this.project = await TestHelper()

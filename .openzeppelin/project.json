@@ -1,8 +1,7 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "DepositManager": "DepositManager",
-    "MockStableCoin": "MockStableCoin"
+    "EthicHubDepositManager": "EthicHubDepositManager"
   },
   "dependencies": {
     "@openzeppelin/contracts-ethereum-package": "^2.3.0"
