@@ -331,9 +331,11 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function (
         await userManager.registerLocalNode(localNode2, { from: owner });
         await userManager.registerRepresentative(borrower, { from: owner });
 
+        const latestTimeValue = await latestTime()
+
         lending = await EthicHubLending.new(
-            latestTime() + duration.days(1), // Funding start time
-            latestTime() + duration.days(35), // Funding end time
+            latestTimeValue + duration.days(1), // Funding start time
+            latestTimeValue + duration.days(35), // Funding end time
             10, // Annual interest
             ether(1), // Total lending amount
             2, // Lending days
@@ -462,149 +464,137 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function (
 });
 
 contract('Integration: EthicHubLending (LocalNode not exists)', function () {
-
     describe('Local Node != Local Node of lending contract', function () {
-        it.skip('should not deploy contract', async function () {
+        it('should not deploy contract', async function () {
             await advanceBlock();
-            instances = await configureContracts();
-            storage = instances[0];
-            userManager = instances[1];
-            reputationInstance = instances[2];
-            cmc = instances[3];
+            await configureContracts();
+
             // register first LocalNode necessary on lending contract
-            await userManager.registerLocalNode(localNode1);
-            await userManager.registerRepresentative(borrower);
-            lending = await lending.new(
-                //Arguments
-                latestTime() + duration.days(1), //_fundingStartTime
-                latestTime() + duration.days(35), //_fundingEndTime
-                borrower, //_representative
-                10, //_annualInterest
-                ether(1), //_totalLendingAmount
-                2, //_lendingDays
-                storage.address, //_storageAddress
-                localNode1,
-                ethicHubTeam,
-                3, //ethichub fee
-                4 //localNode fee
+            await userManager.registerLocalNode(localNode1, { from: owner });
+            await userManager.registerRepresentative(borrower, { from: owner });
+
+            const latestTimeValue = await latestTime()
+
+            lending = await EthicHubLending.new(
+                latestTimeValue + duration.days(1), // Funding start time
+                latestTimeValue + duration.days(35), // Funding end time
+                10, // Annual interest
+                ether(1), // Total lending amount
+                2, // Lending days
+                3, // Ethichub fee
+                4, // LocalNode fee
+                borrower, // Borrower
+                localNode1, // Localnode
+                ethicHubTeam, // Ethichub team
+                depositManager.address, // Deposit manager
+                storage.address, // Storage
+                stableCoin.address // Stable coin
             )
-            await userManager.registerCommunity(community);
+
+            await userManager.registerCommunity(community, { from: owner });
+
             //Gives set permissions on storage
             await cmc.addNewLendingContract(lending.address, {
                 from: localNode2
             }).should.be.rejectedWith(EVMRevert)
+
             //Lending saves parameters in storage, checks if owner is localNode
             await lending.saveInitialParametersToStorage(
                 2, //maxDefaultDays
                 20, //community members
                 community, //community rep wallet
-                {
-                    from: localNode2
-                }
+                { from: localNode2 }
             ).should.be.rejectedWith(EVMRevert);
-            owner = await new lending.owner();
-            //web3Contract = web3.eth.contract(lending.abi).at(lending.address);
-            //owner = web3Contract._eth.coinbase;
+
+            owner = await lending.owner();
         });
     });
 });
 
 contract('Integration: EthicHubLending not funded', function () {
-    let instances;
-    let storage;
-    let lending;
-    let owner = owner;
-    let userManager;
-    let reputationInstance;
-    //let web3Contract;
-    let cmc;
     before(async () => {
-        instances = await configureContracts();
-        storage = instances[0];
-        userManager = instances[1];
-        reputationInstance = instances[2];
-        cmc = instances[3];
+        await configureContracts();
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1);
-        await userManager.registerRepresentative(borrower);
-        lending = await lending.new(
-            //Arguments
-            latestTime() + duration.days(1), //_fundingStartTime
-            latestTime() + duration.days(35), //_fundingEndTime
-            borrower, //_representative
-            10, //_annualInterest
-            ether(10), //_totalLendingAmount
-            2, //_lendingDays
-            storage.address, //_storageAddress
-            localNode1,
-            ethicHubTeam,
-            3, //ethichub fee
-            4 //localNode fee
+        await userManager.registerLocalNode(localNode1, { from: owner });
+        await userManager.registerRepresentative(borrower, { from: owner });
+
+        const latestTimeValue = await latestTime();
+
+        lending = await EthicHubLending.new(
+            latestTimeValue + duration.days(1), // Funding start time
+            latestTimeValue + duration.days(35), // Funding end time
+            10, // Annual interest
+            ether(10), // Total lending amount
+            2, // Lending days
+            3, // Ethichub fee
+            4, // LocalNode fee
+            borrower, // Borrower
+            localNode1, // Localnode
+            ethicHubTeam, // Ethichub team
+            depositManager.address, // Deposit manager
+            storage.address, // Storage
+            stableCoin.address // Stable coin
         )
-        await userManager.registerCommunity(community);
-        await userManager.registerRepresentative(borrower);
+
+        await userManager.registerCommunity(community, { from: owner });
+        await userManager.registerRepresentative(borrower, { from: owner });
+
         //Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address);
-        console.log("--> EthicHubLending deployed");
+        await cmc.addNewLendingContract(lending.address, { from: owner });
+
         //Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
             2, //maxDefaultDays
             20, //community members
             community //community rep wallet
         )
-        owner = await new lending.owner();
-        //web3Contract = web3.eth.contract(lending.abi).at(lending.address);
-        //owner = web3Contract._eth.coinbase;
+        owner = await lending.owner();
     });
-    it.skip('should pass if contract are on storage contract', async function () {
+
+    it('should pass if contract are on storage contract', async function () {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
+
     describe('The investment flow', function () {
-        it.skip('investment not funded', async function () {
-            await increaseTimeTo(latestTime() + duration.days(1));
+        it('investment not funded', async function () {
+            const latestTimeValue = await latestTime()
+            await increaseTimeTo(latestTimeValue + duration.days(1));
+
             // Some initial parameters
-            const initialEthPerFiatRate = 100;
-            const finalEthPerFiatRate = 100;
             const investment1 = ether(2);
             const investment2 = ether(2);
-            let transaction;
 
             // Register all actors
-            transaction = await userManager.registerInvestor(investor1);
+            let transaction = await userManager.registerInvestor(investor1);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
             transaction = await userManager.registerInvestor(investor2);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
             transaction = await userManager.registerInvestor(investor3);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
-            // Show balances
-            //console.log('=== INITIAL ===');
-            //await traceBalancesAllActors();
-            // Init Reputation
-            const initialCommunityReputation = await reputationInstance.getCommunityReputation(community).should.be.fulfilled;
-            const initialLocalNodeReputation = await reputationInstance.getLocalNodeReputation(localNode1).should.be.fulfilled;
-
             // Is contribution period
             var isRunning = await lending.isContribPeriodRunning();
             isRunning.should.be.equal(true);
 
-            // Investment part
-            //Raw transaction in truffle develop. CAUTION the private key is from truffle
-            //await rawTransaction(investor1, privateKeys[5], lending.address, '', investment1).should.be.fulfilled;
-            //Send transaction
-            transaction = await lending.sendTransaction({
-                value: investment1,
-                from: investor1
-            }).should.be.fulfilled;
-            reportMethodGasUsed('report', 'investor1', 'lending.sendTransaction', transaction.tx);
+            // Send transaction
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor1,
+                investment1
+            ).should.be.fulfilled;
+            reportMethodGasUsed('report', 'investor1', 'lending.contribute', transaction.tx);
+            
             const contribution1 = await lending.checkInvestorContribution(investor1);
             contribution1.should.be.bignumber.equal(investment1);
-            transaction = await lending.sendTransaction({
-                value: investment2,
-                from: investor2
-            }).should.be.fulfilled;
+            
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor2,
+                investment2
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor2', 'lending.sendTransaction', transaction.tx);
+            
             const contribution2 = await lending.checkInvestorContribution(investor2);
             contribution2.should.be.bignumber.equal(investment2);
 
@@ -615,32 +605,26 @@ contract('Integration: EthicHubLending not funded', function () {
             transaction = await lending.sendFundsToBorrower({
                 from: owner
             }).should.be.rejectedWith(EVMRevert);
-            //reportMethodGasUsed('report', 'owner', 'lending.sendFundsToBorrower', transaction.tx);
 
             // project not funded
             await lending.declareProjectNotFunded({
                 from: owner
             })
-            var state = await lending.state();
+            let state = await lending.state();
             state.toNumber().should.be.equal(ProjectNotFunded);
-            var balance = web3.eth.getBalance(lending.address);
-            balance.toNumber().should.be.equal(ether(4).toNumber());
+
+            let balance = await stableCoin.balanceOf(lending.address)
+            balance.should.be.bignumber.equal(ether(4));
             // can reclaim contribution from everyone
-            balance = web3.eth.getBalance(investor1);
+            balance = await stableCoin.balanceOf(lending.address)
             await lending.reclaimContribution(investor1).should.be.fulfilled;
             // 0.1 eth less due to used gas
-            new BigNumber(await web3.eth.getBalance(investor1)).should.be.bignumber.above(new BigNumber(balance).add(ether(0.9).toNumber()));
+            (await stableCoin.balanceOf(investor1)).should.be.bignumber.above(balance.add(new BN(1)));
             // fail to reclaim from no investor
             await lending.reclaimContribution(investor3).should.be.rejectedWith(EVMRevert);
-
-            // Show balances
-            //console.log('=== FINISH ===');
-            //await traceBalancesAllActors();
-
         });
     });
 });
-
 
 contract('Integration: EthicHubLending not returned on time', function () {
     let instances;
