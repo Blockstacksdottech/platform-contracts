@@ -1,3 +1,8 @@
+Version 8 (commit:41c58e89):
+----------
+0. EthicHubLending v.8 contract (kovan:0x99eEeDcFC423A8e83Fe676a2e3d3D449bFA71289, mainnet:).
+1. truffle-flattener EthicHubLendingv8.sol > EthicHubLendingFlattenedv8.sol
+
 Version 7 (commit:e9642902):
 ----------
 0. EthicHubLending v.7 contract (kovan:0xEE19059bF936854464CEBeDd52321Ce3ce6E6658, mainnet:0x2a84Aa3B15369E850AA82136D8E7D2CAf71E656B).

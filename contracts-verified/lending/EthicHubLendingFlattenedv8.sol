@@ -675,9 +675,11 @@ contract EthicHubLending is Pausable, Ownable {
     uint256 public initialStableCoinPerFiatRate;
     uint256 public totalLendingFiatAmount;
 
-    address payable public borrower;
-    address payable public localNode;
-    address payable public ethicHubTeam;
+    address public borrower;
+    address public localNode;
+    address public ethicHubTeam;
+
+    address public depositManager;
 
     uint256 public borrowerReturnStableCoinPerFiatRate;
     uint256 public ethichubFee;
@@ -729,9 +731,10 @@ contract EthicHubLending is Pausable, Ownable {
         uint256 _lendingDays,
         uint256 _ethichubFee,
         uint256 _localNodeFee,
-        address payable _borrower,
-        address payable _localNode,
-        address payable _ethicHubTeam,
+        address _borrower,
+        address _localNode,
+        address _ethicHubTeam,
+        address _depositManager,
         EthicHubStorageInterface _ethicHubStorage,
         IERC20 _stableCoin
         ) public {
@@ -765,6 +768,8 @@ contract EthicHubLending is Pausable, Ownable {
         localNode = _localNode;
         ethicHubTeam = _ethicHubTeam;
 
+        depositManager = _depositManager;
+
         stableCoin = _stableCoin;
 
         state = LendingState.Uninitialized;
@@ -788,7 +793,7 @@ contract EthicHubLending is Pausable, Ownable {
         changeState(LendingState.AcceptingContributions);
     }
 
-    function setBorrower(address payable _borrower) external checkIfArbiter {
+    function setBorrower(address _borrower) external checkIfArbiter {
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
 
@@ -816,7 +821,7 @@ contract EthicHubLending is Pausable, Ownable {
 
     function deposit(address contributor, uint256 amount) external {
         require(
-            msg.sender == ethicHubStorage.getAddress(keccak256(abi.encodePacked("depositManager.address", msg.sender))),
+            msg.sender == depositManager,
             "Caller is not a deposit manager"
         );
         require(
@@ -885,7 +890,7 @@ contract EthicHubLending is Pausable, Ownable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContributionDefault(address payable beneficiary) external {
+    function reclaimContributionDefault(address beneficiary) external {
         require(state == LendingState.Default);
         require(!investors[beneficiary].isCompensated);
 
@@ -905,7 +910,7 @@ contract EthicHubLending is Pausable, Ownable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContribution(address payable beneficiary) external {
+    function reclaimContribution(address beneficiary) external {
         require(state == LendingState.ProjectNotFunded, "State is not ProjectNotFunded");
         require(!investors[beneficiary].isCompensated, "Contribution already reclaimed");
         uint256 contribution = investors[beneficiary].amount;
@@ -917,7 +922,7 @@ contract EthicHubLending is Pausable, Ownable {
         doReclaim(beneficiary, contribution);
     }
 
-    function reclaimContributionWithInterest(address payable beneficiary) external {
+    function reclaimContributionWithInterest(address beneficiary) external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(!investors[beneficiary].isCompensated, "Lender already compensated");
         uint256 contribution = checkInvestorReturns(beneficiary);
@@ -964,7 +969,7 @@ contract EthicHubLending is Pausable, Ownable {
         uint256 contractBalance = stableCoin.balanceOf(address(this));
         uint256 reclaimAmount = (contractBalance < amount) ? contractBalance : amount;
 
-        stableCoin.transfer(target, reclaimAmount);
+        require(stableCoin.transfer(target, reclaimAmount), "transfer dai method failed");
 
         emit Reclaim(target, reclaimAmount);
     }
@@ -989,7 +994,7 @@ contract EthicHubLending is Pausable, Ownable {
         }
 
         if (excessRepayment > 0) {
-            stableCoin.transfer(borrower, excessRepayment);
+            require(stableCoin.transfer(borrower, excessRepayment), "transfer dai method failed");
         }
     }
 
@@ -1020,7 +1025,7 @@ contract EthicHubLending is Pausable, Ownable {
         }
 
         if (excessContribAmount > 0) {
-            stableCoin.transfer(contributor, excessContribAmount);
+            require(stableCoin.transfer(contributor, excessContribAmount), "transfer dai method failed");
             investors[contributor].amount = investors[contributor].amount.add(amount).sub(excessContribAmount);
             emit Contribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
         } else {
@@ -1051,11 +1056,8 @@ contract EthicHubLending is Pausable, Ownable {
 
     function sendFundsToBorrower() external onlyOwnerOrLocalNode {
         // Waiting for Exchange
-        emit CapReached(1);
         require(state == LendingState.AcceptingContributions, "State has to be AcceptingContributions");
-        emit CapReached(1);
         require(capReached, "Cap is not reached");
-        emit CapReached(1);
 
         changeState(LendingState.ExchangingToFiat);
 
