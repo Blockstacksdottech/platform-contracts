@@ -117,64 +117,100 @@ async function configureContracts() {
     await stableCoin.transfer(arbiter, ether(100000)).should.be.fulfilled;
     await stableCoin.transfer(paymentGateway, ether(100000)).should.be.fulfilled;
 
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: localNode1 }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: localNode2 }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: borrower }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: investor1 }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: investor2 }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: investor3 }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: ethicHubTeam }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: community }).should.be.fulfilled;
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: arbiter }).should.be.fulfilled
-    await stableCoin.approve(depositManager.address, ether(1000000000), { from: paymentGateway }).should.be.fulfilled
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: owner
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: localNode1
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: localNode2
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: borrower
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: investor1
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: investor2
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: investor3
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: ethicHubTeam
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: community
+    }).should.be.fulfilled;
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: arbiter
+    }).should.be.fulfilled
+    await stableCoin.approve(depositManager.address, ether(1000000000), {
+        from: paymentGateway
+    }).should.be.fulfilled
 }
 
-contract('EthicHubIntegration:', function () {
+contract('EthicHubIntegration:', function() {
     before(async () => {
         await configureContracts();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let userManagerContractAddress = await storage.getAddress(utils.soliditySha3("contract.name", "users"));
         userManagerContractAddress.should.be.equal(userManager.address);
     });
 
-    it('should register local node', async function () {
-        await userManager.registerLocalNode(localNode1, { from: owner });
+    it('should register local node', async function() {
+        await userManager.registerLocalNode(localNode1, {
+            from: owner
+        });
         let registrationStatus = await userManager.viewRegistrationStatus(localNode1, 'localNode');
         registrationStatus.should.be.equal(true);
     });
 
-    it('should register community', async function () {
-        await userManager.registerCommunity(community, { from: owner });
+    it('should register community', async function() {
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
         let registrationStatus = await userManager.viewRegistrationStatus(community, 'community');
         registrationStatus.should.be.equal(true);
     });
 
-    it('should register investor', async function () {
-        await userManager.registerInvestor(investor1, { from: owner });
+    it('should register investor', async function() {
+        await userManager.registerInvestor(investor1, {
+            from: owner
+        });
         let registrationStatus = await userManager.viewRegistrationStatus(investor1, 'investor');
         registrationStatus.should.be.equal(true);
     });
 
-    it('should register representative', async function () {
-        await userManager.registerRepresentative(borrower, { from: owner });
+    it('should register representative', async function() {
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
         let registrationStatus = await userManager.viewRegistrationStatus(borrower, 'representative');
         registrationStatus.should.be.equal(true);
     });
 
-    it('should register paymentGateway', async function () {
-        await userManager.registerPaymentGateway(paymentGateway, { from: owner });
+    it('should register paymentGateway', async function() {
+        await userManager.registerPaymentGateway(paymentGateway, {
+            from: owner
+        });
         let registrationStatus = await userManager.viewRegistrationStatus(paymentGateway, 'paymentGateway');
         registrationStatus.should.be.equal(true);
     });
 
-    it('change user status', async function () {
-        await userManager.unregisterInvestor(investor1, { from: owner });
+    it('change user status', async function() {
+        await userManager.unregisterInvestor(investor1, {
+            from: owner
+        });
         let registrationStatus = await userManager.viewRegistrationStatus(investor1, 'investor');
         registrationStatus.should.be.equal(false);
-        await userManager.registerInvestor(investor1, { from: owner });
+        await userManager.registerInvestor(investor1, {
+            from: owner
+        });
         registrationStatus = await userManager.viewRegistrationStatus(investor1, 'localNode');
         registrationStatus.should.be.equal(false);
         registrationStatus = await userManager.viewRegistrationStatus(investor1, 'investor');
@@ -182,14 +218,18 @@ contract('EthicHubIntegration:', function () {
     });
 });
 
-contract('Integration: EthicHubLending (Lending owner != LocalNode)', function () {
+contract('Integration: EthicHubLending (Lending owner != LocalNode)', function() {
     before(async () => {
         await advanceBlock();
         await configureContracts();
 
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerLocalNode(localNode1, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         const latestTimeValue = await latestTime()
 
@@ -208,9 +248,13 @@ contract('Integration: EthicHubLending (Lending owner != LocalNode)', function (
             storage.address, // Storage
             stableCoin.address, // Stable coin
         )
-        await userManager.registerCommunity(community, { from: owner });
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
         //Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address, { from: owner });
+        await cmc.addNewLendingContract(lending.address, {
+            from: owner
+        });
 
         //Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
@@ -221,13 +265,13 @@ contract('Integration: EthicHubLending (Lending owner != LocalNode)', function (
         owner = await lending.owner();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
 
-    describe('The investment flow', function () {
-        it('investment reaches goal', async function () {
+    describe('The investment flow', function() {
+        it('investment reaches goal', async function() {
             const latestTimeValue = await latestTime()
             await increaseTimeTo(latestTimeValue + duration.days(1));
 
@@ -241,11 +285,17 @@ contract('Integration: EthicHubLending (Lending owner != LocalNode)', function (
             const totalLendingAmount = await lending.totalLendingAmount();
 
             // Register all actors
-            let transaction = await userManager.registerInvestor(investor1, { from: owner });
+            let transaction = await userManager.registerInvestor(investor1, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor2, { from: owner });
+            transaction = await userManager.registerInvestor(investor2, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
-            transaction = await userManager.registerInvestor(investor3, { from: owner });
+            transaction = await userManager.registerInvestor(investor3, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
             // Is contribution period
@@ -322,14 +372,18 @@ contract('Integration: EthicHubLending (Lending owner != LocalNode)', function (
     });
 });
 
-contract('Integration: EthicHubLending (Lending owner == LocalNode)', function () {
+contract('Integration: EthicHubLending (Lending owner == LocalNode)', function() {
     before(async () => {
         await advanceBlock();
         await configureContracts();
 
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode2, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerLocalNode(localNode2, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         const latestTimeValue = await latestTime()
 
@@ -348,7 +402,9 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function (
             storage.address, // Storage
             stableCoin.address // Stable coin
         )
-        await userManager.registerCommunity(community, { from: owner });
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
 
         //Gives set permissions on storage
         await cmc.addNewLendingContract(lending.address, {
@@ -360,18 +416,20 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function (
             2, //maxDefaultDays
             20, //community members
             community, //community rep wallet
-            { from: localNode2 }
+            {
+                from: localNode2
+            }
         )
         owner = await lending.owner();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
 
-    describe('The investment flow', function () {
-        it('investment reaches goal', async function () {
+    describe('The investment flow', function() {
+        it('investment reaches goal', async function() {
             const latestTimeValue = await latestTime()
             await increaseTimeTo(latestTimeValue + duration.days(1));
 
@@ -463,15 +521,19 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function (
     });
 });
 
-contract('Integration: EthicHubLending (LocalNode not exists)', function () {
-    describe('Local Node != Local Node of lending contract', function () {
-        it('should not deploy contract', async function () {
+contract('Integration: EthicHubLending (LocalNode not exists)', function() {
+    describe('Local Node != Local Node of lending contract', function() {
+        it('should not deploy contract', async function() {
             await advanceBlock();
             await configureContracts();
 
             // register first LocalNode necessary on lending contract
-            await userManager.registerLocalNode(localNode1, { from: owner });
-            await userManager.registerRepresentative(borrower, { from: owner });
+            await userManager.registerLocalNode(localNode1, {
+                from: owner
+            });
+            await userManager.registerRepresentative(borrower, {
+                from: owner
+            });
 
             const latestTimeValue = await latestTime()
 
@@ -491,7 +553,9 @@ contract('Integration: EthicHubLending (LocalNode not exists)', function () {
                 stableCoin.address // Stable coin
             )
 
-            await userManager.registerCommunity(community, { from: owner });
+            await userManager.registerCommunity(community, {
+                from: owner
+            });
 
             //Gives set permissions on storage
             await cmc.addNewLendingContract(lending.address, {
@@ -503,7 +567,9 @@ contract('Integration: EthicHubLending (LocalNode not exists)', function () {
                 2, //maxDefaultDays
                 20, //community members
                 community, //community rep wallet
-                { from: localNode2 }
+                {
+                    from: localNode2
+                }
             ).should.be.rejectedWith(EVMRevert);
 
             owner = await lending.owner();
@@ -511,12 +577,16 @@ contract('Integration: EthicHubLending (LocalNode not exists)', function () {
     });
 });
 
-contract('Integration: EthicHubLending not funded', function () {
+contract('Integration: EthicHubLending not funded', function() {
     before(async () => {
         await configureContracts();
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerLocalNode(localNode1, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         const latestTimeValue = await latestTime();
 
@@ -536,11 +606,17 @@ contract('Integration: EthicHubLending not funded', function () {
             stableCoin.address // Stable coin
         )
 
-        await userManager.registerCommunity(community, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         //Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address, { from: owner });
+        await cmc.addNewLendingContract(lending.address, {
+            from: owner
+        });
 
         //Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
@@ -551,13 +627,13 @@ contract('Integration: EthicHubLending not funded', function () {
         owner = await lending.owner();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
 
-    describe('The investment flow', function () {
-        it('investment not funded', async function () {
+    describe('The investment flow', function() {
+        it('investment not funded', async function() {
             const latestTimeValue = await latestTime()
             await increaseTimeTo(latestTimeValue + duration.days(1));
 
@@ -625,7 +701,7 @@ contract('Integration: EthicHubLending not funded', function () {
     });
 });
 
-contract('Integration: EthicHubLending not returned on time', async function () {
+contract('Integration: EthicHubLending not returned on time', async function() {
     const lendingStartTime = await latestTime() + duration.days(1);
 
     before(async () => {
@@ -633,8 +709,12 @@ contract('Integration: EthicHubLending not returned on time', async function () 
         await configureContracts();
 
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerLocalNode(localNode1, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         lending = await EthicHubLending.new(
             lendingStartTime, // Funding start time
@@ -651,10 +731,14 @@ contract('Integration: EthicHubLending not returned on time', async function () 
             storage.address, // Storage
             stableCoin.address // Stable coin
         )
-        await userManager.registerCommunity(community, { from: owner });
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
 
         //Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address, { from: owner });
+        await cmc.addNewLendingContract(lending.address, {
+            from: owner
+        });
 
         //Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
@@ -665,13 +749,13 @@ contract('Integration: EthicHubLending not returned on time', async function () 
         owner = await lending.owner();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
 
-    describe('The investment flow', function () {
-        it('investment not returned on time', async function () {
+    describe('The investment flow', function() {
+        it('investment not returned on time', async function() {
             const latestTimeValue = await latestTime();
 
             await increaseTimeTo(latestTimeValue + duration.days(1));
@@ -686,11 +770,17 @@ contract('Integration: EthicHubLending not returned on time', async function () 
             const investment3 = ether(1.5);
 
             // Register all actors
-            let transaction = await userManager.registerInvestor(investor1, { from: owner });
+            let transaction = await userManager.registerInvestor(investor1, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor2, { from: owner });
+            transaction = await userManager.registerInvestor(investor2, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
-            transaction = await userManager.registerInvestor(investor3, { from: owner });
+            transaction = await userManager.registerInvestor(investor3, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
             await increaseTimeTo(lendingStartTime + duration.minutes(100));
@@ -779,7 +869,7 @@ contract('Integration: EthicHubLending not returned on time', async function () 
     });
 });
 
-contract('Integration: EthicHubLending declare default', async function () {
+contract('Integration: EthicHubLending declare default', async function() {
 
     const lendingStartTime = await latestTime() + duration.days(1);
 
@@ -788,8 +878,12 @@ contract('Integration: EthicHubLending declare default', async function () {
         await configureContracts();
 
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerLocalNode(localNode1, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         const latestTimeValue = await latestTime()
 
@@ -809,10 +903,14 @@ contract('Integration: EthicHubLending declare default', async function () {
             stableCoin.address // Stable coin
         )
 
-        await userManager.registerCommunity(community, { from: owner });
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
 
         // Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address, { from: owner });
+        await cmc.addNewLendingContract(lending.address, {
+            from: owner
+        });
 
         // Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
@@ -824,13 +922,13 @@ contract('Integration: EthicHubLending declare default', async function () {
         owner = await lending.owner();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
 
-    describe('The investment flow', function () {
-        it('declared project default', async function () {
+    describe('The investment flow', function() {
+        it('declared project default', async function() {
             const latestTimeValue = await latestTime()
 
             await increaseTimeTo(latestTimeValue + duration.days(1));
@@ -925,14 +1023,18 @@ contract('Integration: EthicHubLending declare default', async function () {
     });
 });
 
-contract('Integration: EthicHubLending do a payment with paymentGateway', function () {
+contract('Integration: EthicHubLending do a payment with paymentGateway', function() {
     before(async () => {
         await advanceBlock();
         await configureContracts();
 
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1, { from: owner });
-        await userManager.registerRepresentative(borrower, { from: owner });
+        await userManager.registerLocalNode(localNode1, {
+            from: owner
+        });
+        await userManager.registerRepresentative(borrower, {
+            from: owner
+        });
 
         const latestTimeValue = await latestTime();
 
@@ -951,9 +1053,13 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             storage.address, // Storage
             stableCoin.address // Stable coin
         )
-        await userManager.registerCommunity(community, { from: owner });
+        await userManager.registerCommunity(community, {
+            from: owner
+        });
         // Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address, { from: owner });
+        await cmc.addNewLendingContract(lending.address, {
+            from: owner
+        });
 
         // Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
@@ -964,13 +1070,13 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
         owner = await lending.owner();
     });
 
-    it('should pass if contract are on storage contract', async function () {
+    it('should pass if contract are on storage contract', async function() {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
 
-    describe('The investment flow', function () {
-        it('investment reaches goal', async function () {
+    describe('The investment flow', function() {
+        it('investment reaches goal', async function() {
             await increaseTimeTo(latestTime() + duration.days(1));
             // Some initial parameters
             const initialEthPerFiatRate = 100;
@@ -982,11 +1088,17 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             // Register all actors
             let transaction = await userManager.registerPaymentGateway(paymentGateway);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerPaymentGateway(paymentGateway)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor1, { from: owner });
+            transaction = await userManager.registerInvestor(investor1, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor2, { from: owner });
+            transaction = await userManager.registerInvestor(investor2, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
-            transaction = await userManager.registerInvestor(investor3, { from: owner });
+            transaction = await userManager.registerInvestor(investor3, {
+                from: owner
+            });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
             // Show balances
@@ -1001,8 +1113,9 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             transaction = await depositManager.contribute(
                 lending.address,
                 investor1,
-                investment1,
-                { from: paymentGateway }
+                investment1, {
+                    from: paymentGateway
+                }
             ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor1', 'lending.contributeForAddress', transaction.tx);
             const contribution1 = await lending.checkInvestorContribution(investor1);
@@ -1010,8 +1123,9 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             transaction = await depositManager.contribute(
                 lending.address,
                 investor2,
-                investment2,
-                { from: paymentGateway }
+                investment2, {
+                    from: paymentGateway
+                }
             ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor2', 'lending.sendTransaction', transaction.tx);
             const contribution2 = await lending.checkInvestorContribution(investor2);
@@ -1020,8 +1134,9 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             transaction = await depositManager.contribute(
                 lending.address,
                 investor3,
-                investment3,
-                { from: paymentGateway }
+                investment3, {
+                    from: paymentGateway
+                }
             ).should.be.rejectedWith(EVMRevert);
 
             // Send funds to borrower
@@ -1046,8 +1161,9 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             transaction = await depositManager.contribute(
                 lending.address,
                 borrower,
-                borrowerReturnAmount,
-                { from: borrower }
+                borrowerReturnAmount, {
+                    from: borrower
+                }
             ).should.be.fulfilled;
             reportMethodGasUsed('report', 'borrower', 'lending.returnBorrowedEth', transaction.tx);
             // Reclaims amounts
