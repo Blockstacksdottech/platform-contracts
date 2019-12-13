@@ -47,9 +47,12 @@ module.exports = {
             gasPrice: 0x01,
         },
         ganache: {
-            host: "127.0.0.1",
-            port: 9545,
-            network_id: "*" // Match any network id
+            provider: function () {
+                return new HDWalletProvider(process.env.GANACHE_MNEMONIC, "http://127.0.0.1:8545");
+            },
+            gas: 5000000,
+            gasPrice: 5e9,
+            networkId: '*',
         },
         rinkeby: {
             provider: function () {
