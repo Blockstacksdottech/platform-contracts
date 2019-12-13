@@ -90,5 +90,5 @@ if [ "$SOLIDITY_COVERAGE" = true ]; then
     cat coverage/lcov.info | npx coveralls
   fi
 else
-  npx truffle test "$@"
+  npx truffle test --debug "$@"
 fi

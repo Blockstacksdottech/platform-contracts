@@ -21,15 +21,15 @@ mainmenu () {
         elif [ "$mainmenuinput" = "2" ]; then
             bash $SCRIPT_PATH test/EthicHubReputation.js
         elif [ "$mainmenuinput" = "3" ]; then
-            bash $SCRIPT_PATH test test/EthicHubBase.js
+            bash $SCRIPT_PATH test/EthicHubBase.js
         elif [ "$mainmenuinput" = "4" ]; then
-            bash $SCRIPT_PATH  test test/EthicHubUser.js
+            bash $SCRIPT_PATH test/EthicHubUser.js
         elif [ "$mainmenuinput" = "5" ]; then
-              bash $SCRIPT_PATH test test/EthicHubArbitrage.js
+              bash $SCRIPT_PATH test/EthicHubArbitrage.js
         elif [ "$mainmenuinput" = "6" ]; then
-            bash $SCRIPT_PATH test test/EthicHubIntegration.js
+            bash $SCRIPT_PATH test/EthicHubIntegration.js
         elif [ "$mainmenuinput" = "7" ]; then
-            bash $SCRIPT_PATH test test/EthicHubDepositManager.js
+            bash $SCRIPT_PATH test/EthicHubDepositManager.js
 
         elif [ "$mainmenuinput" = "x" ];then
             exit 0
