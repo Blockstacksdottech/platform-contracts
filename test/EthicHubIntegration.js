@@ -625,13 +625,12 @@ contract('Integration: EthicHubLending not funded', function () {
     });
 });
 
-contract('Integration: EthicHubLending not returned on time', function () {
+contract('Integration: EthicHubLending not returned on time', async function () {
+    const lendingStartTime = await latestTime() + duration.days(1);
+
     before(async () => {
         await advanceBlock();
         await configureContracts();
-
-        const latestTimeValue = await latestTime()
-        const lendingStartTime = latestTimeValue + duration.days(1);
 
         // register first LocalNode necessary on lending contract
         await userManager.registerLocalNode(localNode1, { from: owner });
@@ -687,11 +686,11 @@ contract('Integration: EthicHubLending not returned on time', function () {
             const investment3 = ether(1.5);
 
             // Register all actors
-            let transaction = await userManager.registerInvestor(investor1);
+            let transaction = await userManager.registerInvestor(investor1, { from: owner });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor2);
+            transaction = await userManager.registerInvestor(investor2, { from: owner });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
-            transaction = await userManager.registerInvestor(investor3);
+            transaction = await userManager.registerInvestor(investor3, { from: owner });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
             await increaseTimeTo(lendingStartTime + duration.minutes(100));
@@ -780,18 +779,19 @@ contract('Integration: EthicHubLending not returned on time', function () {
     });
 });
 
-contract('Integration: EthicHubLending declare default', function () {
+contract('Integration: EthicHubLending declare default', async function () {
+
+    const lendingStartTime = await latestTime() + duration.days(1);
 
     before(async () => {
         await advanceBlock();
         await configureContracts();
 
-        const latestTimeValue = latestTime()
-        const lendingStartTime = latestTimeValue + duration.days(1);
         // register first LocalNode necessary on lending contract
-
         await userManager.registerLocalNode(localNode1, { from: owner });
         await userManager.registerRepresentative(borrower, { from: owner });
+
+        const latestTimeValue = await latestTime()
 
         lending = await EthicHubLending.new(
             lendingStartTime, // Funding start time
@@ -934,8 +934,10 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
         await userManager.registerLocalNode(localNode1, { from: owner });
         await userManager.registerRepresentative(borrower, { from: owner });
 
+        const latestTimeValue = await latestTime();
+
         lending = await EthicHubLending.new(
-            lendingStartTime + duration.days(1), // Funding start time
+            latestTimeValue + duration.days(1), // Funding start time
             latestTimeValue + duration.days(35), // Funding end time
             10, // Annual interest
             ether(1), // Total lending amount
@@ -961,7 +963,7 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
         )
         owner = await lending.owner();
     });
-    
+
     it('should pass if contract are on storage contract', async function () {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
@@ -980,11 +982,11 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             // Register all actors
             let transaction = await userManager.registerPaymentGateway(paymentGateway);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerPaymentGateway(paymentGateway)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor1, {from: owner});
+            transaction = await userManager.registerInvestor(investor1, { from: owner });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
-            transaction = await userManager.registerInvestor(investor2, {from: owner});
+            transaction = await userManager.registerInvestor(investor2, { from: owner });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
-            transaction = await userManager.registerInvestor(investor3, {from: owner});
+            transaction = await userManager.registerInvestor(investor3, { from: owner });
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
             // Show balances
@@ -996,25 +998,31 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             // Investment part
 
             // Send transaction
-            transaction = await lending.contributeForAddress(investor1, {
-                value: investment1,
-                from: paymentGateway
-            }).should.be.fulfilled;
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor1,
+                investment1,
+                { from: paymentGateway }
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor1', 'lending.contributeForAddress', transaction.tx);
             const contribution1 = await lending.checkInvestorContribution(investor1);
             contribution1.should.be.bignumber.equal(investment1);
-            transaction = await lending.sendTransaction({
-                value: investment2,
-                from: investor2
-            }).should.be.fulfilled;
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor2,
+                investment2,
+                { from: paymentGateway }
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor2', 'lending.sendTransaction', transaction.tx);
             const contribution2 = await lending.checkInvestorContribution(investor2);
             contribution2.should.be.bignumber.equal(investment2);
             // Goal is reached, no accepts more invesments
-            transaction = await lending.sendTransaction({
-                value: investment3,
-                from: investor3
-            }).should.be.rejectedWith(EVMRevert);
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor3,
+                investment3,
+                { from: paymentGateway }
+            ).should.be.rejectedWith(EVMRevert);
 
             // Send funds to borrower
             transaction = await lending.sendFundsToBorrower({
@@ -1035,10 +1043,12 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
             // Show amounts to return
             const borrowerReturnAmount = await lending.borrowerReturnAmount();
 
-            transaction = await lending.sendTransaction({
-                value: borrowerReturnAmount,
-                from: borrower
-            }).should.be.fulfilled;
+            transaction = await depositManager.contribute(
+                lending.address,
+                borrower,
+                borrowerReturnAmount,
+                { from: borrower }
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'borrower', 'lending.returnBorrowedEth', transaction.tx);
             // Reclaims amounts
             transaction = await lending.reclaimContributionWithInterest(investor1, {
