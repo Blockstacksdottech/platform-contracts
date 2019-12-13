@@ -38,6 +38,8 @@ contract EthicHubUser is Ownable {
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = 1;
+
+        Ownable.initialize(msg.sender);
     }
 
     /**

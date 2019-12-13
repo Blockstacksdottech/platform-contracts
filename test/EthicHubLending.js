@@ -33,6 +33,7 @@ const EthicHubLending = artifacts.require('EthicHubLending')
 const EthicHubDepositManager = artifacts.require('EthicHubDepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
+
 const CHAIN_ID = "666"
 
 contract('EthicHubLending', function ([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {

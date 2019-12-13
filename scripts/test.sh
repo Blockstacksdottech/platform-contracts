@@ -32,7 +32,7 @@ ganache_running() {
 }
 
 start_ganache() {
-  # We define 10 accounts with balance 10M ether, needed for high-value tests.
+  # We define 12 accounts with balance 10M ether, needed for high-value tests.
   local accounts=(
     --account="0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c00,1000000000000000000000000"
     --account="0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c01,1000000000000000000000000"
