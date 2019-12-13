@@ -584,17 +584,17 @@ contract('Integration: EthicHubLending not funded', function () {
                 investment1
             ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor1', 'lending.contribute', transaction.tx);
-            
+
             const contribution1 = await lending.checkInvestorContribution(investor1);
             contribution1.should.be.bignumber.equal(investment1);
-            
+
             transaction = await depositManager.contribute(
                 lending.address,
                 investor2,
                 investment2
             ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor2', 'lending.sendTransaction', transaction.tx);
-            
+
             const contribution2 = await lending.checkInvestorContribution(investor2);
             contribution2.should.be.bignumber.equal(investment2);
 
@@ -618,7 +618,6 @@ contract('Integration: EthicHubLending not funded', function () {
             // can reclaim contribution from everyone
             balance = await stableCoin.balanceOf(lending.address)
             await lending.reclaimContribution(investor1).should.be.fulfilled;
-            // 0.1 eth less due to used gas
             (await stableCoin.balanceOf(investor1)).should.be.bignumber.above(balance.add(new BN(1)));
             // fail to reclaim from no investor
             await lending.reclaimContribution(investor3).should.be.rejectedWith(EVMRevert);
@@ -627,83 +626,73 @@ contract('Integration: EthicHubLending not funded', function () {
 });
 
 contract('Integration: EthicHubLending not returned on time', function () {
-    let instances;
-    let storage;
-    let lending;
-    let owner = owner;
-    let userManager;
-    let reputationInstance;
-    let cmc;
-    let lendingStartTime;
-
     before(async () => {
         await advanceBlock();
-        instances = await configureContracts();
-        storage = instances[0];
-        userManager = instances[1];
-        reputationInstance = instances[2];
-        cmc = instances[3];
-        lendingStartTime = latestTime() + duration.days(1);
+        await configureContracts();
+
+        const latestTimeValue = await latestTime()
+        lendingStartTime = latestTimeValue + duration.days(1);
+
         // register first LocalNode necessary on lending contract
-        await userManager.registerLocalNode(localNode1);
-        await userManager.registerRepresentative(borrower);
-        lending = await lending.new(
-            //Arguments
-            lendingStartTime, //_fundingStartTime
-            latestTime() + duration.days(35), //_fundingEndTime
-            borrower, //_representative
-            10, //_annualInterest
-            ether(4), //_totalLendingAmount
-            2, //_lendingDays
-            storage.address, //_storageAddress
-            localNode1,
-            ethicHubTeam,
-            3, //ethichub fee
-            4 //localNode fee
+        await userManager.registerLocalNode(localNode1, { from: owner });
+        await userManager.registerRepresentative(borrower, { from: owner });
+
+        lending = await EthicHubLending.new(
+            lendingStartTime, // Funding start time
+            latestTimeValue + duration.days(35), // Funding end time
+            10, // Annual interest
+            ether(4), // Total lending amount
+            2, // Lending days
+            3, // Ethichub fee
+            4, // LocalNode fee
+            borrower, // Borrower
+            localNode1, // Localnode
+            ethicHubTeam, // Ethichub team
+            depositManager.address, // Deposit manager
+            storage.address, // Storage
+            stableCoin.address // Stable coin
         )
-        await userManager.registerCommunity(community);
+        await userManager.registerCommunity(community,{from: owner});
 
         //Gives set permissions on storage
-        await cmc.addNewLendingContract(lending.address);
-        console.log("--> EthicHubLending deployed");
+        await cmc.addNewLendingContract(lending.address,{from: owner});
+
         //Lending saves parameters in storage, checks if owner is localNode
         await lending.saveInitialParametersToStorage(
             2, //maxDefaultDays
             20, //community members
             community //community rep wallet
         )
-        owner = await new lending.owner();
-        //web3Contract = web3.eth.contract(lending.abi).at(lending.address);
-        //owner = web3Contract._eth.coinbase;
+        owner = await lending.owner();
     });
-    it.skip('should pass if contract are on storage contract', async function () {
+    
+    it('should pass if contract are on storage contract', async function () {
         let lendingContractAddress = await storage.getAddress(utils.soliditySha3("contract.address", lending.address));
         lendingContractAddress.should.be.equal(lending.address);
     });
+
     describe('The investment flow', function () {
-        it.skip('investment not returned on time', async function () {
-            await increaseTimeTo(latestTime() + duration.days(1));
+        it('investment not returned on time', async function () {
+            const latestTimeValue = await latestTime();
+
+            await increaseTimeTo(latestTimeValue + duration.days(1));
             await advanceBlock();
+            await configureContracts();
+
             // Some initial parameters
             const initialEthPerFiatRate = 100;
             const finalEthPerFiatRate = 100;
             const investment1 = ether(2);
             const investment2 = ether(2);
             const investment3 = ether(1.5);
-            const delayDays = 2;
-            let transaction;
 
             // Register all actors
-            transaction = await userManager.registerInvestor(investor1);
+            let transaction = await userManager.registerInvestor(investor1);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor1)', transaction.tx, true);
             transaction = await userManager.registerInvestor(investor2);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor2)', transaction.tx);
             transaction = await userManager.registerInvestor(investor3);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
-
-            // Init Reputation
-            const initialCommunityReputation = await reputationInstance.getCommunityReputation(community).should.be.fulfilled;
-            const initialLocalNodeReputation = await reputationInstance.getLocalNodeReputation(localNode1).should.be.fulfilled;
 
             await increaseTimeTo(lendingStartTime + duration.minutes(100));
             await advanceBlock();
@@ -713,32 +702,43 @@ contract('Integration: EthicHubLending not returned on time', function () {
             isRunning.should.be.equal(true);
 
             // Investment part
-            //Raw transaction in truffle develop. CAUTION the private key is from truffle
-            //await rawTransaction(investor1, privateKeys[5], lending.address, '', investment1).should.be.fulfilled;
-            //Send transaction
-            transaction = await lending.sendTransaction({
-                value: investment1,
-                from: investor1
-            }).should.be.fulfilled;
+            
+            // Contribute
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor1,
+                investment1
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor1', 'lending.sendTransaction', transaction.tx);
+            
             const contribution1 = await lending.checkInvestorContribution(investor1);
             contribution1.should.be.bignumber.equal(investment1);
-            transaction = await lending.sendTransaction({
-                value: investment2,
-                from: investor2
-            }).should.be.fulfilled;
+
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor2,
+                investment2
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'investor2', 'lending.sendTransaction', transaction.tx);
+            
             const contribution2 = await lending.checkInvestorContribution(investor2);
             contribution2.should.be.bignumber.equal(investment2);
+
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor1,
+                investment1
+            ).should.be.fulfilled;
+            
             // Goal is reached, no accepts more invesments
-            transaction = await lending.sendTransaction({
-                value: investment3,
-                from: investor3
-            }).should.be.rejectedWith(EVMRevert);
-            //reportMethodGasUsed('report', 'investor3', 'lending.sendTransaction', transaction.tx);
+            transaction = await depositManager.contribute(
+                lending.address,
+                investor3,
+                investment3
+            ).should.be.rejectedWith(EVMRevert);
 
             const fundingEndTime = await lending.fundingEndTime()
-            await increaseTimeTo(fundingEndTime.add(duration.minutes(1)));
+            await increaseTimeTo(fundingEndTime.add(new BN(duration.minutes(1))));
             await advanceBlock();
 
             // Send funds to borrower
@@ -756,20 +756,18 @@ contract('Integration: EthicHubLending not returned on time', function () {
                 from: owner
             }).should.be.fulfilled;
             reportMethodGasUsed('report', 'owner', 'lending.setborrowerReturnStableCoinPerFiatRate', transaction.tx);
-            // Show balances
-            //console.log('=== MIDDLE ===');
-            //await traceBalancesAllActors();
 
             //delay to 1 of 2 default days
-            var defaultTime = fundingEndTime.add(duration.days(3));
+            var defaultTime = fundingEndTime.add(new BN(duration.days(3)));
             await increaseTimeTo(defaultTime);
             await advanceBlock();
 
             const borrowerReturnAmount = await lending.borrowerReturnAmount();
-            transaction = await lending.sendTransaction({
-                value: borrowerReturnAmount,
-                from: borrower
-            }).should.be.fulfilled;
+            transaction = await depositManager.contribute(
+                lending.address,
+                borrower,
+                borrowerReturnAmount
+            ).should.be.fulfilled;
             reportMethodGasUsed('report', 'borrower', 'lending.sendTransaction', transaction.tx);
 
             await lending.declareProjectDefault({
@@ -777,11 +775,7 @@ contract('Integration: EthicHubLending not returned on time', function () {
             }).should.be.rejectedWith(EVMRevert);
 
             var lendingDelayDays = await storage.getUint(utils.soliditySha3("lending.delayDays", lending.address));
-            lendingDelayDays.toNumber().should.be.equal(1);
-
-            // Show balances
-            //console.log('=== FINISH ===');
-            //await traceBalancesAllActors();            
+            lendingDelayDays.toNumber().should.be.equal(1);          
         });
     });
 });
@@ -946,21 +940,10 @@ contract('Integration: EthicHubLending declare default', function () {
 });
 
 contract('Integration: EthicHubLending do a payment with paymentGateway', function () {
-    let instances;
-    let storage;
-    let userManager;
-    let reputationInstance;
-    let lending;
-    let owner;
-    //let web3Contract;
-    let cmc;
     before(async () => {
         await advanceBlock();
-        instances = await configureContracts();
-        storage = instances[0];
-        userManager = instances[1];
-        reputationInstance = instances[2];
-        cmc = instances[3];
+        await configureContracts();
+
         // register first LocalNode necessary on lending contract
         await userManager.registerLocalNode(localNode1);
         await userManager.registerRepresentative(borrower);
