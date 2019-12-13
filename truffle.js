@@ -53,7 +53,7 @@ module.exports = {
         },
         rinkeby: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY);
+                return new HDWalletProvider(process.env.RINKEBY_MNEMONIC, "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY);
             },
             network_id: '*',
             gasLimit: 6000000,
@@ -61,7 +61,7 @@ module.exports = {
         },
         kovan: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, "https://kovan.infura.io/v3/" + process.env.INFURA_KEY);
+                return new HDWalletProvider(process.env.KOVAN_MNEMONIC, "https://kovan.infura.io/v3/" + process.env.INFURA_KEY);
             },
             network_id: '*',
             gasLimit: 6000000,
