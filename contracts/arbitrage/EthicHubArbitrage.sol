@@ -1,6 +1,6 @@
 pragma solidity 0.5.13;
 
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 
 import "../EthicHubBase.sol";
 import "../storage/EthicHubStorageInterface.sol";
@@ -28,11 +28,13 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
         address indexed _lendingContract // Address of the lending contract
     );
 
-    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+    constructor(address _ethicHubStorage) public {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
-        ethicHubStorage = _ethicHubStorage;
+        ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = 1;
+
+        Ownable.initialize(msg.sender);
     }
 
     function assignArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {

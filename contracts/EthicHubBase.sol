@@ -10,9 +10,9 @@ contract EthicHubBase is Initializable {
 
     EthicHubStorageInterface public ethicHubStorage;
 
-    function initialize(EthicHubStorageInterface _ethicHubStorage, uint8 _version) public initializer {
+    function initialize(address _ethicHubStorage, uint8 _version) public initializer {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
-        ethicHubStorage = _ethicHubStorage;
+        ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = _version;
     }
 }

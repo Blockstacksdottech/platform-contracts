@@ -52,7 +52,6 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
             this.stableCoin.address,
             { from: owner }
         ).should.be.fulfilled
-        await this.mockStorage.setAddress(utils.soliditySha3("depositManager.address", this.depositManager.address), this.depositManager.address)
 
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;

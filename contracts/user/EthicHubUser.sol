@@ -19,7 +19,7 @@
 */
 pragma solidity 0.5.13;
 
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 
 import "../storage/EthicHubStorageInterface.sol";
 
@@ -33,10 +33,10 @@ contract EthicHubUser is Ownable {
 
     event UserStatusChanged(address target, string profile, bool isRegistered);
 
-    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+    constructor(address _ethicHubStorage) public {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
-        ethicHubStorage = _ethicHubStorage;
+        ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = 1;
     }
 

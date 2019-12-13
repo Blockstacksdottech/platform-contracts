@@ -1,6 +1,6 @@
 pragma solidity 0.5.13;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 import '../EthicHubBase.sol';
 import './EthicHubReputationInterface.sol';
@@ -42,7 +42,7 @@ contract EthicHubReputation is EthicHubReputationInterface, EthicHubBase {
     }
 
     /// @dev constructor
-    constructor(EthicHubStorageInterface _ethicHubStorage) public {
+    constructor(address _ethicHubStorage) public {
         EthicHubBase.initialize(_ethicHubStorage, 2);
     }
 

@@ -6,7 +6,7 @@ import "../storage/EthicHubStorageInterface.sol";
 contract MockEthicHubContract is EthicHubBase {
 
     /// @dev constructor
-    constructor(EthicHubStorageInterface _ethicHubStorage, uint8 _version) public {
+    constructor(address _ethicHubStorage, uint8 _version) public {
         EthicHubBase.initialize(_ethicHubStorage, _version);
     }
 

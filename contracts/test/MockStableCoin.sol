@@ -1,7 +1,7 @@
 pragma solidity 0.5.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Detailed.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 contract MockStableCoin is ERC20Detailed {
     using SafeMath for uint256;
@@ -18,8 +18,8 @@ contract MockStableCoin is ERC20Detailed {
     string  public constant version  = "1";
     mapping (address => uint) public nonces;
 
-    constructor(uint256 chainId_)
-        ERC20Detailed('StableCoin', 'STC', 18) public {
+    constructor(uint256 chainId_) public {
+        ERC20Detailed.initialize('StableCoin', 'STC', 18);
         _mint(address(this), 10**28); // 10.000.000.000 StableCoins
         _mint(msg.sender, 10**26); // 1.000.000.000.000 StableCoins
         DOMAIN_SEPARATOR = keccak256(abi.encode(

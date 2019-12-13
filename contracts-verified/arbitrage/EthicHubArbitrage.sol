@@ -1,6 +1,6 @@
 pragma solidity ^0.4.23;
 
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "../EthicHubBase.sol";
 
 /**
@@ -26,6 +26,8 @@ contract EthicHubArbitrage is EthicHubBase, Ownable {
     constructor(address _storageAddress) EthicHubBase(_storageAddress) public {
         // Version
         version = 1;
+
+        Ownable.initialize(msg.sender);
     }
 
     function assignArbiterForLendingContract(address _arbiter, address _lendingContract) public onlyOwner {

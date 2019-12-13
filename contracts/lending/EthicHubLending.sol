@@ -1,9 +1,9 @@
 pragma solidity 0.5.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts/lifecycle/Pausable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/lifecycle/Pausable.sol";
 
 import "../EthicHubBase.sol";
 import "../storage/EthicHubStorageInterface.sol";
@@ -105,12 +105,12 @@ contract EthicHubLending is Pausable, Ownable {
         address _localNode,
         address _ethicHubTeam,
         address _depositManager,
-        EthicHubStorageInterface _ethicHubStorage,
-        IERC20 _stableCoin
+        address _ethicHubStorage,
+        address _stableCoin
         ) public {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
-        ethicHubStorage = _ethicHubStorage;
+        ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = 8;
 
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
@@ -140,9 +140,12 @@ contract EthicHubLending is Pausable, Ownable {
 
         depositManager = _depositManager;
 
-        stableCoin = _stableCoin;
+        stableCoin = IERC20(_stableCoin);
 
         state = LendingState.Uninitialized;
+
+        Ownable.initialize(msg.sender);
+        Pausable.initialize(msg.sender);
     }
 
     function saveInitialParametersToStorage(

@@ -1,22 +1,22 @@
 {
   "manifestVersion": "2.2",
   "contracts": {
-    "DepositManager": "DepositManager",
-    "MockStableCoin": "MockStableCoin"
+    "EthicHubDepositManager": "EthicHubDepositManager"
   },
   "dependencies": {
-    "@openzeppelin/contracts-ethereum-package": "^2.3.0"
+    "@openzeppelin/contracts-ethereum-package": "^2.4.0"
   },
   "name": "ethichub_platform",
   "version": "0.1.7",
   "compiler": {
-    "manager": "truffle",
+    "manager": "openzeppelin",
     "compilerSettings": {
       "optimizer": {
         "enabled": false,
         "runs": "200"
       }
-    }
+    },
+    "solcVersion": "0.5.13"
   },
   "telemetryOptIn": true
 }

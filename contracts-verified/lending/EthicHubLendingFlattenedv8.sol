@@ -267,7 +267,7 @@ contract Context {
     }
 }
 
-// File: @openzeppelin/contracts/ownership/Ownable.sol
+// File: import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 
 pragma solidity ^0.5.0;
 
