@@ -743,11 +743,11 @@ contract('Integration: EthicHubLending not returned on time', async function() {
 
     describe('The investment flow', function() {
         it('investment not returned on time', async function() {
-            const latestTimeValue = await time.latest();
-
-            await time.increaseTo(latestTimeValue.add(time.duration.days(1)));
-            await configureContracts();
             await time.advanceBlock();
+            await configureContracts();
+
+            const latestTimeValue = await time.latest();
+            await time.increaseTo(latestTimeValue.add(time.duration.days(1)));
 
             // Some initial parameters
             const initialEthPerFiatRate = 100;
