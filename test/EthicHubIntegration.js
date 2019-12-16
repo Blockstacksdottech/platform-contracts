@@ -702,7 +702,7 @@ contract('Integration: EthicHubLending not funded', function() {
 });
 
 contract('Integration: EthicHubLending not returned on time', async function() {
-    const lendingStartTime = await latestTime() + duration.days(1);
+    const lendingStartTime = (await latestTime()) + duration.days(1);
 
     before(async () => {
         await advanceBlock();
@@ -846,7 +846,7 @@ contract('Integration: EthicHubLending not returned on time', async function() {
             }).should.be.fulfilled;
             reportMethodGasUsed('report', 'owner', 'lending.setborrowerReturnStableCoinPerFiatRate', transaction.tx);
 
-            //delay to 1 of 2 default days
+            // Delay to 1 of 2 default days
             var defaultTime = fundingEndTime.add(new BN(duration.days(3)));
             await increaseTimeTo(defaultTime);
             await advanceBlock();
@@ -871,8 +871,6 @@ contract('Integration: EthicHubLending not returned on time', async function() {
 
 contract('Integration: EthicHubLending declare default', async function() {
 
-    const lendingStartTime = await latestTime() + duration.days(1);
-
     before(async () => {
         await advanceBlock();
         await configureContracts();
@@ -888,7 +886,7 @@ contract('Integration: EthicHubLending declare default', async function() {
         const latestTimeValue = await latestTime()
 
         lending = await EthicHubLending.new(
-            lendingStartTime, // Funding start time
+            latestTimeValue + duration.days(1), // Funding start time
             latestTimeValue + duration.days(35), // Funding end time
             10, // Annual interest
             ether(4), // Total lending amount
@@ -949,7 +947,7 @@ contract('Integration: EthicHubLending declare default', async function() {
             transaction = await userManager.registerInvestor(investor3);
             reportMethodGasUsed('report', 'ownerUserManager', 'userManager.registerInvestor(investor3)', transaction.tx);
 
-            await increaseTimeTo(lendingStartTime + duration.minutes(100));
+            await increaseTimeTo(latestTimeValue + duration.days(1) + duration.minutes(100));
             await advanceBlock();
 
             // Is contribution period
@@ -958,7 +956,7 @@ contract('Integration: EthicHubLending declare default', async function() {
 
             // Investment part
 
-            //Send transaction
+            // Send transaction
             transaction = await depositManager.contribute(
                 lending.address,
                 investor1,
@@ -1004,7 +1002,7 @@ contract('Integration: EthicHubLending declare default', async function() {
             reportMethodGasUsed('report', 'owner', 'lending.setborrowerReturnStableCoinPerFiatRate', transaction.tx);
 
             //This should be the edge case : end of funding time + awaiting for return period.
-            var defaultTime = fundingEndTime.add(duration.days(4)).add(duration.days(1));
+            var defaultTime = fundingEndTime.add(new BN(duration.days(4))).add(new BN(duration.days(1)));
             await increaseTimeTo(defaultTime);
 
             await lending.declareProjectDefault({
@@ -1077,7 +1075,9 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
 
     describe('The investment flow', function() {
         it('investment reaches goal', async function() {
-            await increaseTimeTo(latestTime() + duration.days(1));
+            const latestTimeValue = await latestTime();
+            await increaseTimeTo(latestTimeValue + duration.days(1));
+
             // Some initial parameters
             const initialEthPerFiatRate = 100;
             const finalEthPerFiatRate = 100;
