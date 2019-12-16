@@ -1,19 +1,13 @@
 'use strict';
 
 import ether from './helpers/ether'
-import {
-    advanceBlock
-} from './helpers/advanceToBlock'
-import {
-    increaseTimeTo,
-    duration
-} from './helpers/increaseTime'
-import latestTime from './helpers/latestTime'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
 import EVMRevert from './helpers/EVMRevert'
 
+
 const {
-    BN
+    BN,
+    time
 } = require('@openzeppelin/test-helpers')
 const {
     fundRecipient,
@@ -32,13 +26,13 @@ const MockStableCoin = artifacts.require('MockStableCoin')
 
 const CHAIN_ID = "666"
 
-contract('EthicHubDepositManager', function ([owner, investor]) {
-    beforeEach(async function () {
-        await advanceBlock()
+contract('EthicHubDepositManager', function([owner, investor]) {
+    beforeEach(async function() {
+        await time.advanceBlock()
 
-        const latestTimeValue = await latestTime()
-        this.fundingStartTime = latestTimeValue + duration.days(1)
-        this.fundingEndTime = this.fundingStartTime + duration.days(40)
+        const latestTimeValue = await time.latest()
+        this.fundingStartTime = latestTimeValue.add(time.duration.days(1))
+        this.fundingEndTime = this.fundingStartTime.add(time.duration.days(40))
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new(CHAIN_ID)
@@ -46,18 +40,25 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
 
-        this.depositManager = await EthicHubDepositManager.new({ from: owner })
+        this.depositManager = await EthicHubDepositManager.new({
+            from: owner
+        })
         await this.depositManager.initialize(
             this.mockStorage.address,
-            this.stableCoin.address,
-            { from: owner }
+            this.stableCoin.address, {
+                from: owner
+            }
         ).should.be.fulfilled
 
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
-        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: owner }).should.be.fulfilled;
+        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
+            from: owner
+        }).should.be.fulfilled;
 
         await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
-        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), { from: investor }).should.be.fulfilled;
+        await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
+            from: investor
+        }).should.be.fulfilled;
 
         this.lending = await EthicHubLending.new(
             this.fundingStartTime,
@@ -84,21 +85,24 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
 
         await this.lending.saveInitialParametersToStorage(90, 20, owner)
 
-        await fundRecipient(web3, { recipient: this.depositManager.address })
+        await fundRecipient(web3, {
+            recipient: this.depositManager.address
+        })
     })
 
-    it('only owner can change relayer', async function () {
-        await this.depositManager.setRelayHubAddress(investor, { from: investor }).should.be.rejectedWith(EVMRevert)
+    it('only owner can change relayer', async function() {
+        await this.depositManager.setRelayHubAddress(investor, {
+            from: investor
+        }).should.be.rejectedWith(EVMRevert)
     })
 
-    it('check can contribute using GSN', async function () {
-        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+    it('check can contribute using GSN', async function() {
+        await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
         const investment = ether(1)
         const result = await this.depositManager.contribute(
             this.lending.address,
             investor,
-            investment,
-            {
+            investment, {
                 from: investor,
                 useGSN: true
             }
@@ -108,14 +112,13 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         investorContribution.should.be.bignumber.equal(investment)
     })
 
-    it('check can contribute without using GSN', async function () {
-        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+    it('check can contribute without using GSN', async function() {
+        await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
         const investment = ether(1)
         await this.depositManager.contribute(
             this.lending.address,
             investor,
-            investment,
-            {
+            investment, {
                 from: investor,
                 useGSN: false
             }
@@ -124,13 +127,12 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         investorContribution.should.be.bignumber.equal(investment)
     })
 
-    it('check cannot contribute 0', async function () {
-        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+    it('check cannot contribute 0', async function() {
+        await time.increaseTo(this.fundingStartTime + time.duration.days(1))
         await this.depositManager.contribute(
             this.lending.address,
             investor,
-            0,
-            {
+            0, {
                 from: investor,
             }
         ).should.be.rejectedWith(EVMRevert)

@@ -3,9 +3,9 @@ require('@babel/polyfill');
 require('dotenv').config();
 
 var HDWalletProvider = require("@truffle/hdwallet-provider");
-const { GSNDevProvider } = require('@openzeppelin/gsn-provider');
-
-let mnemonic = process.env.MNEMONIC;
+const {
+    GSNDevProvider
+} = require('@openzeppelin/gsn-provider');
 
 module.exports = {
     solc: {
@@ -21,7 +21,7 @@ module.exports = {
     },
     networks: {
         development: {
-            provider: function () {
+            provider: function() {
                 return new GSNDevProvider('http://localhost:8545', {
                     txfee: 70,
                     useGSN: false,
@@ -33,7 +33,7 @@ module.exports = {
             network_id: "*" // Match any network id
         },
         coverage: {
-            provider: function () {
+            provider: function() {
                 return new GSNDevProvider('http://localhost:8545', {
                     txfee: 70,
                     useGSN: false,
@@ -55,7 +55,7 @@ module.exports = {
             networkId: '*',
         },
         rinkeby: {
-            provider: function () {
+            provider: function() {
                 return new HDWalletProvider(process.env.RINKEBY_MNEMONIC, "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY);
             },
             network_id: '*',
@@ -63,7 +63,7 @@ module.exports = {
             gas: 4700000
         },
         kovan: {
-            provider: function () {
+            provider: function() {
                 return new HDWalletProvider(process.env.KOVAN_MNEMONIC, "https://kovan.infura.io/v3/" + process.env.INFURA_KEY);
             },
             network_id: '*',
