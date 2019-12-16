@@ -1,19 +1,13 @@
 'use strict';
 
 import ether from './helpers/ether'
-import {
-    advanceBlock
-} from './helpers/advanceToBlock'
-import {
-    increaseTimeTo,
-    duration
-} from './helpers/increaseTime'
-import latestTime from './helpers/latestTime'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
 import EVMRevert from './helpers/EVMRevert'
 
+
 const {
-    BN
+    BN,
+    time
 } = require('@openzeppelin/test-helpers')
 const {
     fundRecipient,
@@ -34,11 +28,11 @@ const CHAIN_ID = "666"
 
 contract('EthicHubDepositManager', function([owner, investor]) {
     beforeEach(async function() {
-        await advanceBlock()
+        await time.advanceBlock()
 
-        const latestTimeValue = await latestTime()
-        this.fundingStartTime = latestTimeValue + duration.days(1)
-        this.fundingEndTime = this.fundingStartTime + duration.days(40)
+        const latestTimeValue = await time.latest()
+        this.fundingStartTime = latestTimeValue.add(time.duration.days(1))
+        this.fundingEndTime = this.fundingStartTime.add(time.duration.days(40))
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new(CHAIN_ID)
@@ -103,7 +97,7 @@ contract('EthicHubDepositManager', function([owner, investor]) {
     })
 
     it('check can contribute using GSN', async function() {
-        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
         const investment = ether(1)
         const result = await this.depositManager.contribute(
             this.lending.address,
@@ -119,7 +113,7 @@ contract('EthicHubDepositManager', function([owner, investor]) {
     })
 
     it('check can contribute without using GSN', async function() {
-        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
         const investment = ether(1)
         await this.depositManager.contribute(
             this.lending.address,
@@ -134,7 +128,7 @@ contract('EthicHubDepositManager', function([owner, investor]) {
     })
 
     it('check cannot contribute 0', async function() {
-        await increaseTimeTo(this.fundingStartTime + duration.days(1))
+        await time.increaseTo(this.fundingStartTime + time.duration.days(1))
         await this.depositManager.contribute(
             this.lending.address,
             investor,

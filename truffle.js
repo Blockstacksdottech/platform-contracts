@@ -7,8 +7,6 @@ const {
     GSNDevProvider
 } = require('@openzeppelin/gsn-provider');
 
-let mnemonic = process.env.MNEMONIC;
-
 module.exports = {
     solc: {
         optimizer: {
