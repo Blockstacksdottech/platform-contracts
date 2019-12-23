@@ -5,8 +5,11 @@ import assertSentViaGSN from './helpers/assertSentViaGSN'
 import EVMRevert from './helpers/EVMRevert'
 const { TestHelper } = require('@openzeppelin/cli');
 const { Contracts, ZWeb3 } = require('@openzeppelin/upgrades');
+const { GSNProvider } = require("@openzeppelin/gsn-provider");
+const Web3 = require("web3");
+const web3 = new Web3(new GSNProvider("http://localhost:8545"));
 
-ZWeb3.initialize(web3.currentProvider);
+ZWeb3.initialize(web3);
 
 const {
     BN,
