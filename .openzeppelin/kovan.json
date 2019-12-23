@@ -125,7 +125,7 @@
         "address": "0x9a261A14D0f50f3dd58E7f232Fea3b702CDD7ef1",
         "version": "0.1.7",
         "implementation": "0x41Db9FA4Bc683b61E20e223d05B1c11865464b27",
-        "admin": "0x3D902AafCEf9cc7c58F881a7CB672519341750d8",
+        "admin": "0xfBCb86e80FF9C864BA37b9bbf2Be21cC71abcdeE",
         "kind": "Upgradeable"
       }
     ]
