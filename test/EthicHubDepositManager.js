@@ -3,7 +3,10 @@
 import ether from './helpers/ether'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
 import EVMRevert from './helpers/EVMRevert'
+const { TestHelper } = require('@openzeppelin/cli');
+const { Contracts, ZWeb3 } = require('@openzeppelin/upgrades');
 
+ZWeb3.initialize(web3.currentProvider);
 
 const {
     BN,
@@ -29,7 +32,8 @@ const CHAIN_ID = "666"
 contract('EthicHubDepositManager', function([owner, investor]) {
     beforeEach(async function() {
         await time.advanceBlock()
-
+        this.project = await TestHelper();
+        console.log('-------------')
         const latestTimeValue = await time.latest()
         this.fundingStartTime = latestTimeValue.add(time.duration.days(1))
         this.fundingEndTime = this.fundingStartTime.add(time.duration.days(40))
@@ -40,16 +44,11 @@ contract('EthicHubDepositManager', function([owner, investor]) {
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
 
-        this.depositManager = await EthicHubDepositManager.new({
-            from: owner
+        this.depositManager = await this.project.createProxy(EthicHubDepositManager, {
+            initMethod: 'initialize',
+            initArgs: [this.mockStorage.address, this.stableCoin.address]
         })
-        await this.depositManager.initialize(
-            this.mockStorage.address,
-            this.stableCoin.address, {
-                from: owner
-            }
-        ).should.be.fulfilled
-
+        console.log('-------------')
         await this.stableCoin.transfer(owner, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
             from: owner
