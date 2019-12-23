@@ -1,7 +1,14 @@
+Version 8.1 (commit:3aae1e37):
+----------
+0. EthicHubLending v.8.1 contract (kovan:0x819445952654328deaabb0774f0c88c9f3ac2cf4, mainnet:).
+1. Compiler Version = v0.5.13+commit.5b0b510c and Optimization Enabled = Yes, tienes que pasarle tambien el ABI del constructor
+2. truffle-flattener EthicHubLendingv8.1.sol > EthicHubLendingFlattenedv8.1.sol
+
 Version 8 (commit:41c58e89):
 ----------
 0. EthicHubLending v.8 contract (kovan:0x99eEeDcFC423A8e83Fe676a2e3d3D449bFA71289, mainnet:).
-1. truffle-flattener EthicHubLendingv8.sol > EthicHubLendingFlattenedv8.sol
+1. Compiler Version = v0.5.13+commit.5b0b510c and Optimization Enabled = Yes, tienes que pasarle tambien el ABI del constructor
+2. truffle-flattener EthicHubLendingv8.sol > EthicHubLendingFlattenedv8.sol
 
 Version 7 (commit:e9642902):
 ----------

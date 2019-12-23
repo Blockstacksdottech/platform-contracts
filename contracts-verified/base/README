@@ -1,0 +1,4 @@
+ATTENTION : Is unused
+0. EthicHubStorage v.0 contract (kovan:, mainnet:0xa406C07Af51a35a03428B653Afed4834E0782cca).
+1. py-solc: python -m solc.install v0.4.25
+2. solidity_flattener --output EthicHubBaseFlattened.sol EthicHubBase.sol
