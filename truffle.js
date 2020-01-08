@@ -47,7 +47,7 @@ module.exports = {
             gasPrice: 0x01,
         },
         ganache: {
-            provider: function () {
+            provider: function() {
                 return new HDWalletProvider(process.env.GANACHE_MNEMONIC, "http://127.0.0.1:8545");
             },
             gas: 5000000,

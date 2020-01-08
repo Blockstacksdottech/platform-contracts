@@ -18,8 +18,13 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const { TestHelper } = require('@openzeppelin/cli');
-const { Contracts, ZWeb3 } = require('@openzeppelin/upgrades');
+const {
+    TestHelper
+} = require('@openzeppelin/cli');
+const {
+    Contracts,
+    ZWeb3
+} = require('@openzeppelin/upgrades');
 
 ZWeb3.initialize(web3.currentProvider);
 
@@ -43,7 +48,7 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
-        
+
         this.project = await TestHelper();
         this.depositManager = await this.project.createProxy(EthicHubDepositManager, {
             initMethod: 'initialize',
@@ -94,9 +99,9 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
     })
 
     it('only owner can change relayer', async function () {
-        await this.depositManager.methods.setRelayHubAddress(investor, {
+        await this.depositManager.methods.setRelayHubAddress(investor).send({
             from: investor
-        }).send().should.be.rejectedWith(EVMRevert)
+        }).should.be.rejectedWith(EVMRevert)
     })
 
     it('check can contribute using GSN', async function () {
@@ -105,36 +110,46 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         const result = await this.depositManager.methods.contribute(
             this.lending.address,
             investor,
-            investment, {
+            investment.toString(10)
+        ).send({
             from: investor,
             useGSN: true
-        }).send().should.be.fulfilled
-        await assertSentViaGSN(web3, result.tx);
+        }).should.be.fulfilled
+        await assertSentViaGSN(web3, result);
+
         const investorContribution = await this.lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
     })
 
     it('check can contribute without using GSN', async function () {
         await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
+
         const investment = ether(1)
         await this.depositManager.methods.contribute(
             this.lending.address,
             investor,
-            investment, {
-            from: investor,
-            useGSN: false
-        }).send().should.be.fulfilled
+            investment.toString(10)
+        ).send(
+            {
+                from: investor,
+                useGSN: true
+            }
+        ).should.be.fulfilled
+
         const investorContribution = await this.lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
     })
 
-    it('check cannot contribute 0', async function () {
-        await time.increaseTo(this.fundingStartTime + time.duration.days(1))
-        await this.depositManager.methods.contribute(
-            this.lending.address,
-            investor,
-            0, {
-            from: investor,
-        }).send().should.be.rejectedWith(EVMRevert)
-    })
+  it('check cannot contribute 0', async function () {
+      await time.increaseTo(this.fundingStartTime + time.duration.days(1))
+      await this.depositManager.methods.contribute(
+          this.lending.address,
+          investor,
+          0
+      ).send(
+          {
+              from: investor,
+          }
+      ).should.be.rejectedWith(EVMRevert)
+  })
 })
