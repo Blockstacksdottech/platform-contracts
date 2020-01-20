@@ -22,7 +22,7 @@
 
 import ether from './helpers/ether';
 import EVMRevert from './helpers/EVMRevert';
-
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
     BN,
     time
@@ -35,12 +35,12 @@ chai.use(require('chai-as-promised'))
 const utils = require("web3-utils");
 const fs = require('fs');
 
-const EthicHubStorage = artifacts.require('./storage/EthicHubStorage.sol');
-const EthicHubCMC = artifacts.require('./EthicHubCMC.sol');
-const EthicHubLending = artifacts.require('./lending/EthicHubLending.sol');
-const EthicHubDepositManager = artifacts.require('./deposit/EthicHubDepositManager.sol');
-const EthicHubUser = artifacts.require('./user/EthicHubUser.sol');
-const MockStableCoin = artifacts.require('MockStableCoin')
+const EthicHubStorage = contract.fromArtifact('./storage/EthicHubStorage.sol');
+const EthicHubCMC = contract.fromArtifact('./EthicHubCMC.sol');
+const EthicHubLending = contract.fromArtifact('./lending/EthicHubLending.sol');
+const EthicHubDepositManager = contract.fromArtifact('./deposit/EthicHubDepositManager.sol');
+const EthicHubUser = contract.fromArtifact('./user/EthicHubUser.sol');
+const MockStableCoin = contract.fromArtifact('MockStableCoin')
 
 let storage = null
 let lending = null

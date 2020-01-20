@@ -2,7 +2,7 @@
 import {
     advanceBlock
 } from './helpers/advanceToBlock'
-
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
     BN
 } = require('@openzeppelin/test-helpers');
@@ -14,10 +14,10 @@ chain.use(require('chai-as-promised'))
     .should()
 
 
-const MockStorage = artifacts.require('MockStorage')
-const MockEthicHubContract = artifacts.require('MockEthicHubContract')
+const MockStorage = contract.fromArtifact('MockStorage')
+const MockEthicHubContract = contract.fromArtifact('MockEthicHubContract')
 
-contract('EthicHubBase', function(accounts) {
+contract('EthicHubBase', function() {
     beforeEach(async function() {
         await advanceBlock();
         this.mockStorage = await MockStorage.new();

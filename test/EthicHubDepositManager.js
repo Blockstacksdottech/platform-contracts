@@ -1,8 +1,12 @@
 'use strict';
 
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 import ether from './helpers/ether'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
 import EVMRevert from './helpers/EVMRevert'
+const { expect } = require('chai');
+const owner = accounts[0]
+const investor = accounts[1]
 
 const {
     BN,
@@ -23,14 +27,14 @@ const { Contracts, ZWeb3 } = require('@openzeppelin/upgrades');
 
 ZWeb3.initialize(web3.currentProvider);
 
-const EthicHubLending = artifacts.require('EthicHubLending')
+const EthicHubLending = contract.fromArtifact('EthicHubLending')
 const EthicHubDepositManager = Contracts.getFromLocal('EthicHubDepositManager');
-const MockStorage = artifacts.require('MockStorage')
-const MockStableCoin = artifacts.require('MockStableCoin')
+const MockStorage = contract.fromArtifact('MockStorage')
+const MockStableCoin = contract.fromArtifact('MockStableCoin')
 
 const CHAIN_ID = "666"
 
-contract('EthicHubDepositManager', function ([owner, investor]) {
+contract('EthicHubDepositManager', function () {
     beforeEach(async function () {
         await time.advanceBlock()
 

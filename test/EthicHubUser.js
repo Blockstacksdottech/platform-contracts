@@ -20,7 +20,7 @@
 */
 
 'use strict';
-
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 import {
     advanceBlock
 } from './helpers/advanceToBlock'
@@ -40,11 +40,12 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const User = artifacts.require('EthicHubUser');
-const Storage = artifacts.require('EthicHubStorage');
-const EthicHubCMC = artifacts.require('EthicHubCMC');
+const User = contract.fromArtifact('EthicHubUser');
+const Storage = contract.fromArtifact('EthicHubStorage');
+const EthicHubCMC = contract.fromArtifact('EthicHubCMC');
+const whitelisted_accounts = accounts
 
-contract('User', function(whitelisted_accounts) {
+contract('User', function() {
 
     const owner = whitelisted_accounts.pop();
 

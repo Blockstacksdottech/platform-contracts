@@ -1,5 +1,6 @@
 'use strict';
 import ether from './helpers/ether'
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 import {
     advanceBlock
 } from './helpers/advanceToBlock'
@@ -29,14 +30,16 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const EthicHubLending = artifacts.require('EthicHubLending')
-const EthicHubDepositManager = artifacts.require('EthicHubDepositManager')
-const MockStorage = artifacts.require('MockStorage')
-const MockStableCoin = artifacts.require('MockStableCoin')
+const EthicHubLending = contract.fromArtifact('EthicHubLending')
+const EthicHubDepositManager = contract.fromArtifact('EthicHubDepositManager')
+const MockStorage = contract.fromArtifact('MockStorage')
+const MockStableCoin = contract.fromArtifact('MockStableCoin')
 
 const CHAIN_ID = "666"
 
-contract('EthicHubLending', function([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
+[owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter] = accounts
+
+contract('EthicHubLending', function() {
     beforeEach(async function() {
         await advanceBlock()
 

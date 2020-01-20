@@ -26,7 +26,8 @@ import {
 } from './helpers/advanceToBlock'
 
 import EVMRevert from './helpers/EVMRevert'
-
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
+[owner, arbiter, _, lending_contract, not_lending_contract] = accounts
 const {
     BN,
     constants
@@ -38,11 +39,11 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const Arbitrage = artifacts.require('EthicHubArbitrage');
+const Arbitrage = contract.fromArtifact('EthicHubArbitrage');
 
-const MockStorage = artifacts.require('MockStorage');
+const MockStorage = contract.fromArtifact('MockStorage');
 
-contract('Arbitrage', function([owner, arbiter, _, lending_contract, not_lending_contract]) {
+contract('Arbitrage', function() {
 
     beforeEach(async function() {
         await advanceBlock()
