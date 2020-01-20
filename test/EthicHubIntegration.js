@@ -21,7 +21,7 @@
 'use strict';
 
 import ether from './helpers/ether';
-import EVMRevert from './helpers/EVMRevert';
+;
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
     BN,
@@ -139,7 +139,7 @@ async function configureContracts() {
     }).should.be.fulfilled
 }
 
-contract('EthicHubIntegration:', function() {
+describe('EthicHubIntegration:', function() {
     before(async () => {
         await configureContracts();
     });
@@ -205,7 +205,7 @@ contract('EthicHubIntegration:', function() {
     });
 });
 
-contract('Integration: EthicHubLending (Lending owner != LocalNode)', function() {
+describe('Integration: EthicHubLending (Lending owner != LocalNode)', function() {
     before(async () => {
         await time.advanceBlock();
         await configureContracts();
@@ -314,7 +314,7 @@ contract('Integration: EthicHubLending (Lending owner != LocalNode)', function()
                 lending.address,
                 investor3,
                 investment3
-            ).should.be.rejectedWith(EVMRevert);
+            ).should.be.rejectedWith('revert');
 
             // Send funds to borrower
             transaction = await lending.sendFundsToBorrower({
@@ -359,7 +359,7 @@ contract('Integration: EthicHubLending (Lending owner != LocalNode)', function()
     });
 });
 
-contract('Integration: EthicHubLending (Lending owner == LocalNode)', function() {
+describe('Integration: EthicHubLending (Lending owner == LocalNode)', function() {
     before(async () => {
         await time.advanceBlock();
         await configureContracts();
@@ -464,7 +464,7 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function()
                 lending.address,
                 investor3,
                 investment3
-            ).should.be.rejectedWith(EVMRevert);
+            ).should.be.rejectedWith('revert');
 
             // Send funds to borrower
             transaction = await lending.sendFundsToBorrower({
@@ -508,7 +508,7 @@ contract('Integration: EthicHubLending (Lending owner == LocalNode)', function()
     });
 });
 
-contract('Integration: EthicHubLending (LocalNode not exists)', function() {
+describe('Integration: EthicHubLending (LocalNode not exists)', function() {
     describe('Local Node != Local Node of lending contract', function() {
         it('should not deploy contract', async function() {
             await time.advanceBlock();
@@ -547,7 +547,7 @@ contract('Integration: EthicHubLending (LocalNode not exists)', function() {
             //Gives set permissions on storage
             await cmc.addNewLendingContract(lending.address, {
                 from: localNode2
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
 
             //Lending saves parameters in storage, checks if owner is localNode
             await lending.saveInitialParametersToStorage(
@@ -557,14 +557,14 @@ contract('Integration: EthicHubLending (LocalNode not exists)', function() {
                 {
                     from: localNode2
                 }
-            ).should.be.rejectedWith(EVMRevert);
+            ).should.be.rejectedWith('revert');
 
             owner = await lending.owner();
         });
     });
 });
 
-contract('Integration: EthicHubLending not funded', function() {
+describe('Integration: EthicHubLending not funded', function() {
     before(async () => {
         await configureContracts();
         // register first LocalNode necessary on lending contract
@@ -667,7 +667,7 @@ contract('Integration: EthicHubLending not funded', function() {
             // Send funds to borrower
             transaction = await lending.sendFundsToBorrower({
                 from: owner
-            }).should.be.rejectedWith(EVMRevert);
+            }).should.be.rejectedWith('revert');
 
             // project not funded
             await lending.declareProjectNotFunded({
@@ -683,12 +683,12 @@ contract('Integration: EthicHubLending not funded', function() {
             await lending.reclaimContribution(investor1).should.be.fulfilled;
             (await stableCoin.balanceOf(investor1)).should.be.bignumber.above(balance.add(new BN(1)));
             // fail to reclaim from no investor
-            await lending.reclaimContribution(investor3).should.be.rejectedWith(EVMRevert);
+            await lending.reclaimContribution(investor3).should.be.rejectedWith('revert');
         });
     });
 });
 
-contract('Integration: EthicHubLending not returned on time', async function() {
+describe('Integration: EthicHubLending not returned on time', async function() {
     const lendingStartTime = (await time.latest()).add(time.duration.days(1));
 
     before(async () => {
@@ -811,7 +811,7 @@ contract('Integration: EthicHubLending not returned on time', async function() {
                 lending.address,
                 investor3,
                 investment3
-            ).should.be.rejectedWith(EVMRevert);
+            ).should.be.rejectedWith('revert');
 
             const fundingEndTime = await lending.fundingEndTime()
             await time.increaseTo(fundingEndTime.add(new BN(time.duration.minutes(1))));
@@ -848,7 +848,7 @@ contract('Integration: EthicHubLending not returned on time', async function() {
 
             await lending.declareProjectDefault({
                 from: owner
-            }).should.be.rejectedWith(EVMRevert);
+            }).should.be.rejectedWith('revert');
 
             var lendingDelayDays = await storage.getUint(utils.soliditySha3("lending.delayDays", lending.address));
             lendingDelayDays.toNumber().should.be.equal(1);
@@ -856,7 +856,7 @@ contract('Integration: EthicHubLending not returned on time', async function() {
     });
 });
 
-contract('Integration: EthicHubLending declare default', async function() {
+describe('Integration: EthicHubLending declare default', async function() {
 
     before(async () => {
         await time.advanceBlock();
@@ -967,7 +967,7 @@ contract('Integration: EthicHubLending declare default', async function() {
                 lending.address,
                 investor3,
                 investment3
-            ).should.be.rejectedWith(EVMRevert);
+            ).should.be.rejectedWith('revert');
 
             const fundingEndTime = await lending.fundingEndTime()
             await time.increaseTo(fundingEndTime.add(new BN(time.duration.minutes(1))));
@@ -1000,7 +1000,7 @@ contract('Integration: EthicHubLending declare default', async function() {
                 lending.address,
                 borrower,
                 borrowerReturnAmount
-            ).should.be.rejectedWith(EVMRevert);
+            ).should.be.rejectedWith('revert');
 
             var lendingDelayDays = await storage.getUint(utils.soliditySha3("lending.delayDays", lending.address));
             lendingDelayDays.toNumber().should.be.equal(2);
@@ -1008,7 +1008,7 @@ contract('Integration: EthicHubLending declare default', async function() {
     });
 });
 
-contract('Integration: EthicHubLending do a payment with paymentGateway', function() {
+describe('Integration: EthicHubLending do a payment with paymentGateway', function() {
     before(async () => {
         await time.advanceBlock();
         await configureContracts();
@@ -1123,7 +1123,7 @@ contract('Integration: EthicHubLending do a payment with paymentGateway', functi
                 investor3,
                 investment3, {
                     from: paymentGateway
-                }).should.be.rejectedWith(EVMRevert);
+                }).should.be.rejectedWith('revert');
 
             // Send funds to borrower
             transaction = await lending.sendFundsToBorrower({

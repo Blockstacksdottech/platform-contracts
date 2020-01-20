@@ -1,18 +1,16 @@
 'use strict';
 import ether from './helpers/ether'
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
-import {
-    advanceBlock
-} from './helpers/advanceToBlock'
+
 import {
     increaseTimeTo,
     duration
 } from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
-import EVMRevert from './helpers/EVMRevert'
 
 const {
-    BN
+    BN,
+    time
 } = require('@openzeppelin/test-helpers')
 
 const Uninitialized = 0;
@@ -39,9 +37,9 @@ const CHAIN_ID = "666"
 
 [owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter] = accounts
 
-contract('EthicHubLending', function() {
+describe('EthicHubLending', function() {
     beforeEach(async function() {
-        await advanceBlock()
+        await time.advanceBlock()
 
         const latestTimeValue = await latestTime()
         this.fundingStartTime = latestTimeValue + duration.days(1)
@@ -166,7 +164,7 @@ contract('EthicHubLending', function() {
                 someLending.address,
                 investor,
                 ether(1)
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('should not allow create projects with unregistered local nodes', async function() {
@@ -184,7 +182,7 @@ contract('EthicHubLending', function() {
                 this.depositManager.address,
                 this.mockStorage.address,
                 this.stableCoin.address
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('should not allow to invest with unregistered representatives', async function() {
@@ -202,7 +200,7 @@ contract('EthicHubLending', function() {
                 this.depositManager.address,
                 this.mockStorage.address,
                 this.stableCoin.address
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('should be in latest version', async function() {
@@ -223,7 +221,7 @@ contract('EthicHubLending', function() {
                 ether(1), {
                     from: investor
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('should not allow to invest after contribution period', async function() {
@@ -236,7 +234,7 @@ contract('EthicHubLending', function() {
                 ether(1), {
                     from: investor
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('should allow to check investor contribution amount', async function() {
@@ -300,7 +298,7 @@ contract('EthicHubLending', function() {
                 ether(1), {
                     from: investor4
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('should return extra value over cap to last investor', async function() {
@@ -350,7 +348,7 @@ contract('EthicHubLending', function() {
         })
 
         it('should fail to operate for time travelers (sorry)', async function() {
-            await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime - duration.days(2)).should.be.rejectedWith(EVMRevert)
+            await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime - duration.days(2)).should.be.rejectedWith('revert')
         })
     })
 
@@ -573,13 +571,13 @@ contract('EthicHubLending', function() {
             // Reclaims amounts
             await this.lending.reclaimContributionWithInterest(investor, {
                 from: investor
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
 
             await this.lending.reclaimContributionWithInterest(investor2, {
                 from: investor2
-            }).should.be.rejectedWith(EVMRevert)
-            await this.lending.reclaimLocalNodeFee().should.be.rejectedWith(EVMRevert)
-            await this.lending.reclaimEthicHubTeamFee().should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
+            await this.lending.reclaimLocalNodeFee().should.be.rejectedWith('revert')
+            await this.lending.reclaimEthicHubTeamFee().should.be.rejectedWith('revert')
         })
     })
 
@@ -610,7 +608,7 @@ contract('EthicHubLending', function() {
             balance = await this.stableCoin.balanceOf(investor)
             await this.lending.reclaimContribution(investor).should.be.fulfilled;
             // fail to reclaim from no investor
-            await this.lending.reclaimContribution(investor2).should.be.rejectedWith(EVMRevert)
+            await this.lending.reclaimContribution(investor2).should.be.rejectedWith('revert')
         })
 
         it('should not allow to retrieve contributions if not contributor paid', async function() {
@@ -632,7 +630,7 @@ contract('EthicHubLending', function() {
             var state = await this.lending.state()
             // project not funded
             state.toNumber().should.be.equal(ProjectNotFunded)
-            await this.lending.reclaimContribution(investor3).should.be.rejectedWith(EVMRevert)
+            await this.lending.reclaimContribution(investor3).should.be.rejectedWith('revert')
         })
 
         it('should not allow to retrieve contributions before declaring project not funded', async function() {
@@ -651,7 +649,7 @@ contract('EthicHubLending', function() {
             await increaseTimeTo(this.fundingEndTime + duration.days(1))
             // can reclaim contribution from everyone
             balance = await this.stableCoin.balanceOf(investor)
-            await this.lending.reclaimContribution(investor).should.be.rejectedWith(EVMRevert)
+            await this.lending.reclaimContribution(investor).should.be.rejectedWith('revert')
         })
     })
 
@@ -684,7 +682,7 @@ contract('EthicHubLending', function() {
             ).should.be.fulfilled;
             await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {
                 from: owner
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
     })
 
@@ -876,7 +874,7 @@ contract('EthicHubLending', function() {
             }).should.be.fulfilled;
             await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {
                 from: owner
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
 
         it('should allow the return of proper amount', async function() {
@@ -945,7 +943,7 @@ contract('EthicHubLending', function() {
                 from: owner
             }).should.be.fulfilled;
             await increaseTimeTo(this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber()) - duration.days(1))
-            await this.lending.declareProjectDefault().should.be.rejectedWith(EVMRevert)
+            await this.lending.declareProjectDefault().should.be.rejectedWith('revert')
         })
     })
 
@@ -1220,7 +1218,7 @@ contract('EthicHubLending', function() {
                 borrowerReturnAmount, {
                     from: investor2
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('Should not allow reclaim twice the funds', async function() {
@@ -1265,7 +1263,7 @@ contract('EthicHubLending', function() {
             }).should.be.fulfilled;
             await this.lending.reclaimContributionWithInterest(investor2, {
                 from: investor2
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
 
         it('Should not allow returns when contract have balance in other state', async function() {
@@ -1278,7 +1276,7 @@ contract('EthicHubLending', function() {
                     from: investor2
                 }
             ).should.be.fulfilled;
-            await this.lending.reclaimContributionWithInterest(investor2).should.be.rejectedWith(EVMRevert)
+            await this.lending.reclaimContributionWithInterest(investor2).should.be.rejectedWith('revert')
         })
 
         it('Should return correct platform fees', async function() {
@@ -1779,7 +1777,7 @@ contract('EthicHubLending', function() {
             await realAmountLending.reclaimEthicHubTeamFee().should.be.fulfilled;
             await realAmountLending.reclaimLeftover({
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
         it('should fail to send leftover dai to team if its correct state, without local node reclaimed', async function() {
             let lendingAmount = new BN("3539238226800208500")
@@ -1886,7 +1884,7 @@ contract('EthicHubLending', function() {
             await realAmountLending.reclaimEthicHubTeamFee().should.be.fulfilled;
             await realAmountLending.reclaimLeftover({
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
 
         })
         it('should fail to send leftover dai to team if its correct state, without team reclaimed', async function() {
@@ -1994,7 +1992,7 @@ contract('EthicHubLending', function() {
             await realAmountLending.reclaimLocalNodeFee().should.be.fulfilled;
             await realAmountLending.reclaimLeftover({
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
 
         it('should fail to send leftover dai to team if its correct state if not arbiter', async function() {
@@ -2104,7 +2102,7 @@ contract('EthicHubLending', function() {
             await realAmountLending.reclaimEthicHubTeamFee().should.be.fulfilled;
             await realAmountLending.reclaimLeftover({
                 from: investor
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
 
         })
 
@@ -2167,7 +2165,7 @@ contract('EthicHubLending', function() {
 
             await realAmountLending.reclaimLeftover({
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
     })
 
@@ -2211,7 +2209,7 @@ contract('EthicHubLending', function() {
                 this.totalLendingAmount.add(ether(1)), {
                     from: borrower
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('Should not allow to send partial return after the rate is set', async function() {
@@ -2235,7 +2233,7 @@ contract('EthicHubLending', function() {
                 this.totalLendingAmount.add(ether(1)), {
                     from: borrower
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
         })
 
         it('Should only allow borrower to send partial return', async function() {
@@ -2256,7 +2254,7 @@ contract('EthicHubLending', function() {
                 ether(1), {
                     from: investor2
                 }
-            ).should.be.rejectedWith(EVMRevert)
+            ).should.be.rejectedWith('revert')
             await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {
                 from: owner
             }).should.be.fulfilled;
@@ -2343,7 +2341,7 @@ contract('EthicHubLending', function() {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.setBorrower(investor3, {
                 from: owner
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
 
     })
@@ -2385,7 +2383,7 @@ contract('EthicHubLending', function() {
             ).should.be.fulfilled;
             await this.lending.changeInvestorAddress(investor, investor2, {
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
 
         it('Should not allow to change new investor who have already invested', async function() {
@@ -2408,7 +2406,7 @@ contract('EthicHubLending', function() {
             ).should.be.fulfilled;
             await this.lending.changeInvestorAddress(investor, investor2, {
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
 
 
@@ -2418,7 +2416,7 @@ contract('EthicHubLending', function() {
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true)
             await this.lending.changeInvestorAddress(investor, investor2, {
                 from: owner
-            }).should.be.rejectedWith(EVMRevert)
+            }).should.be.rejectedWith('revert')
         })
     })
 

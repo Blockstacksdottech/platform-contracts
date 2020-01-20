@@ -21,16 +21,13 @@
 
 'use strict';
 
-import {
-    advanceBlock
-} from './helpers/advanceToBlock'
-
-import EVMRevert from './helpers/EVMRevert'
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
-[owner, arbiter, _, lending_contract, not_lending_contract] = accounts
+const [owner, arbiter, lending_contract, not_lending_contract] = accounts
+
 const {
     BN,
-    constants
+    constants,
+    time
 } = require('@openzeppelin/test-helpers');
 const utils = require("web3-utils");
 const chai = require('chai');
@@ -43,10 +40,10 @@ const Arbitrage = contract.fromArtifact('EthicHubArbitrage');
 
 const MockStorage = contract.fromArtifact('MockStorage');
 
-contract('Arbitrage', function() {
+describe('Arbitrage', function() {
 
     beforeEach(async function() {
-        await advanceBlock()
+        await time.advanceBlock()
         this.storage = await MockStorage.new();
         await this.storage.setAddress(utils.soliditySha3("contract.address", lending_contract), lending_contract)
         this.arbitrage = await Arbitrage.new(this.storage.address, {
@@ -60,21 +57,21 @@ contract('Arbitrage', function() {
 
     describe('Register Arbiter', function() {
         it('Should not allow null arbiter', async function() {
-            await this.arbitrage.assignArbiterForLendingContract(constants.ZERO_ADDRESS, lending_contract).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.assignArbiterForLendingContract(constants.ZERO_ADDRESS, lending_contract).should.be.rejectedWith('revert');
         });
 
         it('Should not allow null lending contract', async function() {
-            await this.arbitrage.assignArbiterForLendingContract(arbiter, constants.ZERO_ADDRESS).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.assignArbiterForLendingContract(arbiter, constants.ZERO_ADDRESS).should.be.rejectedWith('revert');
         });
 
         it('Should not allow unregistered lending contract', async function() {
-            await this.arbitrage.assignArbiterForLendingContract(arbiter, not_lending_contract).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.assignArbiterForLendingContract(arbiter, not_lending_contract).should.be.rejectedWith('revert');
         });
 
         it('Should not allow not owner to register arbiter', async function() {
             await this.arbitrage.assignArbiterForLendingContract(arbiter, lending_contract, {
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert);
+            }).should.be.rejectedWith('revert');
         });
 
         it('Should register correct arbiter', async function() {
@@ -97,31 +94,31 @@ contract('Arbitrage', function() {
     describe('Revoke Arbiter', function() {
 
         beforeEach(async function() {
-            await advanceBlock();
+            await time.advanceBlock();
             await this.arbitrage.assignArbiterForLendingContract(arbiter, lending_contract);
         });
 
         it('Should not allow null arbiter', async function() {
-            await this.arbitrage.revokeArbiterForLendingContract(constants.ZERO_ADDRESS, lending_contract).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.revokeArbiterForLendingContract(constants.ZERO_ADDRESS, lending_contract).should.be.rejectedWith('revert');
         });
 
         it('Should not allow null lending contract', async function() {
-            await this.arbitrage.revokeArbiterForLendingContract(arbiter, constants.ZERO_ADDRESS).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.revokeArbiterForLendingContract(arbiter, constants.ZERO_ADDRESS).should.be.rejectedWith('revert');
         });
 
         it('Should not allow unregistered lending contract', async function() {
-            await this.arbitrage.revokeArbiterForLendingContract(arbiter, not_lending_contract).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.revokeArbiterForLendingContract(arbiter, not_lending_contract).should.be.rejectedWith('revert');
         });
 
         it('Should not allow not owner to revoke arbiter', async function() {
             await this.arbitrage.revokeArbiterForLendingContract(arbiter, lending_contract, {
                 from: arbiter
-            }).should.be.rejectedWith(EVMRevert);
+            }).should.be.rejectedWith('revert');
 
         });
 
         it('Should not allow to revoke non assigned arbiter', async function() {
-            await this.arbitrage.revokeArbiterForLendingContract(owner, lending_contract).should.be.rejectedWith(EVMRevert);
+            await this.arbitrage.revokeArbiterForLendingContract(owner, lending_contract).should.be.rejectedWith('revert');
 
         });
 

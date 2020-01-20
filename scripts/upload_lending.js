@@ -6,7 +6,7 @@ var HDWalletProvider = require("@truffle/hdwallet-provider");
 let mnemonic = process.env.MNEMONIC;
 var Web3 = require('web3');
 var web3 = new Web3(new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/" + process.env.INFURA_KEY));
-const { BN } = require('@openzeppelin/test-helpers');
+const { BN, time } = require('@openzeppelin/test-helpers');
 const utils = require("web3-utils");
 
 function latestTime() {

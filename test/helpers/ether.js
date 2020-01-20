@@ -1,5 +1,6 @@
 const {
-    BN
+    BN,
+    time
 } = require('@openzeppelin/test-helpers');
 const utils = require("web3-utils");
 

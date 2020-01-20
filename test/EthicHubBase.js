@@ -1,10 +1,9 @@
 'use strict';
-import {
-    advanceBlock
-} from './helpers/advanceToBlock'
+
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
-    BN
+    BN,
+    time
 } = require('@openzeppelin/test-helpers');
 
 const chain = require('chai');
@@ -17,9 +16,9 @@ chain.use(require('chai-as-promised'))
 const MockStorage = contract.fromArtifact('MockStorage')
 const MockEthicHubContract = contract.fromArtifact('MockEthicHubContract')
 
-contract('EthicHubBase', function() {
+describe('EthicHubBase', function() {
     beforeEach(async function() {
-        await advanceBlock();
+        await time.advanceBlock();
         this.mockStorage = await MockStorage.new();
     });
 

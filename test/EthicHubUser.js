@@ -21,17 +21,16 @@
 
 'use strict';
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
-import {
-    advanceBlock
-} from './helpers/advanceToBlock'
+
 import {
     duration
 } from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
-import EVMRevert from './helpers/EVMRevert'
+
 
 const {
-    BN
+    BN,
+    time
 } = require('@openzeppelin/test-helpers');
 
 const utils = require("web3-utils");
@@ -45,13 +44,13 @@ const Storage = contract.fromArtifact('EthicHubStorage');
 const EthicHubCMC = contract.fromArtifact('EthicHubCMC');
 const whitelisted_accounts = accounts
 
-contract('User', function() {
+describe('User', function() {
 
     const owner = whitelisted_accounts.pop();
 
     describe('whitelisted accounts', function() {
         beforeEach(async function() {
-            await advanceBlock();
+            await time.advanceBlock();
             this.profile = 'whitelist';
             this.storage = await Storage.new();
             this.cmc = await EthicHubCMC.new(this.storage.address)
@@ -75,7 +74,7 @@ contract('User', function() {
             is_registered.should.be.equal(false);
             await this.users.registerLocalNode(whitelisted_accounts[0], {
                 from: whitelisted_accounts[0]
-            }).should.be.rejectedWith(EVMRevert);
+            }).should.be.rejectedWith('revert');
             is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
             is_registered.should.be.equal(false);
         });

@@ -1,5 +1,5 @@
 const {
-    BN
+    BN, tm
 } = require('@openzeppelin/test-helpers');
 
 const cmc = artifacts.require('./EthicHubCMC.sol');

@@ -3,7 +3,7 @@
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 import ether from './helpers/ether'
 import assertSentViaGSN from './helpers/assertSentViaGSN'
-import EVMRevert from './helpers/EVMRevert'
+
 const { expect } = require('chai');
 const owner = accounts[0]
 const investor = accounts[1]
@@ -34,7 +34,7 @@ const MockStableCoin = contract.fromArtifact('MockStableCoin')
 
 const CHAIN_ID = "666"
 
-contract('EthicHubDepositManager', function () {
+describe('EthicHubDepositManager', function () {
     beforeEach(async function () {
         await time.advanceBlock()
 
@@ -100,7 +100,7 @@ contract('EthicHubDepositManager', function () {
     it('only owner can change relayer', async function () {
         await this.depositManager.methods.setRelayHubAddress(investor, {
             from: investor
-        }).send().should.be.rejectedWith(EVMRevert)
+        }).send().should.be.rejectedWith('revert')
     })
 
     it('check can contribute using GSN', async function () {
@@ -139,6 +139,6 @@ contract('EthicHubDepositManager', function () {
             investor,
             0, {
             from: investor,
-        }).send().should.be.rejectedWith(EVMRevert)
+        }).send().should.be.rejectedWith('revert')
     })
 })
