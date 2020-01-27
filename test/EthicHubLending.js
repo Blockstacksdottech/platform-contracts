@@ -1,5 +1,7 @@
 'use strict';
 import ether from './helpers/ether'
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 
 import {

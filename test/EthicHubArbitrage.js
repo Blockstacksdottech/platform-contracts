@@ -20,7 +20,8 @@
 */
 
 'use strict';
-
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const [owner, arbiter, lending_contract, not_lending_contract] = accounts
 
@@ -37,7 +38,6 @@ chai.use(require('chai-as-promised'))
     .should()
 
 const Arbitrage = contract.fromArtifact('EthicHubArbitrage');
-
 const MockStorage = contract.fromArtifact('MockStorage');
 
 describe('Arbitrage', function() {

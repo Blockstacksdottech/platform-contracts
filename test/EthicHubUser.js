@@ -21,7 +21,8 @@
 
 'use strict';
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
-
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 import {
     duration
 } from './helpers/increaseTime'

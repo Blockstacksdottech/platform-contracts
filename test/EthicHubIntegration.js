@@ -19,7 +19,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 'use strict';
-
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 import ether from './helpers/ether';
 ;
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');

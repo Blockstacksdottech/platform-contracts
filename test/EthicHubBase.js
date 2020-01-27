@@ -1,5 +1,6 @@
 'use strict';
-
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const {
     BN,
