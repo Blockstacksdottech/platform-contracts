@@ -1,5 +1,5 @@
 Version 1: (commit:3aae1e37)
 ----------
-0. EthicHubDepositManager v.1 contract (kovan:0x41Db9FA4Bc683b61E20e223d05B1c11865464b27,).
+0. EthicHubDepositManager v.1 contract (kovan:0x41Db9FA4Bc683b61E20e223d05B1c11865464b27,0xfC89f26e78da31A0E794F12e09a89B5338008B26).
 1. Compiler Version = v0.5.13+commit.5b0b510c and Optimization Enabled = No
-2. truffle-flattener EthicHubDepositManager8.sol > EthicHubDepositManagerFlattened.sol
+2. truffle-flattener EthicHubDepositManager.sol > EthicHubDepositManagerFlattened.sol
