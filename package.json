@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "compile": "oz compile",
-    "test": "oz compile && mocha --require @babel/register --exit --recursive test",
+    "test": "oz compile && npx mocha --require @babel/register --exit --recursive test",
     "coverage": "scripts/coverage.sh"
   },
   "repository": {
