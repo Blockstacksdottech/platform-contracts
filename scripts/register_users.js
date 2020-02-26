@@ -3,10 +3,11 @@ require('@babel/polyfill');
 require('dotenv').config();
 
 var HDWalletProvider = require("@truffle/hdwallet-provider");
-let mnemonic = process.env.MNEMONIC;
+let mnemonic = process.env.KOVAN_MNEMONIC;
 var Web3 = require('web3');
-var web3 = new Web3(new HDWalletProvider(mnemonic, "https://mainnet.infura.io/" + process.env.INFURA_KEY));
-var BN = web3const utils = require("web3-utils");.BN;
+var web3 = new Web3(new HDWalletProvider(mnemonic, "https://kovan.ethichub.com"));
+var BN = web3.BN;
+const utils = require("web3-utils");
 const loader = require('./contract_loader.js');
 
 var userAddress;
@@ -18,7 +19,7 @@ switch (process.env.NETWORK_ID) {
         account = '0xAB42A5a21566C9f1466D414CD3195dA44643390b';
         break;
     case "42":
-        userAddress = '0x8E5E619c56a03b0C769f3E07B0A3C2448994f91F';
+        userAddress = process.env.KOVAN_USER_MANAGER_ADDRESS;
         account = '0xfBCb86e80FF9C864BA37b9bbf2Be21cC71abcdeE';
         break;
     default:
