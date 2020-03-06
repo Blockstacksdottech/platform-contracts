@@ -16,7 +16,12 @@
         "runs": "200"
       }
     },
-    "solcVersion": "0.5.13"
+    "solcVersion": "0.5.13",
+    "artifactsDir": "build/contracts",
+    "contractsDir": "contracts",
+    "typechain": {
+      "enabled": false
+    }
   },
   "telemetryOptIn": true
 }
