@@ -1,0 +1,5 @@
+{
+  modulePathIgnorePatterns: [
+    "node_modules"
+  ]
+}
