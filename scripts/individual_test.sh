@@ -29,7 +29,7 @@ mainmenu () {
         elif [ "$mainmenuinput" = "6" ]; then
             bash $SCRIPT_PATH test/EthicHubIntegration.js
         elif [ "$mainmenuinput" = "7" ]; then
-            bash $SCRIPT_PATH test/EthicHubDepositManager.js
+            bash $SCRIPT_PATH EthicHubDepositManager
 
         elif [ "$mainmenuinput" = "x" ];then
             exit 0

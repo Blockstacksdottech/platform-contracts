@@ -74,12 +74,12 @@ setup_gsn_relay() {
   echo "GSN relay server launched!"
 }
 
-# if ganache_running; then
-#   echo "Using existing ganache instance"
-# else
-#   echo "Starting our own ganache instance"
-#   start_ganache
-# fi
+if ganache_running; then
+  echo "Using existing ganache instance"
+else
+  echo "Starting our own ganache instance"
+  start_ganache
+fi
 
 setup_gsn_relay
 
@@ -90,5 +90,5 @@ if [ "$SOLIDITY_COVERAGE" = true ]; then
     cat coverage/lcov.info | npx coveralls
   fi
 else
-  npx mocha --exit --recursive test "$@"
+  npx jest "$@"
 fi
