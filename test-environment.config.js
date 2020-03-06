@@ -11,5 +11,6 @@ module.exports = {
     defaultGas: 6e6, // Maximum gas for contract calls (when unspecified)
   },
 
-  blockGasLimit: 8e6, // Maximum gas per block
+  blockGasLimit: 8e6, // Maximum gas per block,
+  artifactsDir: ''
 };

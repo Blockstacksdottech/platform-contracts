@@ -57,7 +57,7 @@ describe('Arbitrage', function() {
 
     describe('Register Arbiter', function() {
         it('Should not allow null arbiter', async function() {
-            await this.arbitrage.assignArbiterForLendingContract(constants.ZERO_ADDRESS, lending_contract).should.be.rejectedWith('revert');
+            await this.arbitrage.assignArbiterForLendingContract(constants.ZERO_ADDRESS, lending_contract, {from: owner}).should.be.rejectedWith('revert');
         });
 
         it('Should not allow null lending contract', async function() {
@@ -83,7 +83,7 @@ describe('Arbitrage', function() {
         });
 
         it('Should show correct arbiter registered', async function() {
-            await this.arbitrage.assignArbiterForLendingContract(arbiter, lending_contract).should.be.fulfilled;
+            await this.arbitrage.assignArbiterForLendingContract(arbiter, lending_contract, {from: owner}).should.be.fulfilled;
             let registered = await getArbiterForContract(lending_contract, this.storage);
             let registeredView = await this.arbitrage.arbiterForLendingContract(lending_contract).should.be.fulfilled;
             registered.should.be.equal(registeredView);
