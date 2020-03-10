@@ -1,4 +1,7 @@
 // test-environment.config.js
+const {
+  GSNDevProvider
+} = require('@openzeppelin/gsn-provider')
 
 module.exports = {
   accounts: {
@@ -12,5 +15,20 @@ module.exports = {
   },
 
   blockGasLimit: 8e6, // Maximum gas per block,
-  artifactsDir: ''
+  artifactsDir: '',
+  setupProvider: (baseProvider) => {
+    const {
+      accounts
+    } = require('@openzeppelin/test-environment')
+
+    let gsnProvider = new GSNDevProvider(baseProvider, {
+      txfee: 70,
+      useGSN: false,
+      ownerAddress: accounts[8],
+      relayerAddress: accounts[9]
+    })
+    console.log(gsnProvider.baseProvider.host)
+    return gsnProvider
+  }
 };
+

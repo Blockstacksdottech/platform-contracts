@@ -1,30 +1,22 @@
 'use strict'
-const { accounts, contract, web3 } = require('@openzeppelin/test-environment')
+const utils = require("web3-utils")
 import assertSentViaGSN from './helpers/assertSentViaGSN'
-import { Test } from 'mocha'
-
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment')
 const {
     BN,
     time,
     ether,
     expectRevert
 } = require('@openzeppelin/test-helpers')
-const {
-    fundRecipient,
-} = require('@openzeppelin/gsn-helpers')
-const utils = require("web3-utils")
-
+const { fundRecipient } = require('@openzeppelin/gsn-helpers')
 const { TestHelper } = require('@openzeppelin/cli')
 const { Contracts, ZWeb3 } = require('@openzeppelin/upgrades')
-console.log(web3.currentProvider)
-
-ZWeb3.initialize(web3.currentProvider)
-console.log(ZWeb3)
+ZWeb3.initialize()
 
 const EthicHubLending = contract.fromArtifact('EthicHubLending')
-const EthicHubDepositManager = Contracts.getFromLocal('EthicHubDepositManager')
 const MockStorage = contract.fromArtifact('MockStorage')
 const MockStableCoin = contract.fromArtifact('MockStableCoin')
+const EthicHubDepositManager = Contracts.getFromLocal('EthicHubDepositManager')
 
 const CHAIN_ID = "666"
 
@@ -39,6 +31,7 @@ describe('EthicHubDepositManager', function () {
     let lending
 
     beforeEach(async function () {
+        
         await time.advanceBlock()
 
         const latestTimeValue = await time.latest()
@@ -50,7 +43,6 @@ describe('EthicHubDepositManager', function () {
 
         await mockStorage.setBool(utils.soliditySha3("user", "localNode", owner), true)
         await mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
-        console.log(TestHelper)
         project = await TestHelper()
         depositManager = await project.createProxy(EthicHubDepositManager, {
             initMethod: 'initialize',
@@ -60,12 +52,12 @@ describe('EthicHubDepositManager', function () {
             ]
         })
 
-        await stableCoin.transfer(owner, ether(100000)).should.be.fulfilled
-        await stableCoin.approve(depositManager.address, ether(1000000000), {
+        await stableCoin.transfer(owner, ether('100000')).should.be.fulfilled
+        await stableCoin.approve(depositManager.address, ether('1000000000'), {
             from: owner
         })
-        await stableCoin.transfer(investor, ether(100000)).should.be.fulfilled
-        await stableCoin.approve(depositManager.address, ether(1000000000), {
+        await stableCoin.transfer(investor, ether('100000')).should.be.fulfilled
+        await stableCoin.approve(depositManager.address, ether('1000000000'), {
             from: investor
         })
 
@@ -73,7 +65,7 @@ describe('EthicHubDepositManager', function () {
             fundingStartTime,
             fundingEndTime,
             15,
-            ether(3),
+            ether('3'),
             90,
             3,
             4,
@@ -99,22 +91,22 @@ describe('EthicHubDepositManager', function () {
         })
     })
 
-    it.only('only owner can change relayer', async function () {
-        expectRevert(depositManager.methods.setRelayHubAddress(investor, {
+    it('only owner can change relayer', async function () {
+        expectRevert(depositManager.setRelayHubAddress(investor, {
             from: investor
-        }), )
+        }), 'stuff')
     })
 
-    it('check can contribute using GSN', async function () {
+    it.only('check can contribute using GSN', async function () {
         await time.increaseTo(fundingStartTime.add(time.duration.days(1)))
-        const investment = ether(1)
-        const result = await depositManager.methods.contribute(
+        const investment = ether('1')
+        const result = await depositManager.contribute(
             lending.address,
             investor,
             investment, {
             from: investor,
             useGSN: true
-        }).send().should.be.fulfilled
+        })
         await assertSentViaGSN(web3, result.tx, expect)
         const investorContribution = await lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
@@ -122,25 +114,25 @@ describe('EthicHubDepositManager', function () {
 
     it('check can contribute without using GSN', async function () {
         await time.increaseTo(fundingStartTime.add(time.duration.days(1)))
-        const investment = ether(1)
-        await depositManager.methods.contribute(
+        const investment = ether('1')
+        await depositManager.contribute(
             lending.address,
             investor,
             investment, {
             from: investor,
             useGSN: false
-        }).send().should.be.fulfilled
+        }, {from: owner}).should.be.fulfilled
         const investorContribution = await lending.checkInvestorContribution(investor)
         investorContribution.should.be.bignumber.equal(investment)
     })
 
     it('check cannot contribute 0', async function () {
         await time.increaseTo(fundingStartTime + time.duration.days(1))
-        await depositManager.methods.contribute(
+        await depositManager.contribute(
             lending.address,
             investor,
             0, {
             from: investor,
-        }).send().should.be.rejectedWith('revert')
+        }).should.be.rejectedWith('revert')
     })
 })
