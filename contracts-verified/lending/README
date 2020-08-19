@@ -1,3 +1,9 @@
+Version 99 (commit:545f8be8):
+----------
+0. EthicHubLending debug (kovan:0x9306B0367c8440899Da52Ce09Cb615f67CB1d8bf, mainnet:).
+1. Compiler Version = v0.5.13+commit.5b0b510c and Optimization Enabled = Yes, tienes que pasarle tambien el ABI del constructor
+2. truffle-flattener EthicHubLendingDebug.sol > EthicHubLendingFlattenedDebug.sol
+
 Version 8.1 (commit:3aae1e37):
 ----------
 0. EthicHubLending v.8.1 contract (kovan:0x819445952654328deaabb0774f0c88c9f3ac2cf4, mainnet:).
