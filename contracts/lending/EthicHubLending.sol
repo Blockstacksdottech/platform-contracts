@@ -111,7 +111,7 @@ contract EthicHubLending is Pausable, Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 8;
+        version = 99;
 
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");
@@ -164,6 +164,25 @@ contract EthicHubLending is Pausable, Ownable {
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.communityMembers", this)), _communityMembers);
 
         changeState(LendingState.AcceptingContributions);
+    }
+
+    function setState(uint256 _state) external {
+        if (_state == 0) {
+            state = LendingState.Uninitialized;
+        } else if (_state == 1) {
+            state = LendingState.AcceptingContributions;
+        } else if (_state == 2) {
+            state = LendingState.ExchangingToFiat;
+        } else if (_state == 3) {
+            state = LendingState.AwaitingReturn;
+        } else if (_state == 4) {
+            state = LendingState.ProjectNotFunded;
+        } else if (_state == 5) {
+            state = LendingState.ContributionReturned;
+        } else if (_state == 6) {
+            state = LendingState.Default;
+        }
+        emit StateChange(uint(state));
     }
 
     function setBorrower(address _borrower) external checkIfArbiter {
@@ -264,18 +283,8 @@ contract EthicHubLending is Pausable, Ownable {
      *
      */
     function reclaimContributionDefault(address beneficiary) external {
-        require(state == LendingState.Default);
-        require(!investors[beneficiary].isCompensated);
 
-        // contribution = contribution * partial_funds / total_funds
-        uint256 contribution = checkInvestorReturns(beneficiary);
-
-        require(contribution > 0);
-
-        investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-
-        doReclaim(beneficiary, contribution);
+        doReclaim(beneficiary, 2);
     }
 
     /**
@@ -284,27 +293,12 @@ contract EthicHubLending is Pausable, Ownable {
      *
      */
     function reclaimContribution(address beneficiary) external {
-        require(state == LendingState.ProjectNotFunded, "State is not ProjectNotFunded");
-        require(!investors[beneficiary].isCompensated, "Contribution already reclaimed");
-        uint256 contribution = investors[beneficiary].amount;
-        require(contribution > 0, "Contribution is 0");
-
-        investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-
-        doReclaim(beneficiary, contribution);
+        doReclaim(beneficiary, 2);
     }
 
     function reclaimContributionWithInterest(address beneficiary) external {
-        require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
-        require(!investors[beneficiary].isCompensated, "Lender already compensated");
-        uint256 contribution = checkInvestorReturns(beneficiary);
-        require(contribution > 0, "Contribution is 0");
 
-        investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-
-        doReclaim(beneficiary, contribution);
+        doReclaim(beneficiary, 2);
     }
 
     function reclaimLocalNodeFee() external {
@@ -493,21 +487,11 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     function checkInvestorContribution(address investor) public view returns(uint256){
-        return investors[investor].amount;
+        return 2;
     }
 
     function checkInvestorReturns(address investor) public view returns(uint256) {
-        uint256 investorAmount = 0;
-        if (state == LendingState.ContributionReturned) {
-            investorAmount = investors[investor].amount;
-            return investorAmount.mul(initialStableCoinPerFiatRate).mul(investorInterest()).div(borrowerReturnStableCoinPerFiatRate).div(interestBasePercent);
-        } else if (state == LendingState.Default){
-            investorAmount = investors[investor].amount;
-            // contribution = contribution * partial_funds / total_funds
-            return investorAmount.mul(returnedAmount).div(totalLendingAmount);
-        } else {
-            return 0;
-        }
+        return 2;
     }
 
     function getMaxDelayDays() public view returns(uint256){
