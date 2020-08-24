@@ -4,7 +4,7 @@
   "description": "Smart contracts of the EthicHub platform",
   "scripts": {
     "test": "scripts/test.sh",
-    "console": "truffle console",
+    "console": "truffle develop",
     "coverage": "scripts/coverage.sh"
   },
   "repository": {

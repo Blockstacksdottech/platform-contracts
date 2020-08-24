@@ -24,7 +24,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         GSNRecipient.initialize();
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 1;
+        version = 2;
 
         stableCoin = IERC20(_stableCoin);
     }
