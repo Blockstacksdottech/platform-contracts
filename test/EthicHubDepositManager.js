@@ -158,7 +158,7 @@ contract('EthicHubDepositManager', function ([owner, investor, gateway]) {
     let previousBalanceGateway = await this.stableCoin.balanceOf(gateway)
     console.log('prev', previousBalanceGateway.toString())
     await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
-        from: gateway
+        from: investor
     }).should.be.fulfilled;
     await time.increaseTo(this.fundingStartTime + time.duration.days(1))
     const investment = ether(1)
