@@ -37,7 +37,7 @@ contract EthicHubUser is Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 1;
+        version = 5;
 
         Ownable.initialize(msg.sender);
     }
@@ -181,6 +181,25 @@ contract EthicHubUser is Ownable {
         bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", target)));
         if (isRegistered) {
             deleteUserStatus(target, "paymentGateway");
+        }
+    }
+
+    /**
+    * @dev register a relayer address.
+    */
+    function registerRelayer(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
+        changeUserStatus(target, "relayer", true);
+    }
+
+    /**
+     * @dev unregister a relayer address.
+     */
+    function unregisterRelayer(address target) external onlyOwner {
+        require(target != address(0), "Target address cannot be undefined");
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", target)));
+        if (isRegistered) {
+            deleteUserStatus(target, "relayer");
         }
     }
 }

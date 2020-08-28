@@ -15,6 +15,8 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
     IERC20 public stableCoin;
 
+    address public token_sender;
+
     function initialize(
         address _ethicHubStorage, address _stableCoin
     ) public initializer {
@@ -25,6 +27,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = 2;
+        token_sender = _msgSender();
 
         stableCoin = IERC20(_stableCoin);
     }
@@ -69,7 +72,11 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             amount > 0, "Amount cannot be 0"
         );
 
-        require(stableCoin.transferFrom(_msgSender(), address(target), amount), "transferFrom dai failed");
+        if (ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", _msgSender())))) {
+            token_sender = contributor;
+        }
+
+        require(stableCoin.transferFrom(token_sender, address(target), amount), "transferFrom dai failed");
         IContributionTarget(target).deposit(contributor, amount);
     }
 

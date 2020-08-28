@@ -158,5 +158,21 @@ contract('User', function(whitelisted_accounts) {
             is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
             is_registered.should.be.equal(false);
         });
+
+        it('register/unregister relayer', async function() {
+            let prof = "relayer";
+            let is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
+            is_registered.should.be.equal(false);
+            await this.users.registerRelayer(whitelisted_accounts[0], {
+                from: owner
+            }).should.be.fulfilled;
+            is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
+            is_registered.should.be.equal(true);
+            await this.users.unregisterRelayer(whitelisted_accounts[0], {
+                from: owner
+            }).should.be.fulfilled;
+            is_registered = await this.users.viewRegistrationStatus(whitelisted_accounts[0], prof);
+            is_registered.should.be.equal(false);
+        });
     });
 });

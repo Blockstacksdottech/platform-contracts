@@ -35,7 +35,7 @@ const MockStableCoin = artifacts.require('MockStableCoin')
 
 const CHAIN_ID = "666"
 
-contract('EthicHubDepositManager', function ([owner, investor, gateway]) {
+contract('EthicHubDepositManager', function ([owner, investor, relayer]) {
     beforeEach(async function () {
         await time.advanceBlock()
 
@@ -104,7 +104,7 @@ contract('EthicHubDepositManager', function ([owner, investor, gateway]) {
         }).should.be.rejectedWith(EVMRevert)
     })
 
-    it('check can contribute using GSN', async function () {
+    it.skip('check can contribute using GSN', async function () {
         await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
         const investment = ether(1)
         const result = await this.depositManager.methods.contribute(
@@ -121,7 +121,7 @@ contract('EthicHubDepositManager', function ([owner, investor, gateway]) {
         investorContribution.should.be.bignumber.equal(investment)
     })
 
-    it('check can contribute without using GSN', async function () {
+    it.skip('check can contribute without using GSN', async function () {
         await time.increaseTo(this.fundingStartTime.add(time.duration.days(1)))
 
         const investment = ether(1)
@@ -153,10 +153,12 @@ contract('EthicHubDepositManager', function ([owner, investor, gateway]) {
       ).should.be.rejectedWith(EVMRevert)
   })
 
-  it.only('payment gateway can contribute', async function () {
-    await this.stableCoin.transfer(gateway, ether(100000)).should.be.fulfilled;
-    let previousBalanceGateway = await this.stableCoin.balanceOf(gateway)
-    console.log('prev', previousBalanceGateway.toString())
+  it('relayer can contribute', async function () {
+    await this.stableCoin.transfer(relayer, ether(100000)).should.be.fulfilled;
+    let previousBalanceRelayer = await this.stableCoin.balanceOf(relayer)
+    let previousBalanceInvestor = await this.stableCoin.balanceOf(investor)
+    //console.log('prevRelayer', previousBalanceRelayer.toString())
+    //console.log('prevInvestor', previousBalanceInvestor.toString())
     await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
         from: investor
     }).should.be.fulfilled;
@@ -168,13 +170,15 @@ contract('EthicHubDepositManager', function ([owner, investor, gateway]) {
         investment.toString(10)
     ).send(
         {
-            from: gateway,
+            from: relayer,
             useGSN: false
         }
     ).should.be.rejectedWith(EVMRevert)
     const investorContribution = await this.lending.checkInvestorContribution(investor)
     investorContribution.should.be.bignumber.equal(investment)
-    let afterBalanceGateway = await this.stableCoin.balanceOf(gateway)
-    afterBalanceGateway.should.be.bignumber.equal(previousBalanceGateway.minus(investment))
+    let afterBalanceRelayer = await this.stableCoin.balanceOf(relayer)
+    let afterBalanceInvestor = await this.stableCoin.balanceOf(investor)
+    afterBalanceInvestor.should.be.bignumber.equal(previousBalanceInvestor.minus(investment))
+    afterBalanceRelayer.should.be.bignumber.equal(previousBalanceRelayer)
   })
 })
