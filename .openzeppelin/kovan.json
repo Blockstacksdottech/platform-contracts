@@ -1,11 +1,11 @@
 {
   "contracts": {
     "EthicHubDepositManager": {
-      "address": "0x41Db9FA4Bc683b61E20e223d05B1c11865464b27",
-      "constructorCode": "6080604052612304806100136000396000f3fe",
-      "bodyBytecodeHash": "bef0368f573562b4bfb37736ac5b6d3390290b4f461a226110f5bb4eadeedefb",
-      "localBytecodeHash": "fd7d29bba8253be26889f396bdfbc24d8cae4b3649044c50cd3bb11008ee54c2",
-      "deployedBytecodeHash": "fd7d29bba8253be26889f396bdfbc24d8cae4b3649044c50cd3bb11008ee54c2",
+      "address": "0xA90A9C4Bab7D676fd131Ff8eA6958F95D41eAC87",
+      "constructorCode": "608060405261250f806100136000396000f3fe",
+      "bodyBytecodeHash": "dfccc2bdba1e16a3246e2c3ed6c53de4898285b9e507e8c2f1fbdccc7a0083de",
+      "localBytecodeHash": "0e7d32a4e90e713e3a6cd43108bd60e2d7d67103152455181f2cbbfc366cc944",
+      "deployedBytecodeHash": "0e7d32a4e90e713e3a6cd43108bd60e2d7d67103152455181f2cbbfc366cc944",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -106,7 +106,7 @@
           "label": "stableCoin",
           "astId": 2126,
           "type": "t_address",
-          "src": "594:24:16"
+          "src": "593:24:16"
         }
       ],
       "warnings": {
@@ -114,7 +114,9 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     }
   },
@@ -125,7 +127,7 @@
         "address": "0x9a261A14D0f50f3dd58E7f232Fea3b702CDD7ef1",
         "version": "0.1.7",
         "implementation": "0x41Db9FA4Bc683b61E20e223d05B1c11865464b27",
-        "admin": "0xfBCb86e80FF9C864BA37b9bbf2Be21cC71abcdeE",
+        "admin": "0x3D902AafCEf9cc7c58F881a7CB672519341750d8",
         "kind": "Upgradeable"
       }
     ]
