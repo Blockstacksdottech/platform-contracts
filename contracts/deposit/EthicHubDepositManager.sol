@@ -12,10 +12,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
     uint8 public version;
     EthicHubStorageInterface public ethicHubStorage;
-
     IERC20 public stableCoin;
-
-    address public token_sender;
 
     function initialize(
         address _ethicHubStorage, address _stableCoin
@@ -27,8 +24,6 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
         version = 2;
-        token_sender = _msgSender();
-
         stableCoin = IERC20(_stableCoin);
     }
 
@@ -63,18 +58,20 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", contributor))),
             "Contributor is not registered lender or borrower"
         );
+        address token_sender = _msgSender();
+        if (ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", _msgSender())))) {
+            token_sender = contributor;
+        }
         require(
-            stableCoin.balanceOf(_msgSender()) >= amount &&
-            stableCoin.allowance(_msgSender(), address(this)) >= amount,
+            stableCoin.balanceOf(token_sender) >= amount &&
+            stableCoin.allowance(token_sender, address(this)) >= amount,
             "No balance allowed to transfer or insufficient amount"
         );
         require(
             amount > 0, "Amount cannot be 0"
         );
 
-        if (ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", _msgSender())))) {
-            token_sender = contributor;
-        }
+        
 
         require(stableCoin.transferFrom(token_sender, address(target), amount), "transferFrom dai failed");
         IContributionTarget(target).deposit(contributor, amount);
