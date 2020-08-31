@@ -18,13 +18,18 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         address _ethicHubStorage, address _stableCoin
     ) public initializer {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot is zero address");
+        require(address(_stableCoin) != address(0), "Stable Coin address cannot is zero address");
 
         Ownable.initialize(_msgSender());
         GSNRecipient.initialize();
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 2;
+        version = 1;
         stableCoin = IERC20(_stableCoin);
+    }
+
+    function initialize_v2() public initializer {
+        version = 2;
     }
 
     function acceptRelayedCall(
