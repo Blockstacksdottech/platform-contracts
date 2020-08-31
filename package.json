@@ -5,7 +5,9 @@
   "scripts": {
     "test": "scripts/test.sh",
     "console": "truffle develop",
-    "coverage": "scripts/coverage.sh"
+    "compile": "oz compile",
+    "coverage": "scripts/coverage.sh",
+    "update": "oz update"
   },
   "repository": {
     "type": "git",
