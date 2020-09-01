@@ -28,7 +28,8 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         stableCoin = IERC20(_stableCoin);
     }
 
-    function initialize_v2() public initializer {
+    function initializeToV2() public {
+        require(version < 2, "EthicHubDepositManager: Already upgraded to version 2");
         version = 2;
     }
 
