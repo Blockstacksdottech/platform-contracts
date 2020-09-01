@@ -197,7 +197,7 @@ contract EthicHubUser is Ownable {
      */
     function unregisterRelayer(address target) external onlyOwner {
         require(target != address(0), "Target address cannot be undefined");
-        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "paymentGateway", target)));
+        bool isRegistered = ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", target)));
         if (isRegistered) {
             deleteUserStatus(target, "relayer");
         }
