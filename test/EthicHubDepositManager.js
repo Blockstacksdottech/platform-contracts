@@ -153,18 +153,25 @@ contract('EthicHubDepositManager', function ([owner, investor, relayer]) {
       ).should.be.rejectedWith(EVMRevert)
   })
 
-  it('relayer can contribute', async function () {
-    await this.stableCoin.transfer(relayer, ether(100000)).should.be.fulfilled;
+  it.only('relayer can contribute', async function () {
+    await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
+
     let previousBalanceRelayer = await this.stableCoin.balanceOf(relayer)
     let previousBalanceInvestor = await this.stableCoin.balanceOf(investor)
-    //console.log('prevRelayer', previousBalanceRelayer.toString())
-    //console.log('prevInvestor', previousBalanceInvestor.toString())
+    await this.mockStorage.setBool(utils.soliditySha3("user", "relayer", relayer), true)
+    console.log('Previous-----')
+    console.log('Relayer:', relayer)
+    console.log('prev balance Relayer', previousBalanceRelayer.toString())
+    console.log('Investor:', investor)
+    console.log('prev balance Investor', previousBalanceInvestor.toString())
     await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
         from: investor
     }).should.be.fulfilled;
+    console.log('approved')
     await time.increaseTo(this.fundingStartTime + time.duration.days(1))
     const investment = ether(1)
-    await this.depositManager.methods.contribute(
+    console.log('depositing')
+    let receipt = await this.depositManager.methods.contribute(
         this.lending.address,
         investor,
         investment.toString(10)
@@ -173,7 +180,9 @@ contract('EthicHubDepositManager', function ([owner, investor, relayer]) {
             from: relayer,
             useGSN: false
         }
-    ).should.be.rejectedWith(EVMRevert)
+    )
+    console.log(receipt)
+    console.log('-----results')
     const investorContribution = await this.lending.checkInvestorContribution(investor)
     investorContribution.should.be.bignumber.equal(investment)
     let afterBalanceRelayer = await this.stableCoin.balanceOf(relayer)

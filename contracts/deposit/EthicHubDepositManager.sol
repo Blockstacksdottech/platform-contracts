@@ -13,6 +13,9 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
     uint8 public version;
     EthicHubStorageInterface public ethicHubStorage;
     IERC20 public stableCoin;
+    event LogAddress(address log);
+    event LogBool(bool log);
+    event LogString(string log);
 
     function initialize(
         address _ethicHubStorage, address _stableCoin
@@ -55,19 +58,26 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
     function contribute(address target, address contributor, uint256 amount) public {
         require(contributor != address(0), "Contributor address is zero address");
+        emit LogString("contributor not 0x0");
         require(
             address(target) == ethicHubStorage.getAddress(keccak256(abi.encodePacked("contract.address", target))),
             "Not a valid lending contract address"
         );
+        emit LogString("valid contract");
         require(
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", contributor))) ||
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", contributor))),
             "Contributor is not registered lender or borrower"
         );
+        emit LogString("contributor registered lender or borrower");
         address token_sender = _msgSender();
-        if (ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", _msgSender())))) {
+        emit LogAddress(token_sender);
+        emit LogBool(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", _msgSender()))));
+        /*if (ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "relayer", _msgSender())))) {
+
             token_sender = contributor;
         }
+        emit LogAddress(token_sender);
         require(
             stableCoin.balanceOf(token_sender) >= amount &&
             stableCoin.allowance(token_sender, address(this)) >= amount,
@@ -80,7 +90,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         
 
         require(stableCoin.transferFrom(token_sender, address(target), amount), "transferFrom dai failed");
-        IContributionTarget(target).deposit(contributor, amount);
+        IContributionTarget(target).deposit(contributor, amount);*/
     }
 
     function setRelayHubAddress(address relayAddress) public onlyOwner {
