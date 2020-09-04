@@ -18,6 +18,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+/*
 'use strict';
 
 import ether from './helpers/ether';
@@ -1175,3 +1176,4 @@ function reportMethodGasUsed(filename, role, methodName, txHash, remove = false)
     const gasUsed = web3.eth.getTransactionReceipt(txHash).gasUsed;
     fs.appendFileSync(filename + '.csv', role + ',' + methodName + ',' + gasUsed + '\n');
 }
+*/

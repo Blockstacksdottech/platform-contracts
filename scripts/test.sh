@@ -81,7 +81,7 @@ else
   start_ganache
 fi
 
-setup_gsn_relay
+# setup_gsn_relay
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   npx solidity-coverage

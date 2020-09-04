@@ -17,6 +17,10 @@ contract MockStableCoin is ERC20Detailed {
     bytes32 public constant PERMIT_TYPEHASH = 0xea2aa0a1be11a07ed86d755c93467f4f82362b452371d1ba94d1715123511acb;
     string  public constant version  = "1";
     mapping (address => uint) public nonces;
+    event LogAddress(address log);
+    event LogBool(bool log);
+    event LogString(string log);
+    event LogUint(uint256 log);
 
     constructor(uint256 chainId_) public {
         ERC20Detailed.initialize('StableCoin', 'STC', 18);
@@ -89,7 +93,9 @@ contract MockStableCoin is ERC20Detailed {
      * `amount`.
      */
     function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
+        emit LogAddress(sender);
         _transfer(sender, recipient, amount);
+        emit LogAddress(msg.sender);
         _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
     }
