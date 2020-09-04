@@ -32,10 +32,9 @@ const EthicHubLending = artifacts.require('EthicHubLending')
 const EthicHubDepositManager = Contracts.getFromLocal('EthicHubDepositManager');
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
-
 const CHAIN_ID = "666"
 
-contract('EthicHubDepositManager', function ([owner, investor]) {
+contract('EthicHubDepositManager v1', function ([owner, investor, relayer, testTarget]) {
     beforeEach(async function () {
         await time.advanceBlock()
 
@@ -93,9 +92,9 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
 
         await this.lending.saveInitialParametersToStorage(90, 20, owner)
 
-        await fundRecipient(web3, {
+        /*await fundRecipient(web3, {
             recipient: this.depositManager.address
-        })
+        })*/
     })
 
     it('only owner can change relayer', async function () {
@@ -132,7 +131,7 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
         ).send(
             {
                 from: investor,
-                useGSN: true
+                useGSN: false
             }
         ).should.be.fulfilled
 
@@ -152,4 +151,6 @@ contract('EthicHubDepositManager', function ([owner, investor]) {
           }
       ).should.be.rejectedWith(EVMRevert)
   })
+
+  
 })
