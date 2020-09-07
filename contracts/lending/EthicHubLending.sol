@@ -24,10 +24,7 @@ contract EthicHubLending is Pausable, Ownable {
     uint8 public version;
     EthicHubStorageInterface public ethicHubStorage;
 
-    IERC20 public stableCoin;
-
     mapping(address => Investor) public investors;
-
     uint256 public investorCount;
     uint256 public reclaimedContributions;
     uint256 public fundingStartTime; // Start time of contribution period in UNIX time
@@ -45,11 +42,9 @@ contract EthicHubLending is Pausable, Ownable {
     uint256 public initialStableCoinPerFiatRate;
     uint256 public totalLendingFiatAmount;
 
-    address public borrower;
-    address public localNode;
-    address public ethicHubTeam;
-
-    address public depositManager;
+    address payable public borrower;
+    address payable public localNode;
+    address payable public ethicHubTeam;
 
     uint256 public borrowerReturnStableCoinPerFiatRate;
     uint256 public ethichubFee;
@@ -101,17 +96,15 @@ contract EthicHubLending is Pausable, Ownable {
         uint256 _lendingDays,
         uint256 _ethichubFee,
         uint256 _localNodeFee,
-        address _borrower,
-        address _localNode,
-        address _ethicHubTeam,
-        address _depositManager,
-        address _ethicHubStorage,
-        address _stableCoin
+        address payable _borrower,
+        address payable _localNode,
+        address payable _ethicHubTeam,
+        address _ethicHubStorage
         ) public {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 8;
+        version = 9;
 
         require(_fundingEndTime > fundingStartTime, "fundingEndTime should be later than fundingStartTime");
         require(_borrower != address(0), "No borrower set");
@@ -138,10 +131,6 @@ contract EthicHubLending is Pausable, Ownable {
         localNode = _localNode;
         ethicHubTeam = _ethicHubTeam;
 
-        depositManager = _depositManager;
-
-        stableCoin = IERC20(_stableCoin);
-
         state = LendingState.Uninitialized;
 
         Ownable.initialize(msg.sender);
@@ -166,7 +155,7 @@ contract EthicHubLending is Pausable, Ownable {
         changeState(LendingState.AcceptingContributions);
     }
 
-    function setBorrower(address _borrower) external checkIfArbiter {
+    function setBorrower(address payable _borrower) external checkIfArbiter {
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
 
@@ -175,39 +164,85 @@ contract EthicHubLending is Pausable, Ownable {
         emit BorrowerChanged(borrower);
     }
 
-    function changeInvestorAddress(address oldInvestor, address newInvestor) external checkIfArbiter {
-        require(newInvestor != address(0));
-        require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", newInvestor))));
-        require(investors[oldInvestor].amount != 0, "OldInvestor should have invested in this project");
+    function changeInvestorAddress(address _oldInvestor, address payable _newInvestor) external checkIfArbiter {
+        require(_newInvestor != address(0));
+        require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _newInvestor))));
+        require(investors[_oldInvestor].amount != 0, "OldInvestor should have invested in this project");
         require(
-            investors[newInvestor].amount == 0,
+            investors[_newInvestor].amount == 0,
             "newInvestor should not have invested anything"
         );
 
-        investors[newInvestor].amount = investors[oldInvestor].amount;
-        investors[newInvestor].isCompensated = investors[oldInvestor].isCompensated;
+        investors[_newInvestor].amount = investors[_oldInvestor].amount;
+        investors[_newInvestor].isCompensated = investors[_oldInvestor].isCompensated;
 
-        delete investors[oldInvestor];
+        delete investors[_oldInvestor];
 
-        emit InvestorChanged(oldInvestor, newInvestor);
+        emit InvestorChanged(_oldInvestor, _newInvestor);
     }
 
-    function deposit(address contributor, uint256 amount) external {
-        require(
-            msg.sender == depositManager,
-            "Caller is not a deposit manager"
-        );
-        require(
-            state == LendingState.AcceptingContributions ||
-            state == LendingState.AwaitingReturn,
-            "Can't contribute in this state"
-        );
+    function returnBorrowed() external payable {
+        require(msg.sender == borrower, "In state AwaitingReturn only borrower can contribute");
+        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
+        require(borrowerReturnStableCoinPerFiatRate > 0, "Second exchange rate not set");
 
-        if(state == LendingState.AcceptingContributions) {
-            contributeWithAddress(contributor, amount);
+        bool projectRepayed = false;
+        uint excessRepayment = 0;
+        uint newReturnedAmount = 0;
+
+        emit ReturnAmount(borrower, msg.value);
+
+        (newReturnedAmount, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedAmount, msg.value);
+
+        returnedAmount = newReturnedAmount;
+
+        if (projectRepayed == true) {
+            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
+            changeState(LendingState.ContributionReturned);
+        }
+
+        if (excessRepayment > 0) {
+            address(borrower).transfer(excessRepayment);
+        }
+    }
+
+    // @notice Function to participate in contribution period
+    //  Amounts from the same address should be added up
+    //  If cap is reached, end time should be modified
+    //  Funds should be transferred into multisig wallet
+    // @param contributor Address
+    function deposit(address payable contributor) external payable whenNotPaused {
+        require(
+            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", contributor))),
+            "Contributor is not registered lender"
+        );
+        require(state == LendingState.AcceptingContributions, "state is not AcceptingContributions");
+        require(isContribPeriodRunning(), "can't contribute outside contribution period");
+
+        uint oldTotalContributed = totalContributed;
+        uint newTotalContributed = 0;
+        uint excessContribAmount = 0;
+
+        (newTotalContributed, capReached, excessContribAmount) = calculatePaymentGoal(totalLendingAmount, oldTotalContributed, msg.value);
+
+        totalContributed = newTotalContributed;
+
+        if (capReached) {
+            fundingEndTime = now;
+            emit CapReached(fundingEndTime);
+        }
+
+        if (investors[contributor].amount == 0) {
+            investorCount = investorCount.add(1);
+        }
+
+        if (excessContribAmount > 0) {
+            address(contributor).transfer(excessContribAmount);
+            investors[contributor].amount = investors[contributor].amount.add(msg.value).sub(excessContribAmount);
+            emit Contribution(newTotalContributed, contributor, msg.value.sub(excessContribAmount), investorCount);
         } else {
-            require(contributor == borrower, "In state AwaitingReturn only borrower can contribute");
-            returnBorrowed(amount);
+            investors[contributor].amount = investors[contributor].amount.add(msg.value);
+            emit Contribution(newTotalContributed, contributor, msg.value, investorCount);
         }
     }
 
@@ -263,7 +298,7 @@ contract EthicHubLending is Pausable, Ownable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContributionDefault(address beneficiary) external {
+    function reclaimContributionDefault(address payable beneficiary) external {
         require(state == LendingState.Default);
         require(!investors[beneficiary].isCompensated);
 
@@ -283,7 +318,7 @@ contract EthicHubLending is Pausable, Ownable {
      * @param  beneficiary the contributor
      *
      */
-    function reclaimContribution(address beneficiary) external {
+    function reclaimContribution(address payable beneficiary) external {
         require(state == LendingState.ProjectNotFunded, "State is not ProjectNotFunded");
         require(!investors[beneficiary].isCompensated, "Contribution already reclaimed");
         uint256 contribution = investors[beneficiary].amount;
@@ -295,7 +330,7 @@ contract EthicHubLending is Pausable, Ownable {
         doReclaim(beneficiary, contribution);
     }
 
-    function reclaimContributionWithInterest(address beneficiary) external {
+    function reclaimContributionWithInterest(address payable beneficiary) external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(!investors[beneficiary].isCompensated, "Lender already compensated");
         uint256 contribution = checkInvestorReturns(beneficiary);
@@ -335,77 +370,19 @@ contract EthicHubLending is Pausable, Ownable {
         require(ethicHubTeamFeeReclaimed, "Team fee is not reclaimed");
         require(investorCount == reclaimedContributions, "Not all investors have reclaimed their share");
 
-        doReclaim(ethicHubTeam, stableCoin.balanceOf(address(this)));
+        doReclaim(ethicHubTeam, address(this).balance);
     }
 
-    function doReclaim(address target, uint256 amount) internal {
-        uint256 contractBalance = stableCoin.balanceOf(address(this));
+    function doReclaim(address payable target, uint256 amount) internal {
+        uint256 contractBalance = address(this).balance;
         uint256 reclaimAmount = (contractBalance < amount) ? contractBalance : amount;
-
-        require(stableCoin.transfer(target, reclaimAmount), "transfer stable token method failed");
+        
+        address(target).transfer(reclaimAmount);
 
         emit Reclaim(target, reclaimAmount);
     }
 
-    function returnBorrowed(uint256 amount) internal {
-        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
-        require(borrowerReturnStableCoinPerFiatRate > 0, "Second exchange rate not set");
-
-        bool projectRepayed = false;
-        uint excessRepayment = 0;
-        uint newReturnedAmount = 0;
-
-        emit ReturnAmount(borrower, amount);
-
-        (newReturnedAmount, projectRepayed, excessRepayment) = calculatePaymentGoal(borrowerReturnAmount(), returnedAmount, amount);
-
-        returnedAmount = newReturnedAmount;
-
-        if (projectRepayed == true) {
-            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
-            changeState(LendingState.ContributionReturned);
-        }
-
-        if (excessRepayment > 0) {
-            require(stableCoin.transfer(borrower, excessRepayment), "transfer stable token method failed");
-        }
-    }
-
-    // @notice Function to participate in contribution period
-    //  Amounts from the same address should be added up
-    //  If cap is reached, end time should be modified
-    //  Funds should be transferred into multisig wallet
-    // @param contributor Address
-    function contributeWithAddress(address contributor, uint256 amount) internal whenNotPaused {
-        require(state == LendingState.AcceptingContributions, "state is not AcceptingContributions");
-        require(isContribPeriodRunning(), "can't contribute outside contribution period");
-
-        uint oldTotalContributed = totalContributed;
-        uint newTotalContributed = 0;
-        uint excessContribAmount = 0;
-
-        (newTotalContributed, capReached, excessContribAmount) = calculatePaymentGoal(totalLendingAmount, oldTotalContributed, amount);
-
-        totalContributed = newTotalContributed;
-
-        if (capReached) {
-            fundingEndTime = now;
-            emit CapReached(fundingEndTime);
-        }
-
-        if (investors[contributor].amount == 0) {
-            investorCount = investorCount.add(1);
-        }
-
-        if (excessContribAmount > 0) {
-            require(stableCoin.transfer(contributor, excessContribAmount), "transfer stable token method failed");
-            investors[contributor].amount = investors[contributor].amount.add(amount).sub(excessContribAmount);
-            emit Contribution(newTotalContributed, contributor, amount.sub(excessContribAmount), investorCount);
-        } else {
-            investors[contributor].amount = investors[contributor].amount.add(amount);
-            emit Contribution(newTotalContributed, contributor, amount, investorCount);
-        }
-    }
+    
 
     /**
      * Calculates if a target value is reached after increment, and by how much it was surpassed.
@@ -433,8 +410,7 @@ contract EthicHubLending is Pausable, Ownable {
         require(capReached, "Cap is not reached");
 
         changeState(LendingState.ExchangingToFiat);
-
-        stableCoin.transfer(borrower, totalContributed);
+        address(borrower).transfer(totalContributed);
     }
 
     /**
