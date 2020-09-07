@@ -71,7 +71,8 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
         ).should.be.rejectedWith(EVMRevert)
     })
 
-    it('send to address', async function () {
+    it.skip('send to address', async function () {
+        // NOTE: disabled general purpose sending
         await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
             from: investor
@@ -122,7 +123,7 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
         await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
         const investment = ether(1)
 
-        await this.depositManager.methods.send(investor, investor, investment.toString(), "0x123",  "123").send({
+        await this.depositManager.methods.send(investor, investment.toString(), "0x123",  "123").send({
             from: investor
         }).should.be.rejectedWith(EVMRevert)
     })
@@ -134,7 +135,7 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
         }).should.be.fulfilled;
 
         const investment = ether(1)
-        let tx = await this.depositManager.methods.sendToBridge(investor, target, investment.toString()).send({
+        let tx = await this.depositManager.methods.sendToBridge(investor, investment.toString()).send({
             from: relayer
         })
         console.log(tx.events.allEvents)
