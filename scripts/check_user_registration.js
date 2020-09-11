@@ -5,8 +5,9 @@ require('dotenv').config();
 var HDWalletProvider = require("@truffle/hdwallet-provider");
 let mnemonic = process.env.MNEMONIC;
 var Web3 = require('web3');
-var web3 = new Web3(new HDWalletProvider(mnemonic, "https://mainnet.infura.io/" + process.env.INFURA_KEY));
-var BN = web3const utils = require("web3-utils");.BN;
+var web3 = new Web3(new HDWalletProvider(process.env.KOVAN_MNEMONIC, 'https://kovan.ethichub.com'))//"https://mainnet.infura.io/" + process.env.INFURA_KEY));
+var BN = web3.BN;
+const utils = require("web3-utils");
 const loader = require('./contract_loader.js');
 console.log(`Network: ${process.env.NETWORK_ID}`)
 
@@ -18,7 +19,7 @@ switch (process.env.NETWORK_ID) {
     account = '0xAB42A5a21566C9f1466D414CD3195dA44643390b';
     break;
   case "42":
-    userAddress = '0x8E5E619c56a03b0C769f3E07B0A3C2448994f91F';
+    userAddress = process.env.KOVAN_USER_MANAGER_ADDRESS;
     account = '0xfBCb86e80FF9C864BA37b9bbf2Be21cC71abcdeE';
     break;
   default:
@@ -40,9 +41,7 @@ console.log("address: " + address)
 
 
 loader.load(web3, 'EthicHubUser', userAddress).then(async (userInstance) => {
-  console.log(userInstance.methods)
   var action = userInstance.methods.viewRegistrationStatus(address, role)
-  console.log(action)
 
   var response = await action.call({ from: account });
   console.log(response);

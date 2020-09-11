@@ -37,7 +37,7 @@ contract EthicHubUser is Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 1;
+        version = 4;
 
         Ownable.initialize(msg.sender);
     }
@@ -52,7 +52,7 @@ contract EthicHubUser is Ownable {
         address target,
         string memory profile,
         bool isRegistered
-        ) internal onlyOwner {
+        ) public onlyOwner {
         require(target != address(0), "Target address cannot be undefined");
         require(bytes(profile).length != 0);
         ethicHubStorage.setBool(keccak256(abi.encodePacked("user", profile, target)), isRegistered);

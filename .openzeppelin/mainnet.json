@@ -1,7 +1,7 @@
 {
   "contracts": {
     "EthicHubDepositManager": {
-      "address": "0x70B01088e05c55B2EAE911BB2A332fABE4DDA229",
+      "address": "0xB878d77D9985FA3a66e9f3c74144f6bb25584b32",
       "constructorCode": "6080604052612bb4806100136000396000f3fe",
       "bodyBytecodeHash": "83d01f6d272df9f17ca2ee3b9c18fb991dd1792a8fca4f78c91370691bdee666",
       "localBytecodeHash": "6cf535a5896b087e372371925c34e54891e16c40081038247d443200074bfe9a",
@@ -132,7 +132,32 @@
         "hasInitialValuesInDeclarations": false,
         "uninitializedBaseContracts": [],
         "storageUncheckedVars": [],
-        "storageDiff": []
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 9,
+              "contract": "EthicHubDepositManager",
+              "path": "contracts/deposit/EthicHubDepositManager.sol",
+              "label": "relayer",
+              "astId": 2129,
+              "type": "t_address",
+              "src": "1400:22:16"
+            }
+          },
+          {
+            "action": "append",
+            "updated": {
+              "index": 10,
+              "contract": "EthicHubDepositManager",
+              "path": "contracts/deposit/EthicHubDepositManager.sol",
+              "label": "tokenBridge",
+              "astId": 2131,
+              "type": "t_address",
+              "src": "1428:31:16"
+            }
+          }
+        ]
       }
     }
   },
@@ -140,32 +165,23 @@
   "proxies": {
     "ethichub_platform/EthicHubDepositManager": [
       {
-        "address": "0x079B5f8B2A31FA9a744Cd2AFc681B31BD05C0a60",
+        "address": "0xaE0c1645F27386C74511E9d5C96733F1965F56B6",
         "version": "0.1.7",
-        "implementation": "0x70B01088e05c55B2EAE911BB2A332fABE4DDA229",
-        "admin": "0x9B44D732C4CEc2B835731F2F479B5b547B66f247",
+        "implementation": "0xB878d77D9985FA3a66e9f3c74144f6bb25584b32",
+        "admin": "0x333815B7b20ac00A96F5923Bd4486AB75Ae8888D",
         "kind": "Upgradeable"
       }
     ]
   },
   "manifestVersion": "2.2",
   "version": "0.1.7",
+  "proxyAdmin": {
+    "address": "0x333815B7b20ac00A96F5923Bd4486AB75Ae8888D"
+  },
   "dependencies": {
     "@openzeppelin/contracts-ethereum-package": {
-      "package": "0xB6F8F11b166D526932ee04ffe4D25B810f619E34",
+      "package": "0x778dddF23Ec1B5Cb18394c6C110480CaaDB3B0f6",
       "version": "2.4.0"
     }
-  },
-  "app": {
-    "address": "0x5075533A62399E7AAD0379718597494C3C715c3F"
-  },
-  "package": {
-    "address": "0xE6EFcb650e702C6D7815552c14c02B0d34eF8C07"
-  },
-  "provider": {
-    "address": "0xc7Eb4d825ceF5669CA8C42DFb91f64A3f86ee5E8"
-  },
-  "proxyAdmin": {
-    "address": "0x9B44D732C4CEc2B835731F2F479B5b547B66f247"
   }
 }

@@ -21,7 +21,7 @@ cleanup() {
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   ganache_port=8555
 else
-  ganache_port=8545
+  ganache_port=9545
 fi
 
 relayer_port=8099
@@ -81,7 +81,7 @@ else
   start_ganache
 fi
 
-setup_gsn_relay
+# setup_gsn_relay
 
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   npx solidity-coverage

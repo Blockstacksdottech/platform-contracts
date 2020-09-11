@@ -1,0 +1,6 @@
+----------
+(kovan:0x9a261A14D0f50f3dd58E7f232Fea3b702CDD7ef1,mainnet:0xaE0c1645F27386C74511E9d5C96733F1965F56B6)
+0. Web Etherscan: Misc -> Verify contract
+1. Complete teh params, with excatly compiler proxy (v0.5.3)
+2. Optimization Enabled: No with 200 runs
+2. ABI-Encoded with contract creation code: 00000....
