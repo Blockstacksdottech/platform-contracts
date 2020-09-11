@@ -11,6 +11,7 @@ mainmenu () {
   echo "5 - EthicHubArbitrage"
   echo "6 - EthicHubIntegration"
   echo "7 - EthicHubDepositManager"
+  echo "8 - EthicHubDepositManagerV2"
   echo "x - exit program"
 
   read  -n 1 -p "Input Selection:" mainmenuinput
@@ -30,6 +31,8 @@ mainmenu () {
             bash $SCRIPT_PATH test/EthicHubIntegration.js
         elif [ "$mainmenuinput" = "7" ]; then
             bash $SCRIPT_PATH test/EthicHubDepositManager.js
+        elif [ "$mainmenuinput" = "8" ]; then
+            bash $SCRIPT_PATH test/EthicHubDepositManagerV2.js
 
         elif [ "$mainmenuinput" = "x" ];then
             exit 0

@@ -1,138 +1,187 @@
 {
-    "contracts": {
-      "EthicHubDepositManager": {
-        "address": "0xfC89f26e78da31A0E794F12e09a89B5338008B26",
-        "constructorCode": "6080604052611632806100136000396000f3fe",
-        "bodyBytecodeHash": "40c5d12c14eb75c0240cc2bb63f43fdec269d676206c105200ad894cafbd9df9",
-        "localBytecodeHash": "59a897533f61556b7751100b5733115ee79b833985779c6454aedde509244d7e",
-        "deployedBytecodeHash": "59a897533f61556b7751100b5733115ee79b833985779c6454aedde509244d7e",
-        "types": {
-          "t_bool": {
-            "id": "t_bool",
-            "kind": "elementary",
-            "label": "bool"
-          },
-          "t_uint256": {
-            "id": "t_uint256",
-            "kind": "elementary",
-            "label": "uint256"
-          },
-          "t_array:50<t_uint256>": {
-            "id": "t_array:50<t_uint256>",
-            "valueType": "t_uint256",
-            "length": "50",
-            "kind": "array",
-            "label": "uint256[50]"
-          },
-          "t_address": {
-            "id": "t_address",
-            "kind": "elementary",
-            "label": "address"
-          },
-          "t_uint8": {
-            "id": "t_uint8",
-            "kind": "elementary",
-            "label": "uint8"
-          }
+  "contracts": {
+    "EthicHubDepositManager": {
+      "address": "0xB878d77D9985FA3a66e9f3c74144f6bb25584b32",
+      "constructorCode": "6080604052612bb4806100136000396000f3fe",
+      "bodyBytecodeHash": "83d01f6d272df9f17ca2ee3b9c18fb991dd1792a8fca4f78c91370691bdee666",
+      "localBytecodeHash": "6cf535a5896b087e372371925c34e54891e16c40081038247d443200074bfe9a",
+      "deployedBytecodeHash": "6cf535a5896b087e372371925c34e54891e16c40081038247d443200074bfe9a",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
         },
-        "storage": [
-          {
-            "contract": "Initializable",
-            "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-            "label": "initialized",
-            "astId": 6780,
-            "type": "t_bool",
-            "src": "757:24:27"
-          },
-          {
-            "contract": "Initializable",
-            "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-            "label": "initializing",
-            "astId": 6782,
-            "type": "t_bool",
-            "src": "876:25:27"
-          },
-          {
-            "contract": "Initializable",
-            "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-            "label": "______gap",
-            "astId": 6838,
-            "type": "t_array:50<t_uint256>",
-            "src": "1951:29:27"
-          },
-          {
-            "contract": "Ownable",
-            "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
-            "label": "_owner",
-            "astId": 6526,
-            "type": "t_address",
-            "src": "526:22:24"
-          },
-          {
-            "contract": "Ownable",
-            "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
-            "label": "______gap",
-            "astId": 6639,
-            "type": "t_array:50<t_uint256>",
-            "src": "2471:29:24"
-          },
-          {
-            "contract": "GSNRecipient",
-            "path": "@openzeppelin/contracts-ethereum-package/contracts/GSN/GSNRecipient.sol",
-            "label": "_relayHub",
-            "astId": 5396,
-            "type": "t_address",
-            "src": "1133:25:17"
-          },
-          {
-            "contract": "EthicHubDepositManager",
-            "path": "contracts/deposit/EthicHubDepositManager.sol",
-            "label": "version",
-            "astId": 611,
-            "type": "t_uint8",
-            "src": "514:20:4"
-          },
-          {
-            "contract": "EthicHubDepositManager",
-            "path": "contracts/deposit/EthicHubDepositManager.sol",
-            "label": "ethicHubStorage",
-            "astId": 613,
-            "type": "t_address",
-            "src": "540:47:4"
-          },
-          {
-            "contract": "EthicHubDepositManager",
-            "path": "contracts/deposit/EthicHubDepositManager.sol",
-            "label": "stableCoin",
-            "astId": 615,
-            "type": "t_address",
-            "src": "594:24:4"
-          }
-        ],
-        "warnings": {
-          "hasConstructor": false,
-          "hasSelfDestruct": false,
-          "hasDelegateCall": false,
-          "hasInitialValuesInDeclarations": false,
-          "uninitializedBaseContracts": []
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_uint8": {
+          "id": "t_uint8",
+          "kind": "elementary",
+          "label": "uint8"
         }
-      }
-    },
-    "solidityLibs": {},
-    "proxies": {
-      "ethichub_platform/EthicHubDepositManager": [
+      },
+      "storage": [
         {
-          "address": "0xaE0c1645F27386C74511E9d5C96733F1965F56B6",
-          "version": "0.1.7",
-          "implementation": "0xfC89f26e78da31A0E794F12e09a89B5338008B26",
-          "admin": "0x333815B7b20ac00A96F5923Bd4486AB75Ae8888D",
-          "kind": "Upgradeable"
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 1451,
+          "type": "t_bool",
+          "src": "757:24:11"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 1453,
+          "type": "t_bool",
+          "src": "876:25:11"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 1509,
+          "type": "t_array:50<t_uint256>",
+          "src": "1951:29:11"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "_owner",
+          "astId": 1197,
+          "type": "t_address",
+          "src": "526:22:8"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "______gap",
+          "astId": 1310,
+          "type": "t_array:50<t_uint256>",
+          "src": "2471:29:8"
+        },
+        {
+          "contract": "GSNRecipient",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/GSN/GSNRecipient.sol",
+          "label": "_relayHub",
+          "astId": 67,
+          "type": "t_address",
+          "src": "1133:25:1"
+        },
+        {
+          "contract": "EthicHubDepositManager",
+          "path": "contracts/deposit/EthicHubDepositManager.sol",
+          "label": "version",
+          "astId": 2123,
+          "type": "t_uint8",
+          "src": "1291:20:16"
+        },
+        {
+          "contract": "EthicHubDepositManager",
+          "path": "contracts/deposit/EthicHubDepositManager.sol",
+          "label": "ethicHubStorage",
+          "astId": 2125,
+          "type": "t_address",
+          "src": "1317:47:16"
+        },
+        {
+          "contract": "EthicHubDepositManager",
+          "path": "contracts/deposit/EthicHubDepositManager.sol",
+          "label": "stableCoin",
+          "astId": 2127,
+          "type": "t_address",
+          "src": "1370:24:16"
+        },
+        {
+          "contract": "EthicHubDepositManager",
+          "path": "contracts/deposit/EthicHubDepositManager.sol",
+          "label": "relayer",
+          "astId": 2129,
+          "type": "t_address",
+          "src": "1400:22:16"
+        },
+        {
+          "contract": "EthicHubDepositManager",
+          "path": "contracts/deposit/EthicHubDepositManager.sol",
+          "label": "tokenBridge",
+          "astId": 2131,
+          "type": "t_address",
+          "src": "1428:31:16"
         }
-      ]
-    },
-    "manifestVersion": "2.2",
-    "version": "0.1.7",
-    "proxyAdmin": {
-      "address": "0x333815B7b20ac00A96F5923Bd4486AB75Ae8888D"
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 9,
+              "contract": "EthicHubDepositManager",
+              "path": "contracts/deposit/EthicHubDepositManager.sol",
+              "label": "relayer",
+              "astId": 2129,
+              "type": "t_address",
+              "src": "1400:22:16"
+            }
+          },
+          {
+            "action": "append",
+            "updated": {
+              "index": 10,
+              "contract": "EthicHubDepositManager",
+              "path": "contracts/deposit/EthicHubDepositManager.sol",
+              "label": "tokenBridge",
+              "astId": 2131,
+              "type": "t_address",
+              "src": "1428:31:16"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "solidityLibs": {},
+  "proxies": {
+    "ethichub_platform/EthicHubDepositManager": [
+      {
+        "address": "0xaE0c1645F27386C74511E9d5C96733F1965F56B6",
+        "version": "0.1.7",
+        "implementation": "0xB878d77D9985FA3a66e9f3c74144f6bb25584b32",
+        "admin": "0x333815B7b20ac00A96F5923Bd4486AB75Ae8888D",
+        "kind": "Upgradeable"
+      }
+    ]
+  },
+  "manifestVersion": "2.2",
+  "version": "0.1.7",
+  "proxyAdmin": {
+    "address": "0x333815B7b20ac00A96F5923Bd4486AB75Ae8888D"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-ethereum-package": {
+      "package": "0x778dddF23Ec1B5Cb18394c6C110480CaaDB3B0f6",
+      "version": "2.4.0"
     }
   }
+}

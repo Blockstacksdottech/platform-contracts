@@ -106,27 +106,14 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
     }
 
 
-    function send(address _sender, address _receiver, uint256 _amount, bytes32 _intent, uint256 _destChainID) external onlyRelayer {
-        require(_sender != address(0), "Sender address is zero address");
-        require(_receiver != address(0), "Destination address is zero address");
+    function sendToBridge(address _sender, uint256 _amount) external onlyRelayer {
         require(
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _sender))) ||
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _sender))),
             "Contributor is not registered lender or borrower"
         );
 
-        require(stableCoin.transferFrom(_sender, address(_receiver), _amount), "transferFrom dai failed");
-        emit Sent(_sender, _receiver , _amount, _intent, _destChainID);
-    }
-
-    function sendToBridge(address _sender, address _receiver, uint256 _amount) external onlyRelayer {
-        require(
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _sender))) ||
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _sender))),
-            "Contributor is not registered lender or borrower"
-        );
-
-        tokenBridge.relayTokens(_sender, _receiver, _amount);
+        tokenBridge.relayTokens(_sender, _sender, _amount);
 
     }
 
