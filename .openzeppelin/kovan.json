@@ -1,11 +1,11 @@
 {
   "contracts": {
     "EthicHubDepositManager": {
-      "address": "0x2b33Fb10273C6389c20EC3BDCC8FDfEc2b5c396D",
-      "constructorCode": "60806040526132aa806100136000396000f3fe",
-      "bodyBytecodeHash": "d9b686986d18a2dbd4e737bdae79b59a505f7e7438751a5067333606ebc8e364",
-      "localBytecodeHash": "4fbad54e0242ecf9749873614cb858fbc5abf787400708b89187b055833291cb",
-      "deployedBytecodeHash": "4fbad54e0242ecf9749873614cb858fbc5abf787400708b89187b055833291cb",
+      "address": "0x70B01088e05c55B2EAE911BB2A332fABE4DDA229",
+      "constructorCode": "6080604052612bb4806100136000396000f3fe",
+      "bodyBytecodeHash": "83d01f6d272df9f17ca2ee3b9c18fb991dd1792a8fca4f78c91370691bdee666",
+      "localBytecodeHash": "6cf535a5896b087e372371925c34e54891e16c40081038247d443200074bfe9a",
+      "deployedBytecodeHash": "6cf535a5896b087e372371925c34e54891e16c40081038247d443200074bfe9a",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -132,32 +132,7 @@
         "hasInitialValuesInDeclarations": false,
         "uninitializedBaseContracts": [],
         "storageUncheckedVars": [],
-        "storageDiff": [
-          {
-            "action": "append",
-            "updated": {
-              "index": 9,
-              "contract": "EthicHubDepositManager",
-              "path": "contracts/deposit/EthicHubDepositManager.sol",
-              "label": "relayer",
-              "astId": 2129,
-              "type": "t_address",
-              "src": "1400:22:16"
-            }
-          },
-          {
-            "action": "append",
-            "updated": {
-              "index": 10,
-              "contract": "EthicHubDepositManager",
-              "path": "contracts/deposit/EthicHubDepositManager.sol",
-              "label": "tokenBridge",
-              "astId": 2131,
-              "type": "t_address",
-              "src": "1428:31:16"
-            }
-          }
-        ]
+        "storageDiff": []
       }
     }
   },
@@ -167,7 +142,7 @@
       {
         "address": "0x079B5f8B2A31FA9a744Cd2AFc681B31BD05C0a60",
         "version": "0.1.7",
-        "implementation": "0x2b33Fb10273C6389c20EC3BDCC8FDfEc2b5c396D",
+        "implementation": "0x70B01088e05c55B2EAE911BB2A332fABE4DDA229",
         "admin": "0x9B44D732C4CEc2B835731F2F479B5b547B66f247",
         "kind": "Upgradeable"
       }

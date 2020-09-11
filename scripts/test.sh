@@ -21,7 +21,7 @@ cleanup() {
 if [ "$SOLIDITY_COVERAGE" = true ]; then
   ganache_port=8555
 else
-  ganache_port=8545
+  ganache_port=9545
 fi
 
 relayer_port=8099

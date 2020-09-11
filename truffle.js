@@ -3,6 +3,8 @@ require('@babel/polyfill');
 require('dotenv').config();
 
 var HDWalletProvider = require("@truffle/hdwallet-provider");
+var PrivateKeyProvider = require("truffle-privatekey-provider");
+
 const {
     GSNDevProvider
 } = require('@openzeppelin/gsn-provider');
@@ -22,13 +24,7 @@ module.exports = {
     networks: {
         development: {
             provider: function() {
-                return new GSNDevProvider('http://localhost:8545', {
-                    txfee: 70,
-                    useGSN: false,
-                    // The last two accounts defined in test.sh
-                    ownerAddress: '0x26be9c03ca7f61ad3d716253ee1edcae22734698',
-                    relayerAddress: '0xdc5fd04802ea70f6e27aec12d56716624c98e749',
-                })
+                return new HDWalletProvider(process.env.GANACHE_MNEMONIC, "http://127.0.0.1:9545");
             },
             network_id: "*" // Match any network id
         },
@@ -69,6 +65,12 @@ module.exports = {
             network_id: '*',
             gasLimit: 6000000,
             gas: 4700000
+        },
+        mainnet: {
+            provider: () => new PrivateKeyProvider(process.env.PK, "https://mainnet.infura.io/v3/"  + process.env.INFURA_KEY),
+            network_id: '1',
+            gasLimit: 60000000,
+            gasPrice: 130000000000
         }
     }
 };
