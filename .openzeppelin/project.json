@@ -7,7 +7,7 @@
     "@openzeppelin/contracts-ethereum-package": "^2.4.0"
   },
   "name": "ethichub_platform",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "compiler": {
     "manager": "openzeppelin",
     "compilerSettings": {
