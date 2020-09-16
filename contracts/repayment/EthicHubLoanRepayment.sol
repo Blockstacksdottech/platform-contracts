@@ -411,10 +411,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         investorCount = investorCount.add(1);
 
         if (totalContributed.add(amount) > totalLendingAmount) {
-            excessContribAmount = totalLendingAmount.sub(totalContributed);
-            investors[investor].amount = excessContribAmount;
-            totalContributed = totalContributed.add(excessContribAmount);
-            emit SetInvestorState(investor, excessContribAmount);
+            revert("total lending amount is minor to total contributed");
         } else {
             investors[investor].amount = amount;
             totalContributed = totalContributed.add(amount);
@@ -425,6 +422,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
     function changeInvestorState(address investor, uint256 amount) public onlyOwner {
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", investor))), "Investor is not registered lender");
         require(state == LendingState.Uninitialized, "State is not Uninitialized");
+        require(investors[investor].amount > 0, "This investor is not set yet");
 
         totalContributed = totalContributed.sub(investors[investor].amount);
         investors[investor].amount = amount;
