@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/lifecycle/Pausable.so
 import "../EthicHubBase.sol";
 import "../storage/EthicHubStorageInterface.sol";
 
-contract EthicHubLending is Pausable, Ownable {
+contract EthicHubLoanRepayment is Pausable, Ownable {
     using SafeMath for uint256;
 
     enum LendingState {
@@ -65,13 +65,10 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     // Events
-    event CapReached(uint endTime);
-    event Contribution(uint totalContributed, address indexed investor, uint amount, uint investorsCount);
-    event Compensated(address indexed contributor, uint amount);
     event StateChange(uint state);
-    event InitalRateSet(uint rate);
     event ReturnRateSet(uint rate);
     event SetInvestorState(address indexed investor, uint amount);
+    event ChangeInvestorState(address indexed investor, uint amount);
     event ReturnAmount(address indexed borrower, uint amount);
     event BorrowerChanged(address indexed newBorrower);
     event InvestorChanged(address indexed oldInvestor, address indexed newInvestor);
@@ -151,7 +148,7 @@ contract EthicHubLending is Pausable, Ownable {
         ethicHubStorage.setAddress(keccak256(abi.encodePacked("lending.localNode", this)), localNode);
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.communityMembers", this)), _communityMembers);
 
-        changeState(LendingState.AwaitingReturn);
+        calculateTotalLendingFiatAmount();
     }
 
     function setBorrower(address payable _borrower) external checkIfArbiter {
@@ -181,8 +178,8 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     function returnBorrowed() external payable {
-        require(msg.sender == borrower, "In state AwaitingReturn only borrower can contribute");
-        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
+        require(msg.sender == borrower, "In state uninitialized only borrower can contribute");
+        require(state == LendingState.Uninitialized, "State is not Uninitialized");
         require(borrowerReturnStableCoinPerFiatRate > 0, "Second exchange rate not set");
 
         bool projectRepayed = false;
@@ -205,20 +202,8 @@ contract EthicHubLending is Pausable, Ownable {
         }
     }
 
-    /**
-     * After the contribution period ends unsuccesfully, this method enables the contributor
-     *  to retrieve their contribution
-     */
-    function declareProjectNotFunded() external onlyOwnerOrLocalNode {
-        require(totalContributed < totalLendingAmount);
-        require(state == LendingState.AcceptingContributions);
-        require(now > fundingEndTime);
-
-        changeState(LendingState.ProjectNotFunded);
-    }
-
     function declareProjectDefault() external onlyOwnerOrLocalNode {
-        require(state == LendingState.AwaitingReturn);
+        require(state == LendingState.Uninitialized);
         uint maxDelayDays = getMaxDelayDays();
         require(getDelayDays(now) >= maxDelayDays);
 
@@ -228,11 +213,18 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     function setborrowerReturnStableCoinPerFiatRate(uint256 _borrowerReturnStableCoinPerFiatRate) external onlyOwnerOrLocalNode {
-        require(state == LendingState.AwaitingReturn, "State is not AwaitingReturn");
+        require(state == LendingState.Uninitialized, "State is not Uninitialized");
 
         borrowerReturnStableCoinPerFiatRate = _borrowerReturnStableCoinPerFiatRate;
 
         emit ReturnRateSet(borrowerReturnStableCoinPerFiatRate);
+    }
+
+    /**
+    * Calculate total lending fiat amount.
+    */
+    function calculateTotalLendingFiatAmount() internal {
+        totalLendingFiatAmount = totalLendingAmount.mul(initialStableCoinPerFiatRate);
     }
 
     /**
@@ -248,23 +240,6 @@ contract EthicHubLending is Pausable, Ownable {
         uint256 contribution = checkInvestorReturns(beneficiary);
 
         require(contribution > 0);
-
-        investors[beneficiary].isCompensated = true;
-        reclaimedContributions = reclaimedContributions.add(1);
-
-        doReclaim(beneficiary, contribution);
-    }
-
-    /**
-     * Method to reclaim contribution after a project is declared as not funded
-     * @param  beneficiary the contributor
-     *
-     */
-    function reclaimContribution(address payable beneficiary) external {
-        require(state == LendingState.ProjectNotFunded, "State is not ProjectNotFunded");
-        require(!investors[beneficiary].isCompensated, "Contribution already reclaimed");
-        uint256 contribution = investors[beneficiary].amount;
-        require(contribution > 0, "Contribution is 0");
 
         investors[beneficiary].isCompensated = true;
         reclaimedContributions = reclaimedContributions.add(1);
@@ -426,12 +401,43 @@ contract EthicHubLending is Pausable, Ownable {
         emit StateChange(uint(newState));
     }
 
-    function setInvestorState(address investor, uint256 amount) external onlyOwnerOrLocalNode {
+    function setInvestorState(address investor, uint256 amount) public onlyOwner {
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", investor))), "Investor is not registered lender");
-        require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
-        investors[investor].amount = amount;
-        emit SetInvestorState(investor, amount);
+        require(state == LendingState.Uninitialized, "State is not Uninitialized");
+        require(totalContributed < totalLendingAmount, "Total contributed reached");
+
+        uint excessContribAmount = 0;
+
+        investorCount = investorCount.add(1);
+
+        if (totalContributed.add(amount) > totalLendingAmount) {
+            excessContribAmount = totalLendingAmount.sub(totalContributed);
+            investors[investor].amount = excessContribAmount;
+            totalContributed = totalContributed.add(excessContribAmount);
+            emit SetInvestorState(investor, excessContribAmount);
+        } else {
+            investors[investor].amount = amount;
+            totalContributed = totalContributed.add(amount);
+            emit SetInvestorState(investor, amount);
+        }
     }
 
+    function changeInvestorState(address investor, uint256 amount) public onlyOwner {
+        require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", investor))), "Investor is not registered lender");
+        require(state == LendingState.Uninitialized, "State is not Uninitialized");
+
+        totalContributed = totalContributed.sub(investors[investor].amount);
+        investors[investor].amount = amount;
+        totalContributed = totalContributed.add(amount);
+        emit ChangeInvestorState(investor, amount);
+    }
+
+    function setInvestorsStates(address[] calldata addresses, uint256[] calldata amounts) external onlyOwner {
+        require(addresses.length == amounts.length, "The length of the two arrays should be equal");
+
+        for (uint i = 0; i < addresses.length; i++){
+            setInvestorState(addresses[i], amounts[i]);
+        }
+    }
 }
 
