@@ -71,6 +71,7 @@ contract EthicHubLending is Pausable, Ownable {
     event StateChange(uint state);
     event InitalRateSet(uint rate);
     event ReturnRateSet(uint rate);
+    event SetInvestorState(address indexed investor, uint amount);
     event ReturnAmount(address indexed borrower, uint amount);
     event BorrowerChanged(address indexed newBorrower);
     event InvestorChanged(address indexed oldInvestor, address indexed newInvestor);
@@ -103,7 +104,7 @@ contract EthicHubLending is Pausable, Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 9;
+        version = 1;
 
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
@@ -150,7 +151,7 @@ contract EthicHubLending is Pausable, Ownable {
         ethicHubStorage.setAddress(keccak256(abi.encodePacked("lending.localNode", this)), localNode);
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.communityMembers", this)), _communityMembers);
 
-        changeState(LendingState.AcceptingContributions);
+        changeState(LendingState.AwaitingReturn);
     }
 
     function setBorrower(address payable _borrower) external checkIfArbiter {
@@ -425,10 +426,11 @@ contract EthicHubLending is Pausable, Ownable {
         emit StateChange(uint(newState));
     }
 
-    function setInvestorState(address investor, uint256 amount) external onlyOwner {
+    function setInvestorState(address investor, uint256 amount) external onlyOwnerOrLocalNode {
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", investor))), "Investor is not registered lender");
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
-        investors[investor].amount == amount;
+        investors[investor].amount = amount;
+        emit SetInvestorState(investor, amount);
     }
 
 }
