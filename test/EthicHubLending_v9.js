@@ -731,7 +731,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
-            await this.lending.deposit(investor2, {value: borrowerReturnAmount, from: investor2}).should.be.rejectedWith(EVMRevert)
+            await this.lending.returnBorrowed({value: borrowerReturnAmount, from: investor2}).should.be.rejectedWith(EVMRevert)
         })
 
         it('Should not allow reclaim twice the funds', async function() {
