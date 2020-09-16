@@ -578,7 +578,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(realAmountRepayment, this.lendingDays.toNumber())
             await realAmountRepayment.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -588,7 +588,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             const borrowerReturnAmount = await realAmountRepayment.borrowerReturnAmount()
 
             await realAmountRepayment.reclaimContributionWithInterest(investor3, {from: investor3})
-            await realAmountRepayment.reclaimContributionWithInterest(investor4, {from: investor4})
             await realAmountRepayment.reclaimContributionWithInterest(investor, {from: investor})
             await realAmountRepayment.reclaimContributionWithInterest(investor2, {from: investor2})
 
@@ -687,7 +686,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(realAmountRepayment, this.lendingDays.toNumber())
             await realAmountRepayment.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -698,7 +697,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
 
             const initialTeamBalance = await web3.eth.getBalance(ethicHubTeam)
             await realAmountRepayment.reclaimContributionWithInterest(investor3, {from: investor3}).should.be.fulfilled
-            await realAmountRepayment.reclaimContributionWithInterest(investor4, {from: investor4}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor, {from: investor}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor2, {from: investor2}).should.be.fulfilled
             await realAmountRepayment.reclaimLocalNodeFee().should.be.fulfilled
@@ -739,7 +737,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(realAmountRepayment, this.lendingDays.toNumber())
             await realAmountRepayment.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -749,7 +747,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.returnBorrowed({value: "18844038000000000", from: borrower}).should.be.fulfilled
 
             await realAmountRepayment.reclaimContributionWithInterest(investor3, {from: investor3}).should.be.fulfilled
-            await realAmountRepayment.reclaimContributionWithInterest(investor4, {from: investor4}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor, {from: investor}).should.be.fulfilled
             await realAmountRepayment.reclaimLocalNodeFee().should.be.fulfilled
             await realAmountRepayment.reclaimEthicHubTeamFee().should.be.fulfilled
@@ -784,7 +781,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(realAmountRepayment, this.lendingDays.toNumber())
             await realAmountRepayment.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -794,7 +791,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.returnBorrowed({value: "18844038000000000", from: borrower}).should.be.fulfilled
 
             await realAmountRepayment.reclaimContributionWithInterest(investor3, {from: investor3}).should.be.fulfilled
-            await realAmountRepayment.reclaimContributionWithInterest(investor4, {from: investor4}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor, {from: investor}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor2, {from: investor2}).should.be.fulfilled
             await realAmountRepayment.reclaimEthicHubTeamFee().should.be.fulfilled
@@ -830,7 +826,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(realAmountRepayment, this.lendingDays.toNumber())
             await realAmountRepayment.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -840,7 +836,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.returnBorrowed({value: "18844038000000000", from: borrower}).should.be.fulfilled
 
             await realAmountRepayment.reclaimContributionWithInterest(investor3, {from: investor3}).should.be.fulfilled
-            await realAmountRepayment.reclaimContributionWithInterest(investor4, {from: investor4}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor, {from: investor}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor2, {from: investor2}).should.be.fulfilled
             await realAmountRepayment.reclaimLocalNodeFee().should.be.fulfilled
@@ -876,7 +871,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(realAmountRepayment, this.lendingDays.toNumber())
             await realAmountRepayment.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -886,7 +881,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.returnBorrowed({value: "18844038000000000", from: borrower}).should.be.fulfilled
 
             await realAmountRepayment.reclaimContributionWithInterest(investor3, {from: investor3}).should.be.fulfilled
-            await realAmountRepayment.reclaimContributionWithInterest(investor4, {from: investor4}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor, {from: investor}).should.be.fulfilled
             await realAmountRepayment.reclaimContributionWithInterest(investor2, {from: investor2}).should.be.fulfilled
 
@@ -925,7 +919,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await realAmountRepayment.setInvestorState(investor, investment).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await realAmountRepayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await realAmountRepayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             await realAmountRepayment.reclaimLeftover({from: arbiter}).should.be.rejectedWith(EVMRevert)
         })
@@ -1035,8 +1029,8 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
         })
     })
 
-    describe('set investor state', async function() {
-        it('Set 4 investors one to one without excess', async function() {
+    describe.only('set investor state', async function() {
+        it('Set investors one to one without excess', async function() {
             await increaseTimeTo(this.fundingEndTime)
 
             const investorInitialBalance = await web3.eth.getBalance(investor)
@@ -1103,7 +1097,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             contractFinalBalance.should.be.bignumber.equal(new BN(0))
         })
 
-        it('Set 4 investors one to one with excess', async function() {
+        it('Set investors one to one with excess', async function() {
             await increaseTimeTo(this.fundingEndTime)
 
             const investorInitialBalance = await web3.eth.getBalance(investor)
@@ -1125,7 +1119,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await this.repayment.setInvestorState(investor, investment).should.be.fulfilled
             await this.repayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await this.repayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await this.repayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await this.repayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
 
             increaseTimePastEndingTime(this.repayment, this.lendingDays.toNumber())
             await this.repayment.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
@@ -1135,7 +1129,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             await this.repayment.reclaimContributionWithInterest(investor).should.be.fulfilled
             await this.repayment.reclaimContributionWithInterest(investor2).should.be.fulfilled
             await this.repayment.reclaimContributionWithInterest(investor3).should.be.fulfilled
-            await this.repayment.reclaimContributionWithInterest(investor4).should.be.fulfilled
 
             await this.repayment.reclaimLocalNodeFee().should.be.fulfilled
             await this.repayment.reclaimEthicHubTeamFee().should.be.fulfilled
@@ -1154,10 +1147,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             const expectedInvestor3Balance = getExpectedInvestorBalance(investor3InitialBalance, this.totalLendingAmount.div(new BN(8)), investorInterest, this)
             checkLostinTransactions(expectedInvestor3Balance, investor3FinalBalance)
 
-            const investor4FinalBalance = await web3.eth.getBalance(investor4)
-            const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, this.totalLendingAmount.div(new BN(8)), investorInterest, this)
-            checkLostinTransactions(expectedInvestor4Balance, investor4FinalBalance)
-
             const localNodeFinalBalance = await web3.eth.getBalance(localNode)
             const expectedLocalNodeBalance = new BN(localNodeInitialBalance).add(this.totalLendingAmount.mul(this.initialStableCoinPerFiatRate).mul(this.localNodeFee).div(this.finalStableCoinPerFiatRate).div(new BN(100)))
             checkLostinTransactions(expectedLocalNodeBalance, localNodeFinalBalance)
@@ -1165,12 +1154,9 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             const teamFinalBalance = await web3.eth.getBalance(ethicHubTeam)
             const expectedEthicHubTeamBalance = new BN(teamInitialBalance).add(this.totalLendingAmount.mul(this.initialStableCoinPerFiatRate).mul(this.ethichubFee).div(this.finalStableCoinPerFiatRate).div(new BN(100)))
             checkLostinTransactions(expectedEthicHubTeamBalance, teamFinalBalance)
-
-            const contractFinalBalance = await web3.eth.getBalance(this.repayment.address)
-            contractFinalBalance.should.be.bignumber.equal(new BN(0))
         })
 
-        it('Set 4 investors one to one with excess and the ultimate investor is out of range', async function() {
+        it('Set investors one to one with excess and change this excess', async function() {
             await increaseTimeTo(this.fundingEndTime)
 
             const investorInitialBalance = await web3.eth.getBalance(investor)
@@ -1185,79 +1171,14 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
 
             const investment = this.totalLendingAmount.div(new BN(2))
             const investment2 = this.totalLendingAmount.div(new BN(4))
-            // excess amount set state
-            const investment3 = this.totalLendingAmount
-            // out of range
+            const investment3 = this.totalLendingAmount.div(new BN(6))
             const investment4 = this.totalLendingAmount.div(new BN(8))
 
             await this.repayment.setInvestorState(investor, investment).should.be.fulfilled
             await this.repayment.setInvestorState(investor2, investment2).should.be.fulfilled
             await this.repayment.setInvestorState(investor3, investment3).should.be.fulfilled
             await this.repayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
-
-            increaseTimePastEndingTime(this.repayment, this.lendingDays.toNumber())
-            await this.repayment.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            const borrowerReturnAmount = await this.repayment.borrowerReturnAmount();
-            await this.repayment.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
-
-            await this.repayment.reclaimContributionWithInterest(investor).should.be.fulfilled
-            await this.repayment.reclaimContributionWithInterest(investor2).should.be.fulfilled
-            await this.repayment.reclaimContributionWithInterest(investor3).should.be.fulfilled
-
-            await this.repayment.reclaimLocalNodeFee().should.be.fulfilled
-            await this.repayment.reclaimEthicHubTeamFee().should.be.fulfilled
-
-            const investorInterest = await this.repayment.investorInterest()
-
-            const investorFinalBalance = await web3.eth.getBalance(investor)
-            const expectedInvestorBalance = getExpectedInvestorBalance(investorInitialBalance, this.totalLendingAmount.div(new BN(2)), investorInterest, this)
-            checkLostinTransactions(expectedInvestorBalance, investorFinalBalance)
-
-            const investor2FinalBalance = await web3.eth.getBalance(investor2)
-            const expectedInvestor2Balance = getExpectedInvestorBalance(investor2InitialBalance, this.totalLendingAmount.div(new BN(4)), investorInterest, this)
-            checkLostinTransactions(expectedInvestor2Balance, investor2FinalBalance)
-
-            const investor3FinalBalance = await web3.eth.getBalance(investor3)
-            const expectedInvestor3Balance = getExpectedInvestorBalance(investor3InitialBalance, this.totalLendingAmount.div(new BN(8)), investorInterest, this)
-            checkLostinTransactions(expectedInvestor3Balance, investor3FinalBalance)
-
-            const localNodeFinalBalance = await web3.eth.getBalance(localNode)
-            const expectedLocalNodeBalance = new BN(localNodeInitialBalance).add(this.totalLendingAmount.mul(this.initialStableCoinPerFiatRate).mul(this.localNodeFee).div(this.finalStableCoinPerFiatRate).div(new BN(100)))
-            checkLostinTransactions(expectedLocalNodeBalance, localNodeFinalBalance)
-
-            const teamFinalBalance = await web3.eth.getBalance(ethicHubTeam)
-            const expectedEthicHubTeamBalance = new BN(teamInitialBalance).add(this.totalLendingAmount.mul(this.initialStableCoinPerFiatRate).mul(this.ethichubFee).div(this.finalStableCoinPerFiatRate).div(new BN(100)))
-            checkLostinTransactions(expectedEthicHubTeamBalance, teamFinalBalance)
-
-            const contractFinalBalance = await web3.eth.getBalance(this.repayment.address)
-            contractFinalBalance.should.be.bignumber.equal(new BN(0))
-        })
-
-        it('Set 4 investors one to one with excess and change the investment', async function() {
-            await increaseTimeTo(this.fundingEndTime)
-
-            const investorInitialBalance = await web3.eth.getBalance(investor)
-            const investor2InitialBalance = await web3.eth.getBalance(investor2)
-            const investor3InitialBalance = await web3.eth.getBalance(investor3)
-            const investor4InitialBalance = await web3.eth.getBalance(investor4)
-            const localNodeInitialBalance = await web3.eth.getBalance(localNode)
-            const teamInitialBalance = await web3.eth.getBalance(ethicHubTeam)
-            const contractInitialBalance = await web3.eth.getBalance(this.repayment.address)
-            contractInitialBalance.should.be.bignumber.equal(new BN(0))
-
-
-            const investment = this.totalLendingAmount.div(new BN(2))
-            const investment2 = this.totalLendingAmount.div(new BN(4))
-            // excess amount set state
-            const investment3 = this.totalLendingAmount
-            // out of range
-            const investment4 = this.totalLendingAmount
-
-            await this.repayment.setInvestorState(investor, investment).should.be.fulfilled
-            await this.repayment.setInvestorState(investor2, investment2).should.be.fulfilled
-            await this.repayment.setInvestorState(investor3, investment3).should.be.fulfilled
-            await this.repayment.setInvestorState(investor4, investment4).should.be.rejectedWith(EVMRevert)
-            await this.repayment.changeInvestorState(investor3, this.totalLendingAmount.div(new BN(8)))
+            await this.repayment.changeInvestorState(investor3, this.totalLendingAmount.div(new BN(8))).should.be.fulfilled
             await this.repayment.setInvestorState(investor4, investment4).should.be.fulfilled
 
 
@@ -1304,7 +1225,77 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             contractFinalBalance.should.be.bignumber.equal(new BN(0))
         })
 
-        it('Set 4 investors in array', async function() {
+        it('Set investors one to one with excess and should not change the investment if not set yet', async function() {
+            await increaseTimeTo(this.fundingEndTime)
+
+            const investorInitialBalance = await web3.eth.getBalance(investor)
+            const investor2InitialBalance = await web3.eth.getBalance(investor2)
+            const investor3InitialBalance = await web3.eth.getBalance(investor3)
+            const investor4InitialBalance = await web3.eth.getBalance(investor4)
+            const localNodeInitialBalance = await web3.eth.getBalance(localNode)
+            const teamInitialBalance = await web3.eth.getBalance(ethicHubTeam)
+            const contractInitialBalance = await web3.eth.getBalance(this.repayment.address)
+            contractInitialBalance.should.be.bignumber.equal(new BN(0))
+
+
+            const investment = this.totalLendingAmount.div(new BN(2))
+            const investment2 = this.totalLendingAmount.div(new BN(4))
+            // excess amount set state
+            const investment3 = this.totalLendingAmount
+            const investment4 = this.totalLendingAmount.div(new BN(8))
+
+            await this.repayment.setInvestorState(investor, investment).should.be.fulfilled
+            await this.repayment.setInvestorState(investor2, investment2).should.be.fulfilled
+            await this.repayment.setInvestorState(investor3, investment3).should.be.rejectedWith(EVMRevert)
+            await this.repayment.setInvestorState(investor4, investment4).should.be.fulfilled
+            await this.repayment.changeInvestorState(investor3, this.totalLendingAmount.div(new BN(8))).should.be.rejectedWith(EVMRevert)
+            await this.repayment.setInvestorState(investor3, this.totalLendingAmount.div(new BN(8))).should.be.fulfilled
+
+
+            increaseTimePastEndingTime(this.repayment, this.lendingDays.toNumber())
+            await this.repayment.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
+            const borrowerReturnAmount = await this.repayment.borrowerReturnAmount();
+            await this.repayment.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
+
+            await this.repayment.reclaimContributionWithInterest(investor).should.be.fulfilled
+            await this.repayment.reclaimContributionWithInterest(investor2).should.be.fulfilled
+            await this.repayment.reclaimContributionWithInterest(investor3).should.be.fulfilled
+            await this.repayment.reclaimContributionWithInterest(investor4).should.be.fulfilled
+
+            await this.repayment.reclaimLocalNodeFee().should.be.fulfilled
+            await this.repayment.reclaimEthicHubTeamFee().should.be.fulfilled
+
+            const investorInterest = await this.repayment.investorInterest()
+
+            const investorFinalBalance = await web3.eth.getBalance(investor)
+            const expectedInvestorBalance = getExpectedInvestorBalance(investorInitialBalance, this.totalLendingAmount.div(new BN(2)), investorInterest, this)
+            checkLostinTransactions(expectedInvestorBalance, investorFinalBalance)
+
+            const investor2FinalBalance = await web3.eth.getBalance(investor2)
+            const expectedInvestor2Balance = getExpectedInvestorBalance(investor2InitialBalance, this.totalLendingAmount.div(new BN(4)), investorInterest, this)
+            checkLostinTransactions(expectedInvestor2Balance, investor2FinalBalance)
+
+            const investor3FinalBalance = await web3.eth.getBalance(investor3)
+            const expectedInvestor3Balance = getExpectedInvestorBalance(investor3InitialBalance, this.totalLendingAmount.div(new BN(8)), investorInterest, this)
+            checkLostinTransactions(expectedInvestor3Balance, investor3FinalBalance)
+
+            const investor4FinalBalance = await web3.eth.getBalance(investor4)
+            const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, this.totalLendingAmount.div(new BN(8)), investorInterest, this)
+            checkLostinTransactions(expectedInvestor4Balance, investor4FinalBalance)
+
+            const localNodeFinalBalance = await web3.eth.getBalance(localNode)
+            const expectedLocalNodeBalance = new BN(localNodeInitialBalance).add(this.totalLendingAmount.mul(this.initialStableCoinPerFiatRate).mul(this.localNodeFee).div(this.finalStableCoinPerFiatRate).div(new BN(100)))
+            checkLostinTransactions(expectedLocalNodeBalance, localNodeFinalBalance)
+
+            const teamFinalBalance = await web3.eth.getBalance(ethicHubTeam)
+            const expectedEthicHubTeamBalance = new BN(teamInitialBalance).add(this.totalLendingAmount.mul(this.initialStableCoinPerFiatRate).mul(this.ethichubFee).div(this.finalStableCoinPerFiatRate).div(new BN(100)))
+            checkLostinTransactions(expectedEthicHubTeamBalance, teamFinalBalance)
+
+            const contractFinalBalance = await web3.eth.getBalance(this.repayment.address)
+            contractFinalBalance.should.be.bignumber.equal(new BN(0))
+        })
+
+        it('Set investors in array', async function() {
             await increaseTimeTo(this.fundingEndTime)
 
             const investorInitialBalance = await web3.eth.getBalance(investor)
