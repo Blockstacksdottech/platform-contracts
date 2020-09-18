@@ -411,7 +411,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         investorCount = investorCount.add(1);
 
         if (totalContributed.add(amount) > totalLendingAmount) {
-            revert("total lending amount is minor to total contributed");
+            revert("total lending amount is less than total contributed");
         } else {
             investors[investor].amount = amount;
             totalContributed = totalContributed.add(amount);
