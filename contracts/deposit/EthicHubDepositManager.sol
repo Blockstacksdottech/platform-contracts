@@ -55,10 +55,10 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         stableCoin = IERC20(_stableCoin);
     }
 
-    function initializeToV2(address _tokenBridge) external {
-        require(version < 2, "EthicHubDepositManager: Already upgraded to version 2");
-        version = 2;
+    function setTokenBridge(address _tokenBridge) external {
+        require(address(_tokenBridge) != address(0), "token bridge cannot be zero");
         tokenBridge = ITokenBridge(_tokenBridge);
+        this.stableCoin.approve(_tokenBridge, -1)
     }
 
     function acceptRelayedCall(
@@ -112,9 +112,8 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _sender))),
             "Contributor is not registered lender or borrower"
         );
-
-        tokenBridge.relayTokens(_sender, _sender, _amount);
-
+        require(stableCoin.transferFrom(_sender, address(this), _amount), "transferFrom stable coin failed");
+        tokenBridge.relayTokens(address(this), _sender, _amount);
     }
 
     function setRelayHubAddress(address relayAddress) public onlyOwner {
