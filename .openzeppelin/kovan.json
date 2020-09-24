@@ -1,11 +1,11 @@
 {
   "contracts": {
     "EthicHubDepositManager": {
-      "address": "0x424a63d965135cf5FC009a2105bf06CD4DA9681f",
-      "constructorCode": "6080604052612e1c806100136000396000f3fe",
-      "bodyBytecodeHash": "98a4715361366854ba13d21510151dabb722055dd3f23be5d2a33d7a8adbc559",
-      "localBytecodeHash": "8077a551464dfc8718374f04f00228fda4054da4cb80c24878e8f16ca30a478a",
-      "deployedBytecodeHash": "8077a551464dfc8718374f04f00228fda4054da4cb80c24878e8f16ca30a478a",
+      "address": "0xe678c64537Ca6BC21fC74D7d57eDBd7575B0d300",
+      "constructorCode": "6080604052612c29806100136000396000f3fe",
+      "bodyBytecodeHash": "e00bbaf317db264c1cf4c1ecfdd9beb576a4229f6c7e165dfb5699523658836f",
+      "localBytecodeHash": "dd40af24c10d50afd77fabd7fbbe7218684a6f1419a958f2b7d02c2d35f94bad",
+      "deployedBytecodeHash": "dd40af24c10d50afd77fabd7fbbe7218684a6f1419a958f2b7d02c2d35f94bad",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -88,41 +88,41 @@
           "contract": "EthicHubDepositManager",
           "path": "contracts/deposit/EthicHubDepositManager.sol",
           "label": "version",
-          "astId": 2123,
+          "astId": 2122,
           "type": "t_uint8",
-          "src": "1291:20:16"
+          "src": "1250:20:16"
         },
         {
           "contract": "EthicHubDepositManager",
           "path": "contracts/deposit/EthicHubDepositManager.sol",
           "label": "ethicHubStorage",
-          "astId": 2125,
+          "astId": 2124,
           "type": "t_address",
-          "src": "1317:47:16"
+          "src": "1276:47:16"
         },
         {
           "contract": "EthicHubDepositManager",
           "path": "contracts/deposit/EthicHubDepositManager.sol",
           "label": "stableCoin",
-          "astId": 2127,
+          "astId": 2126,
           "type": "t_address",
-          "src": "1370:24:16"
+          "src": "1329:24:16"
         },
         {
           "contract": "EthicHubDepositManager",
           "path": "contracts/deposit/EthicHubDepositManager.sol",
           "label": "relayer",
-          "astId": 2129,
+          "astId": 2128,
           "type": "t_address",
-          "src": "1400:22:16"
+          "src": "1359:22:16"
         },
         {
           "contract": "EthicHubDepositManager",
           "path": "contracts/deposit/EthicHubDepositManager.sol",
           "label": "tokenBridge",
-          "astId": 2131,
+          "astId": 2130,
           "type": "t_address",
-          "src": "1428:31:16"
+          "src": "1387:26:16"
         }
       ],
       "warnings": {
@@ -142,7 +142,7 @@
       {
         "address": "0x079B5f8B2A31FA9a744Cd2AFc681B31BD05C0a60",
         "version": "0.1.7",
-        "implementation": "0x424a63d965135cf5FC009a2105bf06CD4DA9681f",
+        "implementation": "0xe678c64537Ca6BC21fC74D7d57eDBd7575B0d300",
         "admin": "0x9B44D732C4CEc2B835731F2F479B5b547B66f247",
         "kind": "Upgradeable"
       }

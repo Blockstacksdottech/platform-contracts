@@ -24,7 +24,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 
 import "../interfaces/IContributionTarget.sol";
 import "../storage/EthicHubStorageInterface.sol";
-import "../interfaces/ITokenBridge.sol";
 
 contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
@@ -32,10 +31,8 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
     EthicHubStorageInterface public ethicHubStorage;
     IERC20 public stableCoin;
     address public relayer;
-    ITokenBridge public tokenBridge;
+    address public tokenBridge;
    
-    event Sent(address sender, address receiver, uint256 amount, bytes32 intent, uint256 destChainID);
-
     modifier onlyRelayer() {
         require(relayer == msg.sender);
         _;
@@ -56,12 +53,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
     }
 
     function setTokenBridge(address _tokenBridge) external onlyOwner {
-        if (address(tokenBridge) != address(0)) {
-            require(stableCoin.approve(address(tokenBridge), 0), "error removing approval for old tokenBridge");
-        }
-        require(address(_tokenBridge) != address(0), "token bridge cannot be zero");
-        tokenBridge = ITokenBridge(_tokenBridge);
-        require(stableCoin.approve(_tokenBridge, uint256(2**256 - 1)), "error approving erc20 transfers to bridge");
+        tokenBridge = _tokenBridge;
     }
 
     function acceptRelayedCall(
@@ -116,8 +108,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _sender))),
             "Contributor is not registered lender or borrower"
         );
-        require(stableCoin.transferFrom(_sender, address(this), _amount), "transferFrom stable coin failed");
-        tokenBridge.relayTokens(address(this), _sender, _amount);
+        require(stableCoin.transferFrom(_sender, tokenBridge, _amount), "transferFrom stable coin failed");
     }
 
     function setRelayHubAddress(address relayAddress) public onlyOwner {

@@ -31,13 +31,12 @@ const MockTokenBridge = artifacts.require('MockTokenBridge')
 const CHAIN_ID = "666"
 
 
-contract('EthicHubDepositManager v2', function ([owner, investor, relayer, target]) {
+contract('EthicHubDepositManager v2', function ([owner, investor, relayer, tokenBridge]) {
     beforeEach(async function () {
         //await time.advanceBlock()
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new(CHAIN_ID)
-        this.tokenBridge = await MockTokenBridge.new();
 
         await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "representative", owner), true)
@@ -73,13 +72,10 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
     })
     it.only('send to bridge', async function () {
 
-        await this.depositManager.methods.setTokenBridge(this.tokenBridge.address)
-        let approval = await this.stableCoin.allowance(this.depositManager.address, this.tokenBridge.address).call();
-        /*console.log(approval)
-        approval.should.be.bignumber.equal(new BN('115792089237316195423570985008687907853269984665640564039457584007913129639935'))
+        await this.depositManager.methods.setTokenBridge(tokenBridge)
 
         let resultTokenBridgeAddress = await this.depositManager.methods.tokenBridge.call()
-        resultTokenBridgeAddress.should.be.equal(this.tokenBridge.address)
+        resultTokenBridgeAddress.should.be.equal(tokenBridge)
         
         await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
@@ -92,8 +88,8 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
             from: relayer
         })
         console.log(tx)
-        let bridgeBalance = await this.stableCoin.balanceOf(this.tokenBridge.address).call()
-        bridgeBalance.should.be.bignumber.equal(investment)*/
+        let bridgeBalance = await this.stableCoin.balanceOf(tokenBridge).call()
+        bridgeBalance.should.be.bignumber.equal(investment)
 
     })
 
