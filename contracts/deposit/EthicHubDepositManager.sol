@@ -33,7 +33,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
     IERC20 public stableCoin;
     address public relayer;
     ITokenBridge public tokenBridge;
-
+   
     event Sent(address sender, address receiver, uint256 amount, bytes32 intent, uint256 destChainID);
 
     modifier onlyRelayer() {
@@ -55,10 +55,13 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         stableCoin = IERC20(_stableCoin);
     }
 
-    function setTokenBridge(address _tokenBridge) external {
+    function setTokenBridge(address _tokenBridge) external onlyOwner {
+        if (address(tokenBridge) != address(0)) {
+            require(stableCoin.approve(address(tokenBridge), 0), "error removing approval for old tokenBridge");
+        }
         require(address(_tokenBridge) != address(0), "token bridge cannot be zero");
         tokenBridge = ITokenBridge(_tokenBridge);
-        this.stableCoin.approve(_tokenBridge, -1)
+        require(stableCoin.approve(_tokenBridge, uint256(2**256 - 1)), "error approving erc20 transfers to bridge");
     }
 
     function acceptRelayedCall(
@@ -92,6 +95,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", contributor))),
             "Contributor is not registered lender or borrower"
         );
+        
         require(
             stableCoin.balanceOf(_msgSender()) >= amount &&
             stableCoin.allowance(_msgSender(), address(this)) >= amount,

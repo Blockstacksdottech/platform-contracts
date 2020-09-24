@@ -33,7 +33,7 @@ const CHAIN_ID = "666"
 
 contract('EthicHubDepositManager v2', function ([owner, investor, relayer, target]) {
     beforeEach(async function () {
-        await time.advanceBlock()
+        //await time.advanceBlock()
 
         this.mockStorage = await MockStorage.new()
         this.stableCoin = await MockStableCoin.new(CHAIN_ID)
@@ -49,7 +49,7 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
                 this.stableCoin.address
             ]
         });
-        let tx = await this.depositManager.methods.initializeToV2(this.tokenBridge.address)
+        console.log(this.depositManager)
         await this.depositManager.methods.setTrustedRelayer(
             relayer
         ).send(
@@ -62,6 +62,7 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
     })
     
     it('only owner can set relayer', async function () {
+        console.log(this.depositManager.methods)
         await this.depositManager.methods.setTrustedRelayer(
             relayer
         ).send(
@@ -70,8 +71,16 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
             }
         ).should.be.rejectedWith(EVMRevert)
     })
-    
-    it('send to bridge', async function () {
+    it.only('send to bridge', async function () {
+
+        await this.depositManager.methods.setTokenBridge(this.tokenBridge.address)
+        let approval = await this.stableCoin.allowance(this.depositManager.address, this.tokenBridge.address).call();
+        /*console.log(approval)
+        approval.should.be.bignumber.equal(new BN('115792089237316195423570985008687907853269984665640564039457584007913129639935'))
+
+        let resultTokenBridgeAddress = await this.depositManager.methods.tokenBridge.call()
+        resultTokenBridgeAddress.should.be.equal(this.tokenBridge.address)
+        
         await this.stableCoin.transfer(investor, ether(100000)).should.be.fulfilled;
         await this.stableCoin.approve(this.depositManager.address, ether(1000000000), {
             from: investor
@@ -84,7 +93,7 @@ contract('EthicHubDepositManager v2', function ([owner, investor, relayer, targe
         })
         console.log(tx)
         let bridgeBalance = await this.stableCoin.balanceOf(this.tokenBridge.address).call()
-        bridgeBalance.should.be.bignumber.equal(investment)
+        bridgeBalance.should.be.bignumber.equal(investment)*/
 
     })
 
