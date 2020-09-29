@@ -20,7 +20,7 @@ const AwaitingReturn = 3
 const ProjectNotFunded = 4
 const ContributionReturned = 5
 const Default = 6
-const LatestVersion = 1
+const LatestVersion = 9
 
 const utils = require("web3-utils")
 
@@ -1029,7 +1029,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
         })
     })
 
-    describe.only('set investor state', async function() {
+    describe('set investor state', async function() {
         it('Set investors one to one without excess', async function() {
             await increaseTimeTo(this.fundingEndTime)
 
