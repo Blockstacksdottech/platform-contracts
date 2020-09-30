@@ -30,8 +30,6 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
     uint256 public fundingEndTime; // End time of contribution period in UNIX time
     uint256 public totalContributed;
 
-    bool public capReached;
-
     LendingState public state;
 
     uint256 public annualInterest;
@@ -101,7 +99,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 1;
+        version = 9;
 
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
