@@ -33,6 +33,8 @@ mainmenu () {
             bash $SCRIPT_PATH test/EthicHubDepositManager.js
         elif [ "$mainmenuinput" = "8" ]; then
             bash $SCRIPT_PATH test/EthicHubDepositManagerV2.js
+        elif [ "$mainmenuinput" = "9" ]; then
+            bash $SCRIPT_PATH test/EthicHubLoanRepayment.js
 
         elif [ "$mainmenuinput" = "x" ];then
             exit 0
