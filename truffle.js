@@ -24,19 +24,13 @@ module.exports = {
     networks: {
         development: {
             provider: function() {
-                return new HDWalletProvider(process.env.GANACHE_MNEMONIC, "http://127.0.0.1:9545");
+                return new PrivateKeyProvider('0xd999042bfc9743927b214d2a9be92e32320edffb2457f2c77e51ed1bd6539c00', "http://127.0.0.1:8545");
             },
             network_id: "*" // Match any network id
         },
         coverage: {
             provider: function() {
-                return new GSNDevProvider('http://localhost:8545', {
-                    txfee: 70,
-                    useGSN: false,
-                    // The last two accounts defined in test.sh
-                    ownerAddress: '0x26be9c03ca7f61ad3d716253ee1edcae22734698',
-                    relayerAddress: '0xdc5fd04802ea70f6e27aec12d56716624c98e749',
-                })
+                return new HDWalletProvider(process.env.GANACHE_MNEMONIC, "http://127.0.0.1:8545");
             },
             network_id: '*', // eslint-disable-line camelcase
             gas: 0x10000000,

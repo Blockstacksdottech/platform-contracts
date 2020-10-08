@@ -24,7 +24,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
 
 import "../interfaces/IContributionTarget.sol";
 import "../storage/EthicHubStorageInterface.sol";
-import "../interfaces/ITokenBridge.sol";
 
 contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
@@ -32,10 +31,8 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
     EthicHubStorageInterface public ethicHubStorage;
     IERC20 public stableCoin;
     address public relayer;
-    ITokenBridge public tokenBridge;
-
-    event Sent(address sender, address receiver, uint256 amount, bytes32 intent, uint256 destChainID);
-
+    address public tokenBridge;
+   
     modifier onlyRelayer() {
         require(relayer == msg.sender);
         _;
@@ -55,10 +52,8 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
         stableCoin = IERC20(_stableCoin);
     }
 
-    function initializeToV2(address _tokenBridge) external {
-        require(version < 2, "EthicHubDepositManager: Already upgraded to version 2");
-        version = 2;
-        tokenBridge = ITokenBridge(_tokenBridge);
+    function setTokenBridge(address _tokenBridge) external onlyOwner {
+        tokenBridge = _tokenBridge;
     }
 
     function acceptRelayedCall(
@@ -92,6 +87,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
             ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", contributor))),
             "Contributor is not registered lender or borrower"
         );
+        
         require(
             stableCoin.balanceOf(_msgSender()) >= amount &&
             stableCoin.allowance(_msgSender(), address(this)) >= amount,
@@ -107,14 +103,7 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
 
     function sendToBridge(address _sender, uint256 _amount) external onlyRelayer {
-        require(
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _sender))) ||
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _sender))),
-            "Contributor is not registered lender or borrower"
-        );
-
-        tokenBridge.relayTokens(_sender, _sender, _amount);
-
+        require(stableCoin.transferFrom(_sender, tokenBridge, _amount), "transferFrom stable coin failed");
     }
 
     function setRelayHubAddress(address relayAddress) public onlyOwner {
