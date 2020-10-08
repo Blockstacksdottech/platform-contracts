@@ -1,11 +1,11 @@
 {
   "contracts": {
     "EthicHubDepositManager": {
-      "address": "0xe678c64537Ca6BC21fC74D7d57eDBd7575B0d300",
-      "constructorCode": "6080604052612c29806100136000396000f3fe",
-      "bodyBytecodeHash": "e00bbaf317db264c1cf4c1ecfdd9beb576a4229f6c7e165dfb5699523658836f",
-      "localBytecodeHash": "dd40af24c10d50afd77fabd7fbbe7218684a6f1419a958f2b7d02c2d35f94bad",
-      "deployedBytecodeHash": "dd40af24c10d50afd77fabd7fbbe7218684a6f1419a958f2b7d02c2d35f94bad",
+      "address": "0x541a90C201b07146395bd6f1C3B9163eCB4D0Ce7",
+      "constructorCode": "6080604052612927806100136000396000f3fe",
+      "bodyBytecodeHash": "b032f0268683d033026599178dabe18cabaf1bc23ec7b0c6784e13dbe1aa868e",
+      "localBytecodeHash": "f3f7319be416fcd3ed4b35a3b4f391f647450534d68609a0fb1e19ca426f51f7",
+      "deployedBytecodeHash": "f3f7319be416fcd3ed4b35a3b4f391f647450534d68609a0fb1e19ca426f51f7",
       "types": {
         "t_bool": {
           "id": "t_bool",

@@ -103,11 +103,6 @@ contract EthicHubDepositManager is Initializable, Ownable, GSNRecipient {
 
 
     function sendToBridge(address _sender, uint256 _amount) external onlyRelayer {
-        require(
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "investor", _sender))) ||
-            ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _sender))),
-            "Contributor is not registered lender or borrower"
-        );
         require(stableCoin.transferFrom(_sender, tokenBridge, _amount), "transferFrom stable coin failed");
     }
 
