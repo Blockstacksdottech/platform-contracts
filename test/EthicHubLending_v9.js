@@ -1327,6 +1327,78 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
     })
 
+    describe('Project with interest 8%, fees 0%, rates 1', async function() {
+        it('Should return investors contributions with interests', async function() {
+            let lendingAmount = ether(10)
+            let lendingDays = new BN(183) // half year
+            let lendingInterestRatePercentage = new BN(8)
+            let localNodeInterestRatePercentage = new BN(0)
+            let teamInterestRatePercentage = new BN(0)
+            let rates = new Object()
+            rates.initialStableCoinPerFiatRate = new BN(1)
+            rates.finalStableCoinPerFiatRate = new BN(1)
+            let noFeesLending = await EthicHubLending.new(
+                this.fundingStartTime,
+                this.fundingEndTime,
+                lendingInterestRatePercentage,
+                lendingAmount,
+                lendingDays,
+                teamInterestRatePercentage,
+                localNodeInterestRatePercentage,
+                borrower,
+                localNode,
+                ethicHubTeam,
+                this.mockStorage.address
+            ).should.be.fulfilled
+
+            await noFeesLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
+            await this.mockStorage.setAddress(utils.soliditySha3("contract.address", noFeesLending.address), noFeesLending.address)
+
+            await increaseTimeTo(this.fundingStartTime + duration.days(1))
+
+            const investment2 = ether(5)
+            const investment3 = ether(1.5)
+            const investment4 = ether(3.5)
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2)
+            const investor3InitialBalance = await web3.eth.getBalance(investor3)
+            const investor4InitialBalance = await web3.eth.getBalance(investor4)
+
+            await noFeesLending.deposit(investor2, {value: investment2, from: investor2}).should.be.fulfilled
+            await noFeesLending.deposit(investor3, {value: investment3, from: investor3}).should.be.fulfilled
+            await noFeesLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
+            var state = await noFeesLending.state()
+            state.toNumber().should.be.equal(AcceptingContributions)
+
+            await noFeesLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
+
+            await noFeesLending.finishInitialExchangingPeriod(rates.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
+            increaseTimePastEndingTime(noFeesLending, lendingDays.toNumber())
+            await noFeesLending.setborrowerReturnStableCoinPerFiatRate(rates.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
+            const borrowerReturnAmount = await noFeesLending.borrowerReturnAmount()
+            await noFeesLending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
+            const investorInterest = await noFeesLending.investorInterest()
+            await noFeesLending.reclaimContributionWithInterest(investor2, {from: investor2})
+            await noFeesLending.reclaimContributionWithInterest(investor3, {from: investor3})
+            await noFeesLending.reclaimContributionWithInterest(investor4, {from: investor4})
+            await noFeesLending.reclaimLocalNodeFee().should.be.rejectedWith(EVMRevert)
+            await noFeesLending.reclaimEthicHubTeamFee().should.be.rejectedWith(EVMRevert)
+
+            const balance = await web3.eth.getBalance(noFeesLending.address)
+            new BN(balance).toNumber().should.be.below(2)
+            const investor2FinalBalance = await web3.eth.getBalance(investor2)
+            const expectedInvestor2Balance = getExpectedInvestorBalance(investor2InitialBalance, investment2, investorInterest, rates)
+            checkLostinTransactions(expectedInvestor2Balance, investor2FinalBalance)
+            const investor3FinalBalance = await web3.eth.getBalance(investor3)
+            const expectedInvestor3Balance = getExpectedInvestorBalance(investor3InitialBalance, investment3, investorInterest, rates)
+            checkLostinTransactions(expectedInvestor3Balance, investor3FinalBalance)
+            const investor4FinalBalance = await web3.eth.getBalance(investor4)
+            const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, investment4, investorInterest, rates)
+            checkLostinTransactions(expectedInvestor4Balance, investor4FinalBalance)
+        })
+
+    })
+
     async function increaseTimePastEndingTime(lendingContract, increaseDays) {
         const fundingEnd = await lendingContract.fundingEndTime()
         const returnDate = fundingEnd.add(new BN(duration.days(increaseDays)))
