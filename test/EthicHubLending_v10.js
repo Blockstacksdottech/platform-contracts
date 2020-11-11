@@ -16,7 +16,7 @@ const {
 
 const Uninitialized = 0
 const AcceptingContributions = 1
-const AwaitingReturn = 3
+const Funded = 3
 const ProjectNotFunded = 4
 const ContributionReturned = 5
 const Default = 6
@@ -29,25 +29,22 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const EthicHubLending = artifacts.require('EthicHubLendingLocal')
+const EthicHubLending = artifacts.require('EthicHubLending')
 const MockStorage = artifacts.require('MockStorage')
 
-contract('EthicHubLending', function([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter]) {
+contract('EthicHubLending', function([owner, borrower, investor, investor2, investor3, investor4, localNode, ethicHubTeam, community, arbiter, systemFeesCollector]) {
     beforeEach(async function() {
         await advanceBlock()
 
         const latestTimeValue = await latestTime()
         this.fundingStartTime = latestTimeValue + duration.days(1)
         this.fundingEndTime = this.fundingStartTime + duration.days(40)
-        this.lendingInterestRatePercentage = new BN(15)
+        this.lendingInterestRatePercentage = new BN(8)
         this.totalLendingAmount = ether(3)
 
         this.ethichubFee = new BN(3)
         this.localNodeFee = new BN(4)
 
-        // 400 pesos per eth
-        this.initialStableCoinPerFiatRate = new BN(538520) // 400
-        this.finalStableCoinPerFiatRate = new BN(269260) // 480
         this.lendingDays = new BN(90)
         this.delayMaxDays = new BN(90)
         this.members = new BN(20)
@@ -68,7 +65,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             borrower,
             localNode,
             ethicHubTeam,
-            this.mockStorage.address
+            this.mockStorage.address,
+            this.delayMaxDays,
+            systemFeesCollector
          )
 
         await this.mockStorage.setAddress(utils.soliditySha3("contract.address", this.lending.address), this.lending.address)
@@ -81,7 +80,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         await this.mockStorage.setBool(utils.soliditySha3("user", "community", community), true)
         await this.mockStorage.setBool(utils.soliditySha3("user", "arbiter", arbiter), true)
 
-        await this.lending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
     })
 
     describe('initializing', function() {
@@ -97,7 +95,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await increaseTimeTo(this.fundingStartTime - duration.days(0.5))
@@ -124,7 +124,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 unknow_person,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             ).should.be.rejectedWith(EVMRevert)
         })
 
@@ -141,7 +143,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 unknow_person,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             ).should.be.rejectedWith(EVMRevert)
         })
 
@@ -223,15 +227,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             checkLostinTransactions(expectedBalance, GWAfterSendBalance)
         })
 
-
-        it('should allow to invest amount < 0.1 eth', async function() {
-            await increaseTimeTo(this.fundingStartTime + duration.days(1))
-            var isRunning = await this.lending.isContribPeriodRunning()
-            isRunning.should.be.equal(true)
-            await this.lending.deposit(investor, {value: ether(0.01), from: investor}).should.be.fulfilled
-            const contributionAmount = await this.lending.checkInvestorContribution(investor)
-            contributionAmount.should.be.bignumber.equal(ether(0.01))
-        })
     })
 
 
@@ -256,8 +251,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount.div(new BN(2)), from: borrower}).should.be.fulfilled
             await this.lending.returnBorrowed({value: borrowerReturnAmount.div(new BN(2)), from: borrower}).should.be.fulfilled
@@ -269,8 +262,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
 
             //This should be the edge case : end of funding time + awaiting for return period.
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
@@ -302,8 +293,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             investor2GasCost = accumulateTxCost(tx, investor2GasCost)
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
 
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             //This should be the edge case : end of funding time + awaiting for return period.
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
             await increaseTimeTo(defaultTime)
@@ -341,8 +330,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor2, {value: investor2SendAmount, from: investor2}).should.be.fulfilled
 
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
 
             //This should be the edge case : end of funding time + awaiting for return period.
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
@@ -417,24 +404,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
     })
 
-    describe('Exchange period', function() {
-        it('should not go to exchange state after cap reached', async function() {
-            await increaseTimeTo(this.fundingStartTime + duration.days(1))
-            await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
-
-            var capReached = await this.lending.capReached()
-            capReached.should.be.equal(true)
-
-            var state = await this.lending.state()
-            state.toNumber().should.be.equal(AcceptingContributions)
-        })
-
-        it('should fail to change state to AwaitingReturn before exchanged', async function() {
-            await increaseTimeTo(this.fundingStartTime + duration.days(1))
-            await this.lending.deposit(investor, {value: ether(1), from: investor}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.rejectedWith(EVMRevert)
-        })
-    })
 
     describe('Borrower return', function() {
 
@@ -442,8 +411,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             const localNodeFeeForAmount = this.totalLendingAmount.mul(this.localNodeFee).div(new BN(100))
             const ethichubFeeForAmount = this.totalLendingAmount.mul(this.ethichubFee).div(new BN(100))
@@ -468,7 +435,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             ).should.be.fulfilled
 
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", noFeesLending.address), noFeesLending.address)
@@ -477,10 +446,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await noFeesLending.deposit(investor, {value: lendingAmount, from: investor}).should.be.fulfilled
             await noFeesLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await noFeesLending.finishInitialExchangingPeriod(100, {from: owner})
             increaseTimePastEndingTime(noFeesLending, lendingDays)
-            await noFeesLending.setborrowerReturnStableCoinPerFiatRate(100, {from: owner})
-
             let lendingIncrement = await noFeesLending.lendingInterestRatePercentage()
             lendingIncrement.toNumber().should.be.above(10750)
             lendingIncrement.toNumber().should.be.below(10755)
@@ -500,7 +466,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             ).should.be.fulfilled
 
             await this.mockStorage.setAddress(utils.soliditySha3("contract.address", feesLending.address), feesLending.address)
@@ -509,22 +477,18 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await feesLending.deposit(investor, {value: lendingAmount, from: investor}).should.be.fulfilled
             await feesLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await feesLending.finishInitialExchangingPeriod(100, {from: owner})
             increaseTimePastEndingTime(feesLending, lendingDays)
-            await feesLending.setborrowerReturnStableCoinPerFiatRate(100, {from: owner})
 
             let lendingIncrement = await feesLending.lendingInterestRatePercentage()
             lendingIncrement.should.be.bignumber.equal(new BN(11452))
         })
 
 
-        it('should calculate correct return fiat amount based on return time', async function() {
+        it('should calculate correct return amount based on return time', async function() {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(this.lending, this.lendingDays.toNumber())
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             var state = await this.lending.state()
             state.toNumber().should.be.equal(AwaitingReturn)
             const borrowerReturnStableCoinPerFiatRate = await this.lending.borrowerReturnStableCoinPerFiatRate()
@@ -560,8 +524,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
         })
@@ -592,7 +554,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await increaseTimeTo(this.fundingEndTime - duration.minutes(1))
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             await increaseTimeTo(this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber()) - duration.days(1))
             await this.lending.declareProjectDefault().should.be.rejectedWith(EVMRevert)
         })
@@ -618,9 +579,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
 
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
             const investorInterest = await this.lending.investorInterest()
@@ -656,9 +614,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(this.lending, this.lendingDays.toNumber())
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
 
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
@@ -688,8 +644,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             let investor4Contribution = await this.lending.checkInvestorContribution(investor4)
             investor4Contribution.should.be.bignumber.equal(ether(1.5))
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
             const investorInterest = await this.lending.investorInterest()
@@ -728,7 +682,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: investor2}).should.be.rejectedWith(EVMRevert)
@@ -743,7 +696,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor2, {value: investment2, from: investor2}).should.be.fulfilled
             await this.lending.deposit(investor3, {value: investment3, from: investor3}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
@@ -770,9 +722,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(this.lending, this.lendingDays.toNumber())
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
 
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
@@ -809,7 +759,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -827,9 +779,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await realAmountLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await realAmountLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await realAmountLending.finishInitialExchangingPeriod("538701", {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(realAmountLending, this.lendingDays.toNumber())
-            await realAmountLending.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "8657779357692697862", from: borrower}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "220056000000000", from: borrower}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "188440380000000000", from: borrower}).should.be.fulfilled
@@ -871,8 +821,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
 
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
@@ -923,7 +871,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -942,9 +892,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await realAmountLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await realAmountLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await realAmountLending.finishInitialExchangingPeriod("538701", {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(realAmountLending, this.lendingDays.toNumber())
-            await realAmountLending.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
 
             await realAmountLending.returnBorrowed({value: "8657779357692697862", from: borrower}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "220056000000000", from: borrower}).should.be.fulfilled
@@ -976,7 +924,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -995,7 +945,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await realAmountLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await realAmountLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await realAmountLending.finishInitialExchangingPeriod("538701", {from: owner}).should.be.fulfilled
 
             increaseTimePastEndingTime(realAmountLending, this.lendingDays.toNumber())
             await realAmountLending.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
@@ -1024,7 +973,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -1043,9 +994,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await realAmountLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await realAmountLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await realAmountLending.finishInitialExchangingPeriod("538701", {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(realAmountLending, this.lendingDays.toNumber())
-            await realAmountLending.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
 
             await realAmountLending.returnBorrowed({value: "8657779357692697862", from: borrower}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "220056000000000", from: borrower}).should.be.fulfilled
@@ -1072,7 +1021,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -1091,9 +1042,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await realAmountLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await realAmountLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await realAmountLending.finishInitialExchangingPeriod("538701", {from: owner}).should.be.fulfilled
             increaseTimePastEndingTime(realAmountLending, this.lendingDays.toNumber())
-            await realAmountLending.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
 
             await realAmountLending.returnBorrowed({value: "8657779357692697862", from: borrower}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "220056000000000", from: borrower}).should.be.fulfilled
@@ -1120,7 +1069,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -1139,10 +1090,8 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await realAmountLending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
 
             await realAmountLending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await realAmountLending.finishInitialExchangingPeriod("538701", {from: owner}).should.be.fulfilled
 
             increaseTimePastEndingTime(realAmountLending, this.lendingDays.toNumber())
-            await realAmountLending.setborrowerReturnStableCoinPerFiatRate("242925", {from: owner}).should.be.fulfilled
 
             await realAmountLending.returnBorrowed({value: "8657779357692697862", from: borrower}).should.be.fulfilled
             await realAmountLending.returnBorrowed({value: "220056000000000", from: borrower}).should.be.fulfilled
@@ -1172,7 +1121,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
                 borrower,
                 localNode,
                 ethicHubTeam,
-                this.mockStorage.address
+                this.mockStorage.address,
+                this.delayMaxDays,
+                systemFeesCollector
             )
 
             await realAmountLending.saveInitialParametersToStorage(this.delayMaxDays, this.members, community)
@@ -1201,7 +1152,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
         })
 
         it('Should not allow to send more than collected return', async function() {
@@ -1212,22 +1162,12 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.returnBorrowed({value: this.totalLendingAmount.add(ether(1)), from: borrower}).should.be.rejectedWith(EVMRevert)
         })
 
-        it('Should not allow to send partial return after the rate is set', async function() {
-            await increaseTimeTo(this.fundingStartTime + duration.days(1))
-
-            await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
-            await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.returnBorrowed({value: this.totalLendingAmount.add(ether(1)), from: borrower}).should.be.rejectedWith(EVMRevert)
-        })
-
         it('Should only allow borrower to send partial return', async function() {
             await increaseTimeTo(this.fundingStartTime + duration.days(1))
 
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
             await this.lending.deposit(investor2, {value: ether(1), from: investor2}).should.be.rejectedWith(EVMRevert)
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
         })
 
         it('Should allow to reclaim partial return from contributor', async function() {
@@ -1238,8 +1178,6 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor, {value: investorInvestment, from: investor}).should.be.fulfilled
             await this.lending.deposit(investor2, {value: investor2Investment, from: investor2}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
-            await this.lending.finishInitialExchangingPeriod(this.initialStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
-            await this.lending.setborrowerReturnStableCoinPerFiatRate(this.finalStableCoinPerFiatRate, {from: owner}).should.be.fulfilled
 
             var investorInitialBalance = await web3.eth.getBalance(investor)
 

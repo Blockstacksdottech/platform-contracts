@@ -29,7 +29,7 @@ chai.use(require('chai-as-promised'))
     .use(require('chai-bn')(BN))
     .should()
 
-const EthicHubLending = artifacts.require('EthicHubLending')
+const EthicHubLending = artifacts.require('EthicHubLendingLocal')
 const EthicHubDepositManager = artifacts.require('EthicHubDepositManager')
 const MockStorage = artifacts.require('MockStorage')
 const MockStableCoin = artifacts.require('MockStableCoin')
