@@ -297,7 +297,7 @@ contract EthicHubLending is Pausable, Ownable {
         doReclaim(beneficiary, contribution);
     }
 
-    function reclaimsystemFees() external {
+    function reclaimSystemFees() external {
         require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
         require(systemFeesReclaimed == false, "Local Node's fee already reclaimed");
         uint256 fee = totalLendingAmount.mul(systemFees).mul(interestBaseUint).div(interestBasePercent);
@@ -395,7 +395,7 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     // lendingInterestRate with 2 decimal
-    // 15 * (lending days)/ 365 + 4% local node fee + 3% LendingDev fee
+    // 15 * (lending days)/ 365 + 4% system fee + 3% LendingDev fee
     function lendingInterestRatePercentage() public view returns(uint256){
         return annualInterest.mul(interestBaseUint)
             // current days
