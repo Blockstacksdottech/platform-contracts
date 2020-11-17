@@ -298,7 +298,7 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     function reclaimSystemFees() external {
-        require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
+        require(state == LendingState.AwaitingReturn || state == LendingState.ContributionReturned, "State is not AwaitingReturn or ContributionReturned");
         require(systemFeesReclaimed == false, "Local Node's fee already reclaimed");
         uint256 fee = totalLendingAmount.mul(systemFees).mul(interestBaseUint).div(interestBasePercent);
         require(fee > 0, "Local Node's team fee is 0");
@@ -309,7 +309,7 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     function reclaimEthicHubTeamFee() external {
-        require(state == LendingState.ContributionReturned, "State is not ContributionReturned");
+        require(state == LendingState.AwaitingReturn || state == LendingState.ContributionReturned, "State is not AwaitingReturn or ContributionReturned");
         require(ethicHubTeamFeeReclaimed == false, "EthicHub team's fee already reclaimed");
         uint256 fee = totalLendingAmount.mul(ethichubFee).mul(interestBaseUint).div(interestBasePercent);
         require(fee > 0, "EthicHub's team fee is 0");
@@ -362,9 +362,10 @@ contract EthicHubLending is Pausable, Ownable {
     function sendFundsToBorrower() external onlyOwnerOrLocalNode {
         // Waiting for Exchange
         require(state == LendingState.Funded, "State has to be AcceptingContributions");
-
+        uint256 systemFee = totalLendingAmount.mul(systemFees).mul(interestBaseUint).div(interestBasePercent);
+        uint256 teamFee = totalLendingAmount.mul(ethichubFee).mul(interestBaseUint).div(interestBasePercent);
         changeState(LendingState.AwaitingReturn);
-        address(borrower).transfer(totalContributed);
+        address(borrower).transfer(totalContributed.sub(systemFee).sub(teamFee));
     }
 
     /**
@@ -411,7 +412,8 @@ contract EthicHubLending is Pausable, Ownable {
     }
 
     function borrowerReturnAmount() public view returns(uint256) {
-        return totalLendingAmount.mul(lendingInterestRatePercentage()).div(interestBasePercent);
+        uint interestGenerated = annualInterest.mul(interestBaseUint).mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365).add(interestBasePercent);
+        return totalLendingAmount.mul(interestGenerated).div(interestBasePercent);
     }
 
 

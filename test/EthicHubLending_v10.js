@@ -293,6 +293,10 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             investor2GasCost = accumulateTxCost(tx, investor2GasCost)
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
 
+            // Reclaims fees
+            await this.lending.reclaimSystemFees().should.be.fulfilled
+            await this.lending.reclaimEthicHubTeamFee().should.be.fulfilled
+
             //This should be the edge case : end of funding time + awaiting for return period.
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(10)
             await increaseTimeTo(defaultTime)
@@ -301,11 +305,9 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.returnBorrowed({value: notFullAmount, from: borrower}).should.be.fulfilled
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber() + 1)
             await increaseTimeTo(defaultTime)
-
             await this.lending.declareProjectDefault({from: owner}).should.be.fulfilled
             var state = await this.lending.state()
             state.toNumber().should.be.equal(Default)
-
             tx = await this.lending.reclaimContributionDefault(investor, {from: investor}).should.be.fulfilled
             investor1GasCost = accumulateTxCost(tx, investor1GasCost)
             const investorFinalBalance = await web3.eth.getBalance(investor)
@@ -412,10 +414,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.lending.deposit(investor, {value: this.totalLendingAmount, from: investor}).should.be.fulfilled
             await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
             const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
-            const systemFeesForAmount = this.totalLendingAmount.mul(this.systemFees).div(new BN(100))
-            const ethichubFeeForAmount = this.totalLendingAmount.mul(this.ethichubFee).div(new BN(100))
-            const expectedAmount = this.totalLendingAmount.add(ethichubFeeForAmount).add(systemFeesForAmount)
-            borrowerReturnAmount.should.be.bignumber.equal(expectedAmount)
+            borrowerReturnAmount.should.be.bignumber.equal(this.totalLendingAmount)
             await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
             const state = await this.lending.state()
             state.toNumber().should.be.equal(ContributionReturned)
@@ -491,7 +490,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             var state = await this.lending.state()
             state.toNumber().should.be.equal(AwatingReturn)
 
-            var interest = parseInt((this.annualInterest.toNumber() * 100) * (this.lendingDays.toNumber()) / (365)) + this.ethichubFee * 100 + this.systemFees.toNumber() * 100
+            var interest = parseInt((this.annualInterest.toNumber() * 100) * (this.lendingDays.toNumber()) / (365))
             var borrowerReturnAmount = this.totalLendingAmount.mul(new BN(interest + 10000)).div(new BN(10000))
             var contractBorrowerReturnAmount = await this.lending.borrowerReturnAmount()
             contractBorrowerReturnAmount.should.be.bignumber.equal(borrowerReturnAmount)
@@ -500,7 +499,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
 
             await increaseTimeTo(defaultTime)
 
-            interest = parseInt((this.annualInterest.toNumber() * 100) * (this.lendingDays.toNumber()) / (365)) + this.ethichubFee * 100 + this.systemFees.toNumber() * 100
+            interest = parseInt((this.annualInterest.toNumber() * 100) * (this.lendingDays.toNumber()) / (365))
             borrowerReturnAmount = this.totalLendingAmount.mul(new BN(interest + 10000)).div(new BN(10000))
             contractBorrowerReturnAmount = await this.lending.borrowerReturnAmount()
             contractBorrowerReturnAmount.should.be.bignumber.equal(borrowerReturnAmount)
@@ -1239,6 +1238,145 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor), true)
             await this.mockStorage.setBool(utils.soliditySha3("user", "investor", investor2), true)
             await this.lending.changeInvestorAddress(investor, investor2, {from: owner}).should.be.rejectedWith(EVMRevert)
+        })
+    })
+
+    describe('Fees collected when project is funded', async function() {
+        it('Should be able to get the fees before the return', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1))
+
+            const investment2 = ether(1)
+            const investment3 = ether(0.5)
+            const investment4 = ether(1.5)
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2)
+            const investor3InitialBalance = await web3.eth.getBalance(investor3)
+            const investor4InitialBalance = await web3.eth.getBalance(investor4)
+
+            await this.lending.deposit(investor2, {value: investment2, from: investor2}).should.be.fulfilled
+            await this.lending.deposit(investor3, {value: investment3, from: investor3}).should.be.fulfilled
+            await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Funded)
+
+            await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
+            state = await this.lending.state()
+            state.toNumber().should.be.equal(AwatingReturn)
+
+            const systemFeesCollectorBalance = await web3.eth.getBalance(systemFeesCollector)
+            const teamBalance = await web3.eth.getBalance(ethicHubTeam)
+            await this.lending.reclaimSystemFees().should.be.fulfilled
+            await this.lending.reclaimEthicHubTeamFee().should.be.fulfilled
+            const systemFeesCollectorFinalBalance = await web3.eth.getBalance(systemFeesCollector)
+            const expectedSystemFeesCollectorBalance = new BN(systemFeesCollectorBalance).add(this.totalLendingAmount.mul(this.systemFees).div(new BN(100)))
+            checkLostinTransactions(expectedSystemFeesCollectorBalance, systemFeesCollectorFinalBalance)
+
+            const teamFinalBalance = await web3.eth.getBalance(ethicHubTeam)
+            const expectedEthicHubTeamBalance = new BN(teamBalance).add(this.totalLendingAmount.mul(this.ethichubFee).div(new BN(100)))
+            checkLostinTransactions(expectedEthicHubTeamBalance, teamFinalBalance)
+        })
+
+        it('Should be sent to borrower amount without the fees', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1))
+
+            const investment2 = ether(1)
+            const investment3 = ether(0.5)
+            const investment4 = ether(1.5)
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2)
+            const investor3InitialBalance = await web3.eth.getBalance(investor3)
+            const investor4InitialBalance = await web3.eth.getBalance(investor4)
+            const borrowerBalance = await web3.eth.getBalance(borrower)
+
+            await this.lending.deposit(investor2, {value: investment2, from: investor2}).should.be.fulfilled
+            await this.lending.deposit(investor3, {value: investment3, from: investor3}).should.be.fulfilled
+            await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Funded)
+
+            await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
+            state = await this.lending.state()
+            state.toNumber().should.be.equal(AwatingReturn)
+
+            const borrowerFinalBalance = await web3.eth.getBalance(borrower)
+            const systemFeesAmount = this.totalLendingAmount.mul(this.systemFees).div(new BN(100))
+            const teamFeesAmount = this.totalLendingAmount.mul(this.ethichubFee).div(new BN(100))
+            const expectedBorrowerBalance = new BN(borrowerBalance).sub(systemFeesAmount).sub(teamFeesAmount)
+            checkLostinTransactions(expectedBorrowerBalance, borrowerFinalBalance)
+        })
+
+        it('Should be borrower return amount without the fees', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1))
+
+            const investment2 = ether(1)
+            const investment3 = ether(0.5)
+            const investment4 = ether(1.5)
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2)
+            const investor3InitialBalance = await web3.eth.getBalance(investor3)
+            const investor4InitialBalance = await web3.eth.getBalance(investor4)
+            const borrowerBalance = await web3.eth.getBalance(borrower)
+
+            await this.lending.deposit(investor2, {value: investment2, from: investor2}).should.be.fulfilled
+            await this.lending.deposit(investor3, {value: investment3, from: investor3}).should.be.fulfilled
+            await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Funded)
+
+            await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
+            state = await this.lending.state()
+            state.toNumber().should.be.equal(AwatingReturn)
+
+            await increaseTimeTo(this.fundingStartTime + duration.days(365))
+
+            const lendingDays = await this.lending.getDaysPassedBetweenDates(this.fundingStartTime, this.fundingStartTime + duration.days(365))
+            const interestGenerated = parseInt((this.annualInterest.toNumber() * 100) * (lendingDays.toNumber()) / (365))
+            const borrowerReturnAmount = this.totalLendingAmount.mul(new BN(interestGenerated + 10000)).div(new BN(10000))
+            const contractBorrowerReturnAmount = await this.lending.borrowerReturnAmount()
+            checkLostinTransactions(contractBorrowerReturnAmount, borrowerReturnAmount)
+        })
+
+        it('Should be the same the investor reclaims', async function() {
+            await increaseTimeTo(this.fundingStartTime + duration.days(1))
+
+            const investment2 = ether(1)
+            const investment3 = ether(0.5)
+            const investment4 = ether(1.5)
+
+            const investor2InitialBalance = await web3.eth.getBalance(investor2)
+            const investor3InitialBalance = await web3.eth.getBalance(investor3)
+            const investor4InitialBalance = await web3.eth.getBalance(investor4)
+            const borrowerBalance = await web3.eth.getBalance(borrower)
+
+            await this.lending.deposit(investor2, {value: investment2, from: investor2}).should.be.fulfilled
+            await this.lending.deposit(investor3, {value: investment3, from: investor3}).should.be.fulfilled
+            await this.lending.deposit(investor4, {value: investment4, from: investor4}).should.be.fulfilled
+            var state = await this.lending.state()
+            state.toNumber().should.be.equal(Funded)
+
+            await this.lending.sendFundsToBorrower({from: owner}).should.be.fulfilled
+            state = await this.lending.state()
+            state.toNumber().should.be.equal(AwatingReturn)
+
+            await increaseTimeTo(this.fundingStartTime + duration.days(365))
+            const borrowerReturnAmount = await this.lending.borrowerReturnAmount()
+            await this.lending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
+            state = await this.lending.state()
+            state.toNumber().should.be.equal(ContributionReturned)
+            const investorInterest = await this.lending.investorInterest()
+            await this.lending.reclaimContributionWithInterest(investor2, {from: investor2})
+            await this.lending.reclaimContributionWithInterest(investor3, {from: investor3})
+            await this.lending.reclaimContributionWithInterest(investor4, {from: investor4})
+
+            const investor2FinalBalance = await web3.eth.getBalance(investor2)
+            const expectedInvestor2Balance = getExpectedInvestorBalance(investor2InitialBalance, investment2, investorInterest, this)
+            checkLostinTransactions(expectedInvestor2Balance, investor2FinalBalance)
+            const investor3FinalBalance = await web3.eth.getBalance(investor3)
+            const expectedInvestor3Balance = getExpectedInvestorBalance(investor3InitialBalance, investment3, investorInterest, this)
+            checkLostinTransactions(expectedInvestor3Balance, investor3FinalBalance)
+            const investor4FinalBalance = await web3.eth.getBalance(investor4)
+            const expectedInvestor4Balance = getExpectedInvestorBalance(investor4InitialBalance, investment4, investorInterest, this)
+            checkLostinTransactions(expectedInvestor4Balance, investor4FinalBalance)
         })
     })
 
