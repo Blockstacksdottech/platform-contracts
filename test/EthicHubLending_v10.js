@@ -1380,16 +1380,17 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
         })
     })
 
-    describe('Calculate fees', async function() {
+    describe.only('Calculate fees', async function() {
         it('Should reclaims system fees and team fees before lending period', async function() {
             let lendingAmount = ether(10)
-            let lendingDays = 365 // year
+            let lendingDays = 366 // year
             let systemFees = new BN(4)
             let ethichubFees = new BN(4)
+            let annualInterest = new BN(8)
             let feesLending = await EthicHubLending.new(
                 this.fundingStartTime,
                 this.fundingEndTime,
-                this.annualInterest,
+                annualInterest,
                 lendingAmount,
                 lendingDays,
                 ethichubFees,
@@ -1435,7 +1436,7 @@ contract('EthicHubLending', function([owner, borrower, investor, investor2, inve
             const ethicHubTeamBalanceAfter = await web3.eth.getBalance(ethicHubTeam)
             checkLostinTransactions(expectedEthicHubTeamBalance, ethicHubTeamBalanceAfter)
 
-            await increaseTimeTo(this.fundingStartTime + duration.days(365))
+            await increaseTimeTo(this.fundingStartTime + duration.days(366))
             const borrowerReturnAmount = await feesLending.borrowerReturnAmount()
             await feesLending.returnBorrowed({value: borrowerReturnAmount, from: borrower}).should.be.fulfilled
             state = await feesLending.state()
