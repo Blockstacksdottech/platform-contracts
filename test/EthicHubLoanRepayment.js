@@ -20,7 +20,7 @@ const AwaitingReturn = 3
 const ProjectNotFunded = 4
 const ContributionReturned = 5
 const Default = 6
-const LatestVersion = 9
+const LatestVersion = 11
 
 const utils = require("web3-utils")
 
@@ -227,7 +227,6 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
             var expected2 = new BN(investor2AfterSendBalance).add(investor2SendAmount.div(new BN(4)).mul(new BN(3)))
             checkLostinTransactions(expected2, investor2FinalBalance)
             var contractBalance = await web3.eth.getBalance(this.repayment.address)
-            console.log('Pasa')
             contractBalance.should.be.bignumber.equal(new BN(0))
         })
 
@@ -252,7 +251,7 @@ contract('EthicHubLoanRepayment', function([owner, borrower, investor, investor2
 
             var defaultTime = this.fundingEndTime + duration.days(this.lendingDays.toNumber()) + duration.days(this.delayMaxDays.toNumber() + 1)
             await increaseTimeTo(defaultTime)
-            this.repayment.declareProjectDefault({from: owner}).should.be.fulfilled
+            await this.repayment.declareProjectDefault({from: owner}).should.be.fulfilled
             var state = await this.repayment.state()
             state.toNumber().should.be.equal(Default)
             // Reclaims amounts

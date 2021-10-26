@@ -1,12 +1,11 @@
-pragma solidity 0.5.13;
+pragma solidity 0.8.3;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/lifecycle/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
-import "../EthicHubBase.sol";
-import "../storage/EthicHubStorageInterface.sol";
+import "../storage/IEthicHubStorage.sol";
 
 contract EthicHubLoanRepayment is Pausable, Ownable {
     using SafeMath for uint256;
@@ -22,7 +21,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
     }
 
     uint8 public version;
-    EthicHubStorageInterface public ethicHubStorage;
+    IEthicHubStorage public ethicHubStorage;
 
     mapping(address => Investor) public investors;
     uint256 public investorCount;
@@ -95,11 +94,11 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         address payable _localNode,
         address payable _ethicHubTeam,
         address _ethicHubStorage
-        ) public {
+        ) Ownable () Pausable () public {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
-        ethicHubStorage = EthicHubStorageInterface(_ethicHubStorage);
-        version = 9;
+        ethicHubStorage = IEthicHubStorage(_ethicHubStorage);
+        version = 11;
 
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
@@ -126,9 +125,6 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         initialStableCoinPerFiatRate = _initialStableCoinPerFiatRate;
 
         state = LendingState.Uninitialized;
-
-        Ownable.initialize(msg.sender);
-        Pausable.initialize(msg.sender);
     }
 
     function saveInitialParametersToStorage(
@@ -191,19 +187,19 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         returnedAmount = newReturnedAmount;
 
         if (projectRepayed == true) {
-            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, now);
+            borrowerReturnDays = getDaysPassedBetweenDates(fundingEndTime, block.timestamp);
             changeState(LendingState.ContributionReturned);
         }
 
         if (excessRepayment > 0) {
-            address(borrower).transfer(excessRepayment);
+            address(borrower).call{value: excessRepayment}('');
         }
     }
 
     function declareProjectDefault() external onlyOwnerOrLocalNode {
         require(state == LendingState.Uninitialized);
         uint maxDelayDays = getMaxDelayDays();
-        require(getDelayDays(now) >= maxDelayDays);
+        require(getDelayDays(block.timestamp) >= maxDelayDays);
 
         ethicHubStorage.setUint(keccak256(abi.encodePacked("lending.delayDays", this)), maxDelayDays);
 
@@ -292,7 +288,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         uint256 contractBalance = address(this).balance;
         uint256 reclaimAmount = (contractBalance < amount) ? contractBalance : amount;
         
-        address(target).transfer(reclaimAmount);
+        address(target).call{value:reclaimAmount}('');
 
         emit Reclaim(target, reclaimAmount);
     }
@@ -349,7 +345,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
     function lendingInterestRatePercentage() public view returns(uint256){
         return annualInterest.mul(interestBaseUint)
             // current days
-            .mul(getDaysPassedBetweenDates(fundingEndTime, now)).div(365)
+            .mul(getDaysPassedBetweenDates(fundingEndTime, block.timestamp)).div(365)
             .add(localNodeFee.mul(interestBaseUint))
             .add(ethichubFee.mul(interestBaseUint))
             .add(interestBasePercent);
