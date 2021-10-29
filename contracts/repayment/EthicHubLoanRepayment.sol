@@ -98,7 +98,7 @@ contract EthicHubLoanRepayment is Pausable, Ownable {
         require(address(_ethicHubStorage) != address(0), "Storage address cannot be zero address");
 
         ethicHubStorage = IEthicHubStorage(_ethicHubStorage);
-        version = 11;
+        version = 9;
 
         require(_borrower != address(0), "No borrower set");
         require(ethicHubStorage.getBool(keccak256(abi.encodePacked("user", "representative", _borrower))), "Borrower not registered representative");
